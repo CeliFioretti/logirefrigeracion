@@ -1,30 +1,31 @@
 const express = require('express');
 const router = express.Router();
+const verificarRol = require('../middlewares/verificarRol.js')
+const verificarToken = require('../middlewares/verificarToken.js');
 const departamentoController = require('../controller/ubicaciones.controller.js')
 
 // DEPARTAMENTOS
-// Ver todos los departamentos
-router.get('/ubicaciones', departamentoController.listarDepartamentos);
+// Ver todos los departamentos - GET
+router.get('/ubicaciones', verificarToken, verificarRol('Administrador'), departamentoController.listarDepartamentos);
 
-// Crear departamento
-router.post('/ubicaciones', departamentoController.crearDepartamento);
-
+// Crear departamento - POST
+router.post('/ubicaciones', verificarToken, verificarRol('Administrador'), departamentoController.crearDepartamento);
 
 // ZONAS
-// Ver zona
-router.get('/ubicaciones/zonas/:id', departamentoController.verZona);
+// Ver zona - GET
+router.get('/ubicaciones/zonas/:id', verificarToken, verificarRol('Administrador'), departamentoController.verZona);
 
-// Ver zonas de un departamento
-router.get('/ubicaciones/:id/zonas', departamentoController.verZonasPorDepartamento);
+// Ver zonas de un departamento - GET
+router.get('/ubicaciones/:id/zonas', verificarToken, verificarRol('Administrador'), departamentoController.verZonasPorDepartamento);
 
-// Crear zona
-router.post('/ubicaciones/:id/zonas', departamentoController.crearZona);
+// Crear zona - POST
+router.post('/ubicaciones/:id/zonas', verificarToken, verificarRol('Administrador'), departamentoController.crearZona);
 
-// Editar zona
-router.put('/ubicaciones/zonas/:id', departamentoController.editarZona);
+// Editar zona - PUT
+router.put('/ubicaciones/zonas/:id', verificarToken, verificarRol('Administrador'), departamentoController.editarZona);
 
-// Eliminar zona
-router.delete('/ubicaciones/zonas/:id', departamentoController.eliminarZona);
+// Eliminar zona - DELETE
+router.delete('/ubicaciones/zonas/:id', verificarToken, verificarRol('Administrador'), departamentoController.eliminarZona);
 
 
 

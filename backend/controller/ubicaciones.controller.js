@@ -35,15 +35,27 @@ const listarDepartamentos = async (req, res, next) => {
 // Crea un departamento - POST
 const crearDepartamento = async (req, res, next) => {
     const { nombre } = req.body
+
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
     try {
         let query = 'INSERT INTO departamento (nombre) VALUES (?)';
         if (!nombre || nombre.trim() === '') {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
+        
         await db.promise().query(query, [nombre]);
+
+        // Auditoría
+        const mensaje = `Registro de nuevo departamento: ${nombre.replace(/'/g, "")}`
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable,mensaje]);
+
         res.status(201).json({
-            message: 'Departamento creado con éxito'
+            message: 'Departamento creado con éxito',
         })
+       
     } catch (err) {
         next(err)
     }
@@ -115,21 +127,33 @@ const verZona = async (req, res, next) => {
 // Crea una nueva zona - POST
 const crearZona = async (req, res, next) => {
     const idDepartamento = req.params.id;
-    const { nombre, idUsuario } = req.body;
+    const { nombre , idOperador} = req.body;
+
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
     try {
         let query = 'INSERT INTO zona (departamento_id, usuario_id, nombre) VALUES (?, ?, ?)';
+
         let usuarioAsignado;
 
-        if (idUsuario === "") {
+        if (idOperador === "") {
             usuarioAsignado = null;
         } else {
-            usuarioAsignado = idUsuario;
+            usuarioAsignado = idOperador;
         }
 
         if (!nombre || nombre.trim() === '') {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
-        await db.promise().query(query, [idDepartamento, usuarioAsignado, nombre])
+        
+        await db.promise().query(query, [idDepartamento, usuarioAsignado, nombre]);
+
+        // Auditoría
+        const mensaje = `Registro de nueva zona: ${nombre.replace(/'/g, "")}`
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
+
         res.status(201).json({
             message: 'Zona creada con éxito'
         })
@@ -141,16 +165,16 @@ const crearZona = async (req, res, next) => {
 // Editar zona - PUT
 const editarZona = async (req, res, next) => {
     const idZona = req.params.id;
-    const { nombre, idUsuario } = req.body;
+    const { nombre } = req.body;
+
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
     try {
         let query = 'UPDATE zona SET usuario_id = ?, nombre = ?  WHERE id = ?';
-        let usuarioAsignado;
 
-        if (idUsuario === "") {
-            usuarioAsignado = null;
-        } else {
-            usuarioAsignado = idUsuario;
-        }
+        let usuarioAsignado = idUsuarioResponsable;
 
         if (!nombre || nombre.trim() === '') {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
@@ -161,6 +185,11 @@ const editarZona = async (req, res, next) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: "Zona no encontrada." });
         }
+
+        // Auditoría
+        const mensaje = `Edición de zona: ${nombre.replace(/'/g, "")}`
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable,mensaje]);
+
         res.status(200).json({
             message: 'Zona actualizada correctamente'
         })
@@ -173,19 +202,29 @@ const editarZona = async (req, res, next) => {
 const eliminarZona = async (req, res, next) => {
     const idZona = req.params.id;
 
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
     try {
-        let querySelect = 'SELECT id FROM zona WHERE id = ?';
+        let querySelect = 'SELECT * FROM zona WHERE id = ?';
         let queryDelete = 'DELETE FROM zona WHERE id =?';
 
-        const [exists] = await db.promise().query(querySelect, [idZona]);
+        const [zona] = await db.promise().query(querySelect, [idZona]);
 
-        if (exists.length === 0) {
+        if (zona.length === 0) {
             return res.status(404).json({
                 message: 'Zona no encontrada'
             })
         }
 
+        const nombreZona = zona[0].nombre;
+
         await db.promise().query(queryDelete, [idZona])
+
+        // Auditoría
+        const mensaje = `Eliminación de zona: ${nombreZona.replace(/'/g, "")}`
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable,mensaje]);
 
         res.status(200).json({
             message: 'Zona eliminada correctamente'

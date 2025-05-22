@@ -1,5 +1,4 @@
 module.exports = (err, req, res, next) => {
-  console.log('🛠️ ERROR DETECTADO:', err); 
   const isDev = process.env.NODE_ENV === 'development';
 
   switch (err.errno) {
