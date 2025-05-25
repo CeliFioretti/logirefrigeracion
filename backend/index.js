@@ -10,14 +10,24 @@ const puerto = 3200;
 const errorHandler = require('./middlewares/errorHandler.js');
 
 // Rutas
-const rutasUbicaciones = require('./routes/ubicaciones.routes.js');
 const rutaAuth = require('./routes/auth.routes.js');
+const rutaUsuario = require('./routes/usuario.routes.js');
+const rutaFreezer = require('./routes/freezers.routes.js');
+const rutaClientes = require('./routes/clientes.routes.js');
+const rutaEventosFreezer = require('./routes/eventos.routes.js');
+const rutasUbicaciones = require('./routes/ubicaciones.routes.js');
+const rutaAuditoria = require('./routes/auditoria.routes.js');
 
 app.use(express.json());
 
-app.use('/', rutasUbicaciones);
-
 app.use('/auth', rutaAuth);
+app.use('/usuarios', rutaUsuario);
+app.use('/freezers', rutaFreezer);
+app.use('/clientes', rutaClientes)
+app.use('/eventos', rutaEventosFreezer)
+app.use('/ubicaciones', rutasUbicaciones);
+app.use('/auditoria', rutaAuditoria);
+
 
 app.use(errorHandler);
 

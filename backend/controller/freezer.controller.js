@@ -1,0 +1,366 @@
+const db = require('../config/db.js')
+const bcrypt = require('bcrypt');
+
+
+// Obtener registro completo de freezers
+const listar = async (req, res, next) => {
+    const { modelo, tipo, fechaCompra, capacidad, estado, nserie } = req.query;
+
+    try {
+        let query = 'SELECT * FROM freezer';
+        let condiciones = [];
+        let params = [];
+
+        if (modelo) {
+            condiciones.push('modelo LIKE ?');
+            params.push(`%${modelo}%`);
+        }
+        if (tipo) {
+            condiciones.push('tipo LIKE ?');
+            params.push(`%${tipo}%`);
+        }
+        if (fechaCompra) {
+            condiciones.push('fecha_compra LIKE ?');
+            params.push(`%${fechaCompra}%`);
+        }
+        if (capacidad) {
+            condiciones.push('capacidad LIKE ?');
+            params.push(`%${capacidad}%`);
+        }
+        if (estado) {
+            condiciones.push('estado LIKE ?');
+            params.push(`%${estado}%`);
+        }
+        if (nserie) {
+            condiciones.push('numero_serie LIKE ?');
+            params.push(`%${nserie}%`);
+        }
+
+        if (condiciones.length > 0) {
+            query += ' WHERE ' + condiciones.join(' AND ');
+        }
+
+        const [resultado] = await db.promise().query(query, params);
+
+        if (resultado.length === 0) {
+            res.status(200).json({
+                message: 'No hay registros de usuario actualmente',
+                data: []
+            })
+        } else {
+            res.status(200).json({
+                data: resultado
+            })
+        }
+
+    } catch (error) {
+        next(error)
+    }
+
+}
+
+// Obtiene los detalles de un freezer
+const detalle = async (req, res, next) => {
+    const idFreezer = req.params.id;
+
+    try {
+        let query = 'SELECT * FROM freezer WHERE id = ?';
+        const [results] = await db.promise().query(query, [idFreezer])
+
+        if (results.length === 0) {
+            return res.status(200).json({
+                message: 'No hay registros del usuario',
+                data: []
+            });
+        } else {
+            res.status(200).json({
+                data: results
+            });
+        }
+    } catch (err) {
+        next(err)
+    }
+}
+
+// Crea un freezer - POST
+const crear = async (req, res, next) => {
+    const {
+        cliente_id, // puede ser null
+        numero_serie,
+        modelo,
+        tipo,
+        fecha_compra,
+        marca, // puede ser null
+        capacidad,
+        estado,
+        imagen // puede ser null
+    } = req.body;
+
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    try {
+
+        if (!numero_serie || numero_serie.trim() === '' ||
+            !modelo || modelo.trim() === '' ||
+            !tipo || tipo.trim() === '' ||
+            !fecha_compra || fecha_compra.trim() === '' ||
+            capacidad === undefined || isNaN(capacidad)) {
+            return res.status(400).json({ error: 'Faltan campos por rellenar' });
+        }
+
+        if (!numero_serie.match(/^[a-zA-Z0-9-]+$/)) {
+            return res.status(400).json({ error: 'El número de serie contiene caracteres no válidos' });
+        }
+
+        const clienteAsignado = cliente_id && !isNaN(cliente_id) ? Number(cliente_id) : null;
+
+        let estadoFinal = estado?.trim() || "";
+        const estadosValidos = ["Disponible", "Asignado", "Baja", "Mantenimiento"];
+
+        if (clienteAsignado) {
+            estadoFinal = "Asignado"
+        } else if (!estadoFinal) {
+            estadoFinal = "Disponible"
+        }
+
+        if (!estadosValidos.includes(estadoFinal)) {
+            return res.status(400).json({
+                error: 'Estado inválido'
+            })
+        }
+
+        const marcaAsignada = marca?.trim() || null;
+        const imagenAsignada = imagen?.trim() || null;
+
+        const query = `INSERT INTO freezer (cliente_id, numero_serie, modelo, tipo, fecha_compra, marca, capacidad, estado, imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+        await db.promise().query(query, [clienteAsignado, numero_serie, modelo, tipo, fecha_compra, marcaAsignada, capacidad, estadoFinal, imagenAsignada]);
+
+        // Auditoría
+        const mensaje = `Se creo un nuevo freezer: Número de serie ${numero_serie}`
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
+
+        res.status(201).json({
+            message: 'Freezer creado correctamente'
+        })
+    } catch (err) {
+        next(err);
+    }
+}
+
+// Editar freezer - PUT
+const editar = async (req, res, next) => {
+    const id = req.params.id;
+
+    const campos = [
+        "cliente_id",
+        "numero_serie",
+        "modelo",
+        "tipo",
+        "fecha_compra",
+        "marca",
+        "capacidad",
+        "estado",
+        "imagen"
+    ]
+
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    try {
+
+        let setClause = [];
+        let params = [];
+
+        campos.forEach(campo => {
+            if (req.body[campo] !== undefined && req.body[campo] !== "") {
+                setClause.push(`${campo} = ?`);
+                params.push(req.body[campo].trim() === "" ? null : req.body[campo]);
+            }
+        });
+
+        if (setClause.length === 0) {
+            return res.status(400).json({ error: 'No se proporcionó ningún campo para actualizar' });
+        }
+
+        const {cliente_id, estado} = req.body;
+        const estadosValidos = ["Disponible", "Asignado", "Baja", "Mantenimiento"];
+
+        if (estado && !estadosValidos.includes(estado)) {
+            return res.status(400).json({
+                error: 'Estado inválido'
+            })
+        }
+
+        if (cliente_id && estado === "Disponible") {
+            return res.status(400).json({
+                error: 'Un freezer con cliente no puede estar en estado Disponible'
+            })
+        }
+
+
+        const query = `UPDATE freezer SET ${setClause.join(', ')} WHERE id = ?`;
+        params.push(id);
+
+        await db.promise().query(query, params);
+
+        // Auditoría
+        const mensaje = `Edición de freezer ID ${id}`;
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
+
+        res.status(201).json({
+            message: 'Actualizado con éxito'
+        })
+    } catch (err) {
+        next(err);
+    }
+}
+
+// Eliminar freezer - DELETE
+const eliminar = async (req, res, next) => {
+    const id = req.params.id;
+
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    try {
+        let querySelect = 'SELECT * FROM freezer WHERE id = ?';
+        let queryDelete = 'DELETE FROM freezer WHERE id =?';
+
+        const [freezer] = await db.promise().query(querySelect, [id]);
+
+        if (freezer.length === 0) {
+            return res.status(404).json({
+                message: 'Freezer no encontrado'
+            })
+        }
+
+        const nserieFreezer = freezer[0].numero_serie;
+
+        await db.promise().query(queryDelete, [id])
+
+        // Auditoría
+        const mensaje = `Eliminación de freezer con nº: ${nserieFreezer.replace(/'/g, "")}`
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
+
+        res.status(200).json({
+            message: 'Freezer eliminado correctamente'
+        })
+    } catch (err) {
+        next(err);
+    }
+
+}
+
+// Asignar freezer - PUT
+const asignarFreezer = async (req, res, next) => {
+    const id = req.params.id;
+    const { cliente_id } = req.body;
+
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    try {
+        const [freezer] = await db.promise().query('SELECT estado FROM freezer WHERE id = ?', [id]);
+
+        if (freezer.length === 0) {
+            return res.status(404).json({ error: 'Freezer no encontrado' });
+        }
+
+        if (freezer[0].estado !== 'Disponible') {
+            return res.status(400).json({ error: 'El freezer no está disponible para asignación' });
+        }
+
+        await db.promise().query('UPDATE freezer SET cliente_id = ?, estado = "Asignado" WHERE id = ?', [cliente_id, id]);
+
+        // Auditoría
+        const mensaje = `Asignación de freezer ID ${id} al cliente ID ${cliente_id}`;
+        await db.promise().query(`
+            INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) 
+            VALUES (?, ?, NOW(), ?)`,
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
+        );
+
+        res.status(200).json({ message: 'Freezer asignado correctamente' });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Obtener freezers de un cliente - GET
+const freezersPorCliente = async (req, res, next) => {
+    const idCliente = req.params.id;
+
+    try {
+        let query = `
+        SELECT f.id, f.numero_serie, f.modelo, f.tipo, f.fecha_compra, 
+        f.marca, f.capacidad, f.estado, f.imagen
+        FROM freezer f
+        WHERE f.cliente_id = ?
+        `
+
+        const [resultados] = await db.promise().query(query, [idCliente])
+
+        if (resultados.length === 0) {
+            return res.status(200).json({
+                message: 'No se encontraron freezers registrados para este cliente',
+                data: []
+            })
+        }
+
+        res.status(200).json({
+            data: resultados
+        })
+
+
+    } catch (error) {
+        next(error)
+    }
+}
+
+// Liberar un freezer - PUT
+const liberar = async (req, res, next) => {
+
+  const id = req.params.id;
+  const idUsuario = req.usuario.id;
+  const nombreUsuario = req.usuario.nombre;
+
+  try {
+    const [freezer] = await db.promise().query('SELECT * FROM freezer WHERE id = ?', [id]);
+    if (freezer.length === 0) {
+      return res.status(404).json({ error: 'Freezer no encontrado' });
+    }
+
+    await db.promise().query('UPDATE freezer SET cliente_id = NULL, estado = "Disponible" WHERE id = ?', [id]);
+
+    // Auditoría
+    const mensaje = `Se desasignó el freezer con ID ${id}`;
+    await db.promise().query(
+      'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+      [idUsuario, nombreUsuario, mensaje]
+    );
+
+    res.status(200).json({ message: 'Freezer liberado correctamente' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+module.exports = {
+    listar,
+    detalle,
+    crear,
+    editar,
+    eliminar,
+    freezersPorCliente,
+    asignarFreezer,
+    liberar
+}

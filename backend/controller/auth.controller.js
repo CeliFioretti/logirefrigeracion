@@ -6,20 +6,12 @@ const login = async (req, res) => {
     const { correo, contraseña } = req.body;
 
     try {
-        const [rows] = await db.promise().query('SELECT * FROM usuario WHERE correo = ?', [correo]);
+        const [filas] = await db.promise().query('SELECT * FROM usuario WHERE correo = ?', [correo]);
+        const usuario = filas[0];
 
-        if (rows.length === 0) {
+        if (filas.length === 0 || !(await bcrypt.compare(contraseña, usuario.password))) {
             return res.status(401).json({
-                error: 'Correo no registrado'
-            })
-        }
-
-        const usuario = rows[0];
-
-        const contraseñaValida = await bcrypt.compare(contraseña, usuario.password);
-        if (!contraseñaValida) {
-            return res.status(401).json({
-                error: 'Contraseña incorrecta'
+                error: 'Credenciales inválidas'
             })
         }
 
@@ -29,10 +21,10 @@ const login = async (req, res) => {
             { expiresIn: '2h' }
         );
 
-
         res.status(200).json({ token });
+
     } catch (error) {
-        console.error('Error real en login: ', error)
+
         res.status(500).json({
             error: 'Error interno al iniciar sesión'
         })
