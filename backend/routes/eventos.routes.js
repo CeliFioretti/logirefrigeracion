@@ -8,14 +8,10 @@ const eventosController = require('../controller/eventos.controller.js')
 // Ver todos los eventos de freezers - GET
 router.get('/', verificarToken, verificarRol('Administrador'), eventosController.listar);
 
-// Obtener usuario que realizó el evento - GET
-router.get('/:id', verificarToken, verificarRol('Administrador'), eventosController.detalle);
-
 // Crear nuevo evento - POST
-router.post('/', verificarToken, verificarRol('Administrador'), eventosController.crear);
+router.post('/', verificarToken, verificarRol('Administrador', 'Operador'), eventosController.crear);
 
-// Eliminar evento - DELETE
-router.delete('/:id', verificarToken, verificarRol('Administrador'), eventosController.eliminar);
-
+// Ver mis eventos (Operador) - GET
+router.get('/mis-eventos', verificarToken, verificarRol('Operador'), eventosController.misEventos);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const db = require('../config/db.js')
-const bcrypt = require('bcrypt');
+const notificacionController = require('./notificaciones.controller.js');
 
 
 // Obtener registro completo de freezers
@@ -85,27 +85,23 @@ const detalle = async (req, res, next) => {
 // Crea un freezer - POST
 const crear = async (req, res, next) => {
     const {
-        cliente_id, // puede ser null
+        cliente_id,
         numero_serie,
         modelo,
         tipo,
-        fecha_compra,
-        marca, // puede ser null
+        marca,
         capacidad,
         estado,
-        imagen // puede ser null
+        imagen
     } = req.body;
 
-    // Auditoría
     const idUsuarioResponsable = req.usuario.id;
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-
         if (!numero_serie || numero_serie.trim() === '' ||
             !modelo || modelo.trim() === '' ||
             !tipo || tipo.trim() === '' ||
-            !fecha_compra || fecha_compra.trim() === '' ||
             capacidad === undefined || isNaN(capacidad)) {
             return res.status(400).json({ error: 'Faltan campos por rellenar' });
         }
@@ -120,35 +116,54 @@ const crear = async (req, res, next) => {
         const estadosValidos = ["Disponible", "Asignado", "Baja", "Mantenimiento"];
 
         if (clienteAsignado) {
-            estadoFinal = "Asignado"
+            estadoFinal = "Asignado";
         } else if (!estadoFinal) {
-            estadoFinal = "Disponible"
+            estadoFinal = "Disponible";
         }
 
         if (!estadosValidos.includes(estadoFinal)) {
-            return res.status(400).json({
-                error: 'Estado inválido'
-            })
+            return res.status(400).json({ error: 'Estado inválido' });
         }
 
         const marcaAsignada = marca?.trim() || null;
         const imagenAsignada = imagen?.trim() || null;
 
-        const query = `INSERT INTO freezer (cliente_id, numero_serie, modelo, tipo, fecha_compra, marca, capacidad, estado, imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        const query = `INSERT INTO freezer (cliente_id, numero_serie, modelo, tipo, fecha_creacion, marca, capacidad, estado, imagen) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?)`;
 
-        await db.promise().query(query, [clienteAsignado, numero_serie, modelo, tipo, fecha_compra, marcaAsignada, capacidad, estadoFinal, imagenAsignada]);
+        await db.promise().query(query, [clienteAsignado, numero_serie, modelo, tipo, marcaAsignada, capacidad, estadoFinal, imagenAsignada]);
 
         // Auditoría
-        const mensaje = `Se creo un nuevo freezer: Número de serie ${numero_serie}`
+        const mensaje = `Se creó un nuevo freezer: Número de serie ${numero_serie}`;
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
+
+        // Notificación si hay cliente asignado
+        if (clienteAsignado) {
+            const [[cliente]] = await db.promise().query('SELECT nombre_responsable FROM cliente WHERE id = ?', [clienteAsignado]);
+
+            const [[operador]] = await db.promise().query(`
+                SELECT usuario_id FROM asignacioncliente
+                WHERE cliente_id = ? ORDER BY fecha_asignacion DESC LIMIT 1
+            `, [clienteAsignado]);
+
+            if (operador) {
+                await notificacionController.crear({
+                    usuario_id: operador.usuario_id,
+                    titulo: `Nuevo freezer asignado`,
+                    mensaje: `Se te ha asignado el freezer ${numero_serie} para el cliente ${cliente?.nombre_responsable || 'N/A'}.`,
+                    tipo: 'freezer',
+                    referencia_tipo: 'freezer',
+                    referencia_id: null
+                });
+            }
+        }
 
         res.status(201).json({
             message: 'Freezer creado correctamente'
-        })
+        });
     } catch (err) {
         next(err);
     }
-}
+};
 
 // Editar freezer - PUT
 const editar = async (req, res, next) => {
@@ -159,19 +174,16 @@ const editar = async (req, res, next) => {
         "numero_serie",
         "modelo",
         "tipo",
-        "fecha_compra",
         "marca",
         "capacidad",
         "estado",
         "imagen"
-    ]
+    ];
 
-    // Auditoría
     const idUsuarioResponsable = req.usuario.id;
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-
         let setClause = [];
         let params = [];
 
@@ -186,38 +198,76 @@ const editar = async (req, res, next) => {
             return res.status(400).json({ error: 'No se proporcionó ningún campo para actualizar' });
         }
 
-        const {cliente_id, estado} = req.body;
+        const { cliente_id, estado } = req.body;
         const estadosValidos = ["Disponible", "Asignado", "Baja", "Mantenimiento"];
 
         if (estado && !estadosValidos.includes(estado)) {
-            return res.status(400).json({
-                error: 'Estado inválido'
-            })
+            return res.status(400).json({ error: 'Estado inválido' });
         }
 
         if (cliente_id && estado === "Disponible") {
-            return res.status(400).json({
-                error: 'Un freezer con cliente no puede estar en estado Disponible'
-            })
+            return res.status(400).json({ error: 'Un freezer con cliente no puede estar en estado Disponible' });
         }
 
+        // Obtener datos actuales del freezer
+        const [[freezerAnterior]] = await db.promise().query('SELECT cliente_id, estado, numero_serie FROM freezer WHERE id = ?', [id]);
 
         const query = `UPDATE freezer SET ${setClause.join(', ')} WHERE id = ?`;
         params.push(id);
-
         await db.promise().query(query, params);
 
         // Auditoría
         const mensaje = `Edición de freezer ID ${id}`;
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
+        // Notificación si se asignó un nuevo cliente
+        if (cliente_id && cliente_id !== freezerAnterior.cliente_id) {
+            const [[cliente]] = await db.promise().query('SELECT nombre_responsable FROM cliente WHERE id = ?', [cliente_id]);
+
+            const [[operador]] = await db.promise().query(`
+                SELECT usuario_id FROM asignacioncliente
+                WHERE cliente_id = ? ORDER BY fecha_asignacion DESC LIMIT 1
+            `, [cliente_id]);
+
+            if (operador) {
+                await notificacionController.crear({
+                    usuario_id: operador.usuario_id,
+                    titulo: `Nuevo freezer asignado`,
+                    mensaje: `Se te ha asignado el freezer ${freezerAnterior.numero_serie} para el cliente ${cliente?.nombre_responsable || 'N/A'}.`,
+                    tipo: 'freezer',
+                    referencia_tipo: 'freezer',
+                    referencia_id: Number(id)
+                });
+            }
+        }
+
+        // Notificación si se puso en Baja o Mantenimiento
+        if (estado && (estado === "Baja" || estado === "Mantenimiento") && freezerAnterior.cliente_id) {
+            const [[operador]] = await db.promise().query(`
+                SELECT usuario_id FROM asignacioncliente
+                WHERE cliente_id = ? ORDER BY fecha_asignacion DESC LIMIT 1
+            `, [freezerAnterior.cliente_id]);
+
+            if (operador) {
+                await notificacionController.crear({
+                    usuario_id: operador.usuario_id,
+                    titulo: `Estado de freezer actualizado`,
+                    mensaje: `El freezer ${freezerAnterior.numero_serie} cambió su estado a ${estado}.`,
+                    tipo: 'freezer',
+                    referencia_tipo: 'freezer',
+                    referencia_id: Number(id)
+                });
+            }
+        }
+
         res.status(201).json({
             message: 'Actualizado con éxito'
-        })
+        });
     } catch (err) {
         next(err);
     }
-}
+};
+
 
 // Eliminar freezer - DELETE
 const eliminar = async (req, res, next) => {

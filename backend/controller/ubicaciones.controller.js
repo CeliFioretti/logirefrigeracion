@@ -1,4 +1,5 @@
 const db = require('../config/db.js')
+const { enviarCorreo } = require('../services/emailService.js');
 
 // DEPARTAMENTOS
 // Lista todos los departamentos - GET
@@ -45,17 +46,17 @@ const crearDepartamento = async (req, res, next) => {
         if (!nombre || nombre.trim() === '') {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
-        
+
         await db.promise().query(query, [nombre]);
 
         // Auditoría
         const mensaje = `Registro de nuevo departamento: ${nombre.replace(/'/g, "")}`
-        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable,mensaje]);
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(201).json({
             message: 'Departamento creado con éxito',
         })
-       
+
     } catch (err) {
         next(err)
     }
@@ -83,7 +84,7 @@ const verZonasPorDepartamento = async (req, res, next) => {
         if (operador) {
             query += ' AND u.nombre LIKE ?';
             params.push(`%${operador}%`)
-        }        
+        }
 
         const [results] = await db.promise().query(query, params)
 
@@ -127,7 +128,7 @@ const verZona = async (req, res, next) => {
 // Crea una nueva zona - POST
 const crearZona = async (req, res, next) => {
     const idDepartamento = req.params.id;
-    const { nombre , idOperador} = req.body;
+    const { nombre, idOperador } = req.body;
 
     // Auditoría
     const idUsuarioResponsable = req.usuario.id;
@@ -147,7 +148,7 @@ const crearZona = async (req, res, next) => {
         if (!nombre || nombre.trim() === '') {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
-        
+
         await db.promise().query(query, [idDepartamento, usuarioAsignado, nombre]);
 
         // Auditoría
@@ -157,6 +158,20 @@ const crearZona = async (req, res, next) => {
         res.status(201).json({
             message: 'Zona creada con éxito'
         })
+
+        // Si existe un usuario asignado para la zona (operador), le envia un correo para informarlo.
+        if (usuarioAsignado) {
+            const [[operador]] = await db.promise().query('SELECT email, nombre FROM usuario WHERE id = ?', [usuarioAsignado]);
+
+            if (operador) {
+                await enviarCorreo({
+                    para: operador.email,
+                    asunto: 'Zona asignada',
+                    mensaje: `Hola ${operador.nombre}, se te ha asignado una nueva zona: "${nombre}".`
+                });
+            }
+        }
+
     } catch (err) {
         next(err);
     }
@@ -188,11 +203,22 @@ const editarZona = async (req, res, next) => {
 
         // Auditoría
         const mensaje = `Edición de zona: ${nombre.replace(/'/g, "")}`
-        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable,mensaje]);
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(200).json({
             message: 'Zona actualizada correctamente'
         })
+
+        const [[operador]] = await db.promise().query('SELECT email, nombre FROM usuario WHERE id = ?', [usuarioAsignado]);
+
+        if (operador) {
+            await enviarCorreo({
+                para: operador.email,
+                asunto: 'Zona actualizada',
+                mensaje: `Hola ${operador.nombre}, tu zona fue modificada. Nueva Zona: "${nombre}".`
+            });
+        }
+
     } catch (err) {
         next(err)
     }
@@ -224,7 +250,7 @@ const eliminarZona = async (req, res, next) => {
 
         // Auditoría
         const mensaje = `Eliminación de zona: ${nombreZona.replace(/'/g, "")}`
-        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable,mensaje]);
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(200).json({
             message: 'Zona eliminada correctamente'
