@@ -6,6 +6,9 @@ const express = require('express');
 const app = express();
 const puerto = 3200;
 
+// Cors
+const cors = require('cors');
+
 // Middlewares
 const errorHandler = require('./middlewares/errorHandler.js');
 
@@ -23,7 +26,14 @@ const rutasUbicaciones = require('./routes/ubicaciones.routes.js');
 const rutaAuditoria = require('./routes/auditoria.routes.js');
 const rutaCodigosRegistro = require('./routes/codigos-registro.routes.js');
 
+app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
+
 app.use(express.json());
+
 
 app.use('/api/auth', rutaAuth);
 app.use('/api/codigos-registro', rutaCodigosRegistro);
