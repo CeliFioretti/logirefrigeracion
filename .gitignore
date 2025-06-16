@@ -1,4 +1,19 @@
+# Node_modules en Backend y Frontend
 node_modules/
-.env
+
+# Archivo oculto macOS
 .DS_Store
+
+# Archivos logs
+.log
+
+# Archivos de configuración sensibles
 .env
+
+# Archivos de compilación en React/Vite
+build/
+dist/
+
+# Ignorar caché de la base de datos
+database.sqlite
+

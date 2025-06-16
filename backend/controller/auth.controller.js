@@ -15,6 +15,7 @@ const login = async (req, res) => {
         }
 
         const usuario = filas[0]; 
+        const rol = usuario.rol;
 
         const passwordValida = await bcrypt.compare(password, usuario.password);
 
@@ -34,6 +35,7 @@ const login = async (req, res) => {
 
         res.status(200).json({
             token,
+            rol,
             requiereCambioPassword: usuario.requiere_cambio_password === 1
         });
 
