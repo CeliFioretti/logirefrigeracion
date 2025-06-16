@@ -60,6 +60,7 @@ const crear = async (req, res, next) => {
       return res.status(400).json({ error: 'Tipo de evento inválido' });
     }
 
+    // Obtenemos el estado del freezer el cual tendrá el evento (disponible, baja, mantenimiento, asignado)
     const [resultado] = await db.promise().query('SELECT estado FROM freezer WHERE id = ?', [freezer_id]);
 
     if (resultado.length === 0) {
@@ -68,10 +69,12 @@ const crear = async (req, res, next) => {
 
     const estadoActual = resultado[0].estado;
 
+    // Si el evento a crear es entrega y el estado del freezer NO es Disponible
     if (tipoEvento === 'entrega' && estadoActual !== 'Disponible') {
       return res.status(400).json({ error: 'Solo se pueden entregar freezers disponibles' });
     }
 
+    // Si el evento a crear es retiro y el estado del freezer NO es Asignado
     if (tipoEvento === 'retiro' && estadoActual !== 'Asignado') {
       return res.status(400).json({ error: 'Solo se pueden retirar freezers asignados' });
     }
@@ -82,7 +85,7 @@ const crear = async (req, res, next) => {
       return res.status(404).json({ error: 'Cliente no encontrado' });
     }
 
-    // Crear evento
+    // Creación del evento
     await db.promise().query(`
       INSERT INTO eventofreezer 
       (usuario_id, freezer_id, usuario_nombre, cliente_id, cliente_nombre, fecha, tipo, observaciones)
@@ -90,36 +93,21 @@ const crear = async (req, res, next) => {
       [idUsuarioResponsable, freezer_id, nombreUsuarioResponsable, cliente_id, cliente.nombre_responsable, tipoEvento, observaciones || null]
     );
 
-    const nuevoEstado = tipoEvento === 'entrega' ? 'Asignado' : 'Disponible';
+    // Actualizamos el estado del freezer
+    const nuevoEstado = (tipoEvento === 'entrega' ? 'Asignado' : 'Disponible');
+
+    // Actualizamos el estado del freezer que sufrió el evento
     await db.promise().query('UPDATE freezer SET estado = ? WHERE id = ?', [nuevoEstado, freezer_id]);
 
     // Crear notificación
-    if (rolUsuarioResponsable === 'Operador') {
-      // Notificar a todos los administradores (simplificado como todos los usuarios con rol 'Administrador')
-      const [admins] = await db.promise().query('SELECT id FROM usuario WHERE rol = "Administrador"');
+    if (rolUsuarioResponsable === 'operador') {
+      // Notificar a todos los administradores (simplificado como todos los usuarios con rol 'administrador')
+      const [admins] = await db.promise().query('SELECT id FROM usuario WHERE rol = "administrador"');
       for (const admin of admins) {
         await notificacionController.crear({
           usuario_id: admin.id,
           titulo: `Evento de ${tipoEvento} registrado`,
           mensaje: `${nombreUsuarioResponsable} registró un ${tipoEvento} del freezer ID ${freezer_id} para el cliente ${cliente.nombre_responsable}.`,
-          tipo: 'evento',
-          referencia_id: freezer_id,
-          referencia_tipo: 'freezer'
-        });
-      }
-    } else if (rolUsuarioResponsable === 'Administrador') {
-      // Si lo hizo el admin, notificar al operador asignado (si hay)
-      const [[ultimaAsignacion]] = await db.promise().query(`
-        SELECT usuario_id FROM asignacionmantenimiento 
-        WHERE freezer_id = ? 
-        ORDER BY fecha_creacion DESC LIMIT 1
-      `, [freezer_id]);
-
-      if (ultimaAsignacion) {
-        await notificacionController.crear({
-          usuario_id: ultimaAsignacion.usuario_id,
-          titulo: `Evento de ${tipoEvento} asignado`,
-          mensaje: `Te han asignado un evento de ${tipoEvento} para el freezer ID ${freezer_id} y el cliente ${cliente.nombre_responsable}.`,
           tipo: 'evento',
           referencia_id: freezer_id,
           referencia_tipo: 'freezer'

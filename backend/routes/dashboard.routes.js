@@ -6,6 +6,6 @@ const notificacionesController = require('../controller/dashboard.controller.js'
 
 // DASHBOARD
 // Mostrar Dashboard
-router.get('/', verificarToken, verificarRol('Administrador', 'Operador'), notificacionesController.mostrar);
+router.get('/', verificarToken, verificarRol('administrador', 'operador'), notificacionesController.mostrar);
 
 module.exports = router;

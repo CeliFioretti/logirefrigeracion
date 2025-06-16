@@ -170,6 +170,52 @@ const confirmarAsignacion = async (req, res, next) => {
   }
 };
 
+// Actualiza el estado de una asignacion de mantenimiento.
+const cambiarEstadoAsignacion = async (req, res, next) => {
+    const idAsignacion = req.params.id;
+    const { estado } = req.body;
+
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    try {
+        if (!estado) {
+            return res.status(400).json({ error: 'Debe proporcionar el nuevo estado' });
+        }
+
+        const ESTADOS_VALIDOS = ['pendiente', 'en curso', 'completado', 'cancelado'];
+
+        if (!ESTADOS_VALIDOS.includes(estado)) {
+            return res.status(400).json({ error: `Estado inválido. Estados permitidos: ${ESTADOS_VALIDOS.join(', ')}` });
+        }
+
+        const [asignacion] = await db.promise().query('SELECT id FROM asignacionmantenimiento WHERE id = ?', [idAsignacion]);
+
+        if (asignacion.length === 0) {
+            return res.status(404).json({ error: 'La asignación no existe' });
+        }
+
+        await db.promise().query(
+            'UPDATE asignacionmantenimiento SET estado = ? WHERE id = ?',
+            [estado, idAsignacion]
+        );
+
+        // Auditoría
+        const mensaje = `Se actualizó el estado de la asignación de mantenimiento ID ${idAsignacion} a "${estado}"`;
+        await db.promise().query(
+            'INSERT INTO auditoriadeactividades (idUsuarioResponsable, nombreUsuarioResponsable, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
+        );
+
+        res.status(200).json({ message: 'Estado de la asignación actualizado correctamente' });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
 
 
 module.exports = {
@@ -177,6 +223,6 @@ module.exports = {
   crear,
   eliminar,
   verAsignacionesPropias,
-  confirmarAsignacion
-
+  confirmarAsignacion,
+  cambiarEstadoAsignacion
 };

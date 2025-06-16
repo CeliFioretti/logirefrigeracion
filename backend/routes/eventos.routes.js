@@ -4,14 +4,18 @@ const verificarRol = require('../middlewares/verificarRol.js')
 const verificarToken = require('../middlewares/verificarToken.js');
 const eventosController = require('../controller/eventos.controller.js')
 
+// Uso de Middlewares para verificar
+const soloAdmin = [verificarToken, verificarRol('administrador')];
+const soloOperador = [verificarToken, verificarRol('operador')];
+
 // EVENTOS FREEZER
 // Ver todos los eventos de freezers - GET
-router.get('/', verificarToken, verificarRol('Administrador'), eventosController.listar);
+router.get('/', soloAdmin, eventosController.listar);
 
 // Crear nuevo evento - POST
-router.post('/', verificarToken, verificarRol('Administrador', 'Operador'), eventosController.crear);
+router.post('/', verificarToken, verificarRol('administrador', 'operador'), eventosController.crear);
 
 // Ver mis eventos (Operador) - GET
-router.get('/mis-eventos', verificarToken, verificarRol('Operador'), eventosController.misEventos);
+router.get('/mis-eventos', soloOperador, eventosController.misEventos);
 
 module.exports = router;

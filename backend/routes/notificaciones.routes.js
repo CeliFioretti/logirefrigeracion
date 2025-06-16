@@ -4,12 +4,15 @@ const verificarRol = require('../middlewares/verificarRol.js')
 const verificarToken = require('../middlewares/verificarToken.js');
 const notificacionesController = require('../controller/notificaciones.controller.js')
 
+// Uso de Middlewares para verificar
+const soloAdmin = [verificarToken, verificarRol('administrador')];
+
 // NOTIFICACIONES
 // Listar notificaciones propias - GET
-router.get('/', verificarToken, verificarRol('Administrador', 'Operador'), notificacionesController.listar);
+router.get('/', verificarToken, verificarRol('administrador', 'operador'), notificacionesController.listar);
 
 // Marcar como leida la notificación - PUT
-router.put('/', verificarToken, verificarRol('Administrador'), notificacionesController.leida);
+router.put('/', soloAdmin, notificacionesController.leida);
 
 
 module.exports = router;

@@ -4,28 +4,31 @@ const verificarRol = require('../middlewares/verificarRol.js')
 const verificarToken = require('../middlewares/verificarToken.js');
 const ubicacionController = require('../controller/ubicaciones.controller.js')
 
+// Uso de Middlewares para verificar
+const soloAdmin = [verificarToken, verificarRol('administrador')];
+
 // DEPARTAMENTOS
 // Ver todos los departamentos - GET
-router.get('/', verificarToken, verificarRol('Administrador'), ubicacionController.listarDepartamentos);
+router.get('/', soloAdmin, ubicacionController.listarDepartamentos);
 
 // Crear departamento - POST
-router.post('/', verificarToken, verificarRol('Administrador'), ubicacionController.crearDepartamento);
+router.post('/', soloAdmin, ubicacionController.crearDepartamento);
 
 // ZONAS
 // Ver zona - GET
-router.get('/zonas/:id', verificarToken, verificarRol('Administrador'), ubicacionController.verZona);
+router.get('/zonas/:id', soloAdmin, ubicacionController.verZona);
 
 // Ver zonas de un departamento - GET
-router.get('/:id/zonas', verificarToken, verificarRol('Administrador'), ubicacionController.verZonasPorDepartamento);
+router.get('/:id/zonas', soloAdmin, ubicacionController.verZonasPorDepartamento);
 
 // Crear zona - POST
-router.post('/:id/zonas', verificarToken, verificarRol('Administrador'), ubicacionController.crearZona);
+router.post('/:id/zonas', soloAdmin, ubicacionController.crearZona);
 
 // Editar zona - PUT
-router.put('/zonas/:id', verificarToken, verificarRol('Administrador'), ubicacionController.editarZona);
+router.put('/zonas/:id', soloAdmin, ubicacionController.editarZona);
 
 // Eliminar zona - DELETE
-router.delete('/zonas/:id', verificarToken, verificarRol('Administrador'), ubicacionController.eliminarZona);
+router.delete('/zonas/:id', soloAdmin, ubicacionController.eliminarZona);
 
 
 

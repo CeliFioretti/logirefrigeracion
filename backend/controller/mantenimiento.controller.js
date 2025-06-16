@@ -20,7 +20,7 @@ const listar = async (req, res, next) => {
         }
         if (freezer) {
             condiciones.push('freezer_id = ?');
-            params.push(`%${freezer}%`)
+            params.push(freezer)
         }
         if (tipo) {
             condiciones.push('tipo LIKE ?');

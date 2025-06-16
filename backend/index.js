@@ -21,20 +21,22 @@ const rutaAsignacionMantenimientos = require('./routes/asignaciones-mantenimient
 const rutaEventosFreezer = require('./routes/eventos.routes.js');
 const rutasUbicaciones = require('./routes/ubicaciones.routes.js');
 const rutaAuditoria = require('./routes/auditoria.routes.js');
+const rutaCodigosRegistro = require('./routes/codigos-registro.routes.js');
 
 app.use(express.json());
 
-app.use('/auth', rutaAuth);
-app.use('/usuarios', rutaUsuario);
-app.use('/dashboard', rutaDashboard);
-app.use('/notificaciones', rutaNotificaciones);
-app.use('/freezers', rutaFreezer);
-app.use('/clientes', rutaClientes);
-app.use('/mantenimientos', rutaMantenimientos);
-app.use('/asignaciones-mantenimiento', rutaAsignacionMantenimientos);
-app.use('/eventos', rutaEventosFreezer);
-app.use('/ubicaciones', rutasUbicaciones);
-app.use('/auditoria', rutaAuditoria);
+app.use('/api/auth', rutaAuth);
+app.use('/api/codigos-registro', rutaCodigosRegistro);
+app.use('/api/usuarios', rutaUsuario);
+app.use('/api/dashboard', rutaDashboard);
+app.use('/api/notificaciones', rutaNotificaciones);
+app.use('/api/freezers', rutaFreezer);
+app.use('/api/clientes', rutaClientes);
+app.use('/api/mantenimientos', rutaMantenimientos);
+app.use('/api/asignaciones-mantenimiento', rutaAsignacionMantenimientos);
+app.use('/api/eventos', rutaEventosFreezer);
+app.use('/api/ubicaciones', rutasUbicaciones);
+app.use('/api/auditoria', rutaAuditoria);
 
 
 app.use(errorHandler);

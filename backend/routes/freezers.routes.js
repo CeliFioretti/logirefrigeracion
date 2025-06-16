@@ -4,30 +4,33 @@ const verificarRol = require('../middlewares/verificarRol.js')
 const verificarToken = require('../middlewares/verificarToken.js');
 const freezerController = require('../controller/freezer.controller.js')
 
+// Uso de Middlewares para verificar
+const soloAdmin = [verificarToken, verificarRol('administrador')];
+
 // FREEZERS
 // Ver todos los freezers - GET
-router.get('/', verificarToken, verificarRol('Administrador'), freezerController.listar);
+router.get('/', soloAdmin, freezerController.listar);
 
 // Ver detalles de un freezer - GET
-router.get('/:id', verificarToken, verificarRol('Administrador'), freezerController.detalle);
+router.get('/:id', soloAdmin, freezerController.detalle);
 
 // Crea un freezer - POST
-router.post('/', verificarToken, verificarRol('Administrador'), freezerController.crear);
+router.post('/', soloAdmin, freezerController.crear);
 
 // Actualizar freezer - PUT
-router.put('/:id', verificarToken, verificarRol('Administrador'), freezerController.editar);
+router.put('/:id', soloAdmin, freezerController.editar);
 
 // Eliminar freezer - DELETE
-router.delete('/:id', verificarToken, verificarRol('Administrador'), freezerController.eliminar);
+router.delete('/:id', soloAdmin, freezerController.eliminar);
 
 // Asignar freezer - PUT
-router.put('/:id/asignar', verificarToken, verificarRol('Administrador'), freezerController.asignarFreezer);
+router.put('/:id/asignar', soloAdmin, freezerController.asignarFreezer);
 
 // Ver freezers de un cliente - GET
-router.get('/cliente/:id', verificarToken, verificarRol('Administrador'), freezerController.freezersPorCliente);
+router.get('/cliente/:id', soloAdmin, freezerController.freezersPorCliente);
 
 // Liberar un freezer asignado - PUT
-router.put('/:id/liberar', verificarToken, verificarRol('Administrador'), freezerController.liberar);
+router.put('/:id/liberar', soloAdmin, freezerController.liberar);
 
 
 

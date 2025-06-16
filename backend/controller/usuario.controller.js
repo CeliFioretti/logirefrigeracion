@@ -75,28 +75,34 @@ const crear = async (req, res, next) => {
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-
-        let query = 'INSERT INTO usuario (nombre, correo, password, rol, activo) VALUES (?, ?, ?, ?, 0)';
-
-        if (!nombre || nombre.trim() === '' || !correo || correo.trim() === '' || !password || password.trim() === '' || !rol || rol.trim() === '' ) {
+        if (!nombre || nombre.trim() === '' || !correo || correo.trim() === '' || !password || password.trim() === '' || !rol || rol.trim() === '') {
             return res.status(400).json({ error: 'Faltan campos por rellenar' });
-        } 
+        }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        
+
+        let query = `
+            INSERT INTO usuario (nombre, correo, password, rol, activo, requiere_cambio_password) 
+            VALUES (?, ?, ?, ?, 0, 1)
+        `;
+
         await db.promise().query(query, [nombre, correo, passwordHash, rol]);
 
         // Auditoría
-        const mensaje = `Se creo un nuevo usuario: ${nombre.replace(/'/g, "")}`
-        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
+        const mensaje = `Se creó un nuevo usuario: ${nombre.replace(/'/g, "")}`;
+        await db.promise().query(
+            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
+        );
 
         res.status(201).json({
             message: 'Usuario creado correctamente'
-        })
+        });
     } catch (err) {
         next(err);
     }
-}
+};
+
 
 // Editar usuario - PUT
 const editar = async (req, res, next) => {
@@ -181,11 +187,35 @@ const eliminar = async (req, res, next) => {
 
 }
 
+// Actializa la contraseña del usuario - POST
+const cambiarContraseña = async (req, res) => {
+    const { nuevaContraseña } = req.body;
+    const idUsuarioResponsable = req.usuario.id;
+
+    if (!nuevaContraseña || nuevaContraseña.trim() === '') {
+        return res.status(400).json({ error: 'La nueva contraseña no puede estar vacía' });
+    }
+
+    try {
+        const passwordHash = await bcrypt.hash(nuevaContraseña, 10);
+
+        await db.promise().query(
+            'UPDATE usuario SET password = ?, requiere_cambio_password = 0 WHERE id = ?',
+            [passwordHash, idUsuarioResponsable]
+        );
+
+        res.status(200).json({ message: 'Contraseña actualizada correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar la contraseña' });
+    }
+};
+
 
 module.exports = {
     listar,
     detalle,
     crear,
     editar,
-    eliminar
+    eliminar,
+    cambiarContraseña
 }

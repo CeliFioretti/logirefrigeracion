@@ -91,7 +91,7 @@ const crear = async (req, res, next) => {
         tipo,
         marca,
         capacidad,
-        estado,
+        estado, // Baja o Mantenimiento
         imagen
     } = req.body;
 
@@ -110,14 +110,24 @@ const crear = async (req, res, next) => {
             return res.status(400).json({ error: 'El número de serie contiene caracteres no válidos' });
         }
 
+        // La idea del estado, es que si no va en el body pero tiene un cliente_id este se ajuste a un estado de: Asignado. Sinó tiene cliente_id este será disponible
+        // Aun así se permite ingresar manualmente 2 estados diferentes como el de Baja o Mantenimiento
         const clienteAsignado = cliente_id && !isNaN(cliente_id) ? Number(cliente_id) : null;
 
-        let estadoFinal = estado?.trim() || "";
         const estadosValidos = ["Disponible", "Asignado", "Baja", "Mantenimiento"];
+        let estadoFinal = estado?.trim() || "";
+
+        // Verificamos tambien que si hay un cliente_id pero el estado fue insertado manualmente como Baja o Mantenimiento esto no sea compatible.
+        if (clienteAsignado && (estadoFinal === "Baja" || estadoFinal === "Mantenimiento")) {
+            return res.status(400).json({ error: 'Un freezer asignado a un cliente no puede estar en Baja o Mantenimiento' });
+        }
 
         if (clienteAsignado) {
             estadoFinal = "Asignado";
-        } else if (!estadoFinal) {
+        } else if ( estadoFinal === "Asignado"  && clienteAsignado === null ) {
+            return res.status(400).json({ error: 'Un freezer no puede estar asignado sin un cliente' }); 
+        }
+        else if (!estadoFinal) {
             estadoFinal = "Disponible";
         }
 
@@ -349,7 +359,7 @@ const freezersPorCliente = async (req, res, next) => {
 
     try {
         let query = `
-        SELECT f.id, f.numero_serie, f.modelo, f.tipo, f.fecha_compra, 
+        SELECT f.id, f.numero_serie, f.modelo, f.tipo, f.fecha_creacion, 
         f.marca, f.capacidad, f.estado, f.imagen
         FROM freezer f
         WHERE f.cliente_id = ?
@@ -377,29 +387,29 @@ const freezersPorCliente = async (req, res, next) => {
 // Liberar un freezer - PUT
 const liberar = async (req, res, next) => {
 
-  const id = req.params.id;
-  const idUsuario = req.usuario.id;
-  const nombreUsuario = req.usuario.nombre;
+    const id = req.params.id;
+    const idUsuario = req.usuario.id;
+    const nombreUsuario = req.usuario.nombre;
 
-  try {
-    const [freezer] = await db.promise().query('SELECT * FROM freezer WHERE id = ?', [id]);
-    if (freezer.length === 0) {
-      return res.status(404).json({ error: 'Freezer no encontrado' });
+    try {
+        const [freezer] = await db.promise().query('SELECT * FROM freezer WHERE id = ?', [id]);
+        if (freezer.length === 0) {
+            return res.status(404).json({ error: 'Freezer no encontrado' });
+        }
+
+        await db.promise().query('UPDATE freezer SET cliente_id = NULL, estado = "Disponible" WHERE id = ?', [id]);
+
+        // Auditoría
+        const mensaje = `Se desasignó el freezer con ID ${id}`;
+        await db.promise().query(
+            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+            [idUsuario, nombreUsuario, mensaje]
+        );
+
+        res.status(200).json({ message: 'Freezer liberado correctamente' });
+    } catch (err) {
+        next(err);
     }
-
-    await db.promise().query('UPDATE freezer SET cliente_id = NULL, estado = "Disponible" WHERE id = ?', [id]);
-
-    // Auditoría
-    const mensaje = `Se desasignó el freezer con ID ${id}`;
-    await db.promise().query(
-      'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
-      [idUsuario, nombreUsuario, mensaje]
-    );
-
-    res.status(200).json({ message: 'Freezer liberado correctamente' });
-  } catch (err) {
-    next(err);
-  }
 };
 
 

@@ -4,22 +4,26 @@ const verificarRol = require('../middlewares/verificarRol.js')
 const verificarToken = require('../middlewares/verificarToken.js');
 const usuarioController = require('../controller/usuario.controller.js')
 
+// Uso de Middlewares para verificar
+const soloAdmin = [verificarToken, verificarRol('administrador')];
+
 // USUARIOS
 // Ver todos los usuarios - GET
-router.get('/', verificarToken, verificarRol('Administrador'), usuarioController.listar);
+router.get('/',soloAdmin, usuarioController.listar);
 
 // Ver detalles de un usuario - GET
-router.get('/:id', verificarToken, verificarRol('Administrador'), usuarioController.detalle);
+router.get('/:id',soloAdmin, usuarioController.detalle);
 
 // Crea un usuario - POST
-router.post('/', verificarToken, verificarRol('Administrador'), usuarioController.crear);
+router.post('/',soloAdmin, usuarioController.crear);
 
 // Actualizar usuario - PUT
-router.put('/configuracion', verificarToken, verificarRol('Administrador, Operador'), usuarioController.editar);
+router.put('/configuracion', verificarToken, verificarRol('administrador, operador'), usuarioController.editar);
 
 // Eliminar usuario - DELETE
-router.delete('/:id', verificarToken, verificarRol('Administrador'), usuarioController.eliminar);
+router.delete('/:id',soloAdmin, usuarioController.eliminar);
 
-
+// Ruta para cambio de contraseña del usuario autenticado
+router.post('/cambiar-password', verificarToken, usuarioController.cambiarContraseña);
 
 module.exports = router;

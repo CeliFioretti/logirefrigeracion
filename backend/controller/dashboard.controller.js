@@ -4,7 +4,7 @@ const mostrar = async (req, res, next) => {
     const usuario = req.usuario;
 
     try {
-        if (usuario.rol === 'Administrador') {
+        if (usuario.rol === 'administrador') {
             const [
                 [clientesResult],
                 [mantenimientosResult],
@@ -51,7 +51,7 @@ const mostrar = async (req, res, next) => {
             });
         }
 
-        else if (usuario.rol === 'Operador') {
+        else if (usuario.rol === 'operador') {
             const [
                 [asignacionesResult],
                 [notificacionesResult]

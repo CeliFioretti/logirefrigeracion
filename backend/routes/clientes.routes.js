@@ -4,21 +4,24 @@ const verificarRol = require('../middlewares/verificarRol.js')
 const verificarToken = require('../middlewares/verificarToken.js');
 const clientesController = require('../controller/clientes.controller.js')
 
+// Uso de Middlewares para verificar
+const soloAdmin = [verificarToken, verificarRol('administrador')];
+
 // CLIENTES
 // Ver todos los clientes - GET
-router.get('/', verificarToken, verificarRol('Administrador'), clientesController.listar);
+router.get('/', soloAdmin, clientesController.listar);
 
 // Ver detalles de un cliente - GET
-router.get('/:id', verificarToken, verificarRol('Administrador'), clientesController.detalle);
+router.get('/:id', soloAdmin, clientesController.detalle);
 
 // Crea un cliente - POST
-router.post('/', verificarToken, verificarRol('Administrador'), clientesController.crear);
+router.post('/', soloAdmin, clientesController.crear);
 
 // Actualizar cliente - PUT
-router.put('/:id', verificarToken, verificarRol('Administrador'), clientesController.editar);
+router.put('/:id', soloAdmin, clientesController.editar);
 
 // Eliminar cliente - DELETE
-router.delete('/:id', verificarToken, verificarRol('Administrador'), clientesController.eliminar);
+router.delete('/:id', soloAdmin, clientesController.eliminar);
 
 
 
