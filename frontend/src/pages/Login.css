@@ -1,14 +1,10 @@
-/* Login.css */
 
-body, html {
+body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(to bottom right, #e6ecf3, #1e2a3a);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: relative; 
+  overflow: hidden; 
 }
 
 .login-container {
@@ -19,9 +15,13 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
-  justify-content: center;
   box-sizing: border-box;
+
+  /* Centrado absoluto */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .login-box {
@@ -39,21 +39,10 @@ body, html {
   color: #1e2a3a;
 }
 
-.login-box label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #333;
-}
-
-.login-box input[type="text"],
-.login-box input[type="password"] {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 14px;
+.login-box .login-box-h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #1e2a3a;
 }
 
 .login-box .extra-options {
@@ -64,31 +53,19 @@ body, html {
   margin-bottom: 15px;
 }
 
-.login-box .extra-options a {
+.login-box .extra-options-link {
   color: #5f85db;
   text-decoration: none;
 }
-
-.login-box button {
-  width: 100%;
-  background-color: #9bcbe0;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s ease;
-}
-
-.login-box button:hover {
-  background-color: #72b3d2;
+.login-box .extra-options-link:hover {
+    text-decoration: underline;
 }
 
 .logo {
   display: block;
   margin: 0 auto 20px auto;
-  width: 100px;
+  width: 150px;
+  height: auto;
 }
 
 footer {
@@ -99,7 +76,6 @@ footer {
   opacity: 0.8;
 }
 
-/* Responsive */
 @media (max-width: 600px) {
   .login-box {
     padding: 20px;
@@ -107,9 +83,5 @@ footer {
 
   .login-box h2 {
     font-size: 20px;
-  }
-
-  .login-box button {
-    font-size: 14px;
   }
 }
