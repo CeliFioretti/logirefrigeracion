@@ -17,8 +17,8 @@ export default function TopBarAdmin({ nombre = "Adriana Rodríguez", rol = "Admi
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('rol');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('rol');
     navigate('/', { replace: true });
   };
 

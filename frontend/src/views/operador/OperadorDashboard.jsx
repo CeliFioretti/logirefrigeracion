@@ -1,12 +1,7 @@
 import { Box, Toolbar, Paper, Typography } from '@mui/material';
-import TopBarOperador from '../components/TopBarOperador';
-import { useEffect } from 'react';
+import TopBarOperador from '../../components/TopBarOperador';
 
 export default function OperadorDashboard() {
-
-  useEffect(() => {
-      document.title = 'Dashboard - Admin';
-    }, []);
 
   return (
     <Box>

@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { Box, Toolbar, Grid, Paper, Typography } from '@mui/material';
-import TopBarAdmin from '../components/TopBarAdmin';
-import SideNav from '../components/SideNav';
+import { Box, Toolbar, Paper, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import TopBarAdmin from '../../components/TopBarAdmin';
+
 
 export default function AdminDashboard() {
 
@@ -12,13 +13,12 @@ export default function AdminDashboard() {
   return (
     <Box sx={{ display: 'flex' }}>
       <TopBarAdmin title="Panel Administrador" />
-      <SideNav />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Toolbar />
         {/* Tarjetas resumen */}
         <Grid container spacing={2}>
           {/* Ejemplo tarjeta */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{xs:12, sm:6, md:3}}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="subtitle2">Freezers activos</Typography>
               <Typography variant="h4">123</Typography>

@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
 function PrivateRoute({ roles }) {
-  const token = localStorage.getItem('token');
-  const rol = localStorage.getItem('rol');
+  const token = sessionStorage.getItem('token');
+  const rol = sessionStorage.getItem('rol');
 
   if (!token || !roles.includes(rol)) {
     return <Navigate to="/" replace />;

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import './Login.css';
 
+// Iconos y Estilos
+import '../../styles/Login.css';
 import {
   TextField,
   Button,
@@ -14,9 +15,13 @@ import {
   Link
 } from '@mui/material';
 
+import fondo from '../../assets/fondo-login-0.png';
+import logo from '../../assets/logo-negro-2.png';
+
 function Login() {
   const [nombre, setNombre] = useState('');
   const [password, setPassword] = useState('');
+  const [isRedirecting, setIsRedirecting] = useState(true); // controla si se debería o no renderizar el formulario de login
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,14 +30,22 @@ function Login() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const rol = localStorage.getItem('rol');
+    const token = sessionStorage.getItem('token');
+    const rol = sessionStorage.getItem('rol');
 
-    if (location.pathname === '/login' && token && rol) {
+    // Si el usuario ya tiene token y rol, no le permite volver al login si este lo escribé en el buscador.
+    if (token && rol) {
       navigate('/dashboard', { replace: true });
-      }
-    }, [navigate, location]); 
+    } else {
+      setIsRedirecting(false);
+    }
 
+  }, [navigate, location]);
+
+  if (isRedirecting) return null;
+
+
+  // Manejo del formulario Login
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -41,8 +54,8 @@ function Login() {
         password
       });
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('rol', data.rol);
+      sessionStorage.setItem('token', data.token);
+      sessionStorage.setItem('rol', data.rol);
 
       navigate('/dashboard', { replace: true });
     } catch (error) {
@@ -53,7 +66,7 @@ function Login() {
   return (
     <div
       style={{
-        backgroundImage: "url('/fondo-login-0.png')",
+        backgroundImage: `url(${fondo})`,
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
@@ -72,7 +85,7 @@ function Login() {
           alignItems: 'center',
           gap: 2,
         }}>
-          <img src="/logo-negro-2.png" alt="Logo" className="logo" />
+          <img src={logo} alt="Logo" className="logo" />
 
           <Typography
             variant="h5"

@@ -1,10 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import Login from './pages/Login';
-import Dashboard from './components/Dashboard'; // Este decide qué layout usar según el rol
+import Login from './pages/Login/Login';
+import DashboardLayout from './layout/DashboardLayout'; 
 import PrivateRoute from './components/PrivateRoute';
 
-import './App.css';
+// Estilos
+import './styles/App.css';
 
 function App() {
   return (
@@ -15,11 +16,11 @@ function App() {
 
         {/* Dashboard general (admin u operador), protegido por roles */}
         <Route element={<PrivateRoute roles={['administrador', 'operador']} />}>
-          <Route path="/dashboard/*" element={<Dashboard />} />
+          <Route path="/dashboard/*" element={<DashboardLayout />} />
         </Route>
 
         {/* Redirección para rutas inexistentes */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

@@ -9,30 +9,22 @@ import {
   TableBody,
   Box
 } from '@mui/material';
-import axios from '../api/axios'; 
+import instance from '../api/axios'; 
 
 function Freezers() {
   const [freezers, setFreezers] = useState([]);
 
   useEffect(() => {
-    const fetchFreezers = async () => {
-      try {
-        const { data } = await axios.get('/freezers');
-        setFreezers(data);
-      } catch (error) {
-        console.error('Error al obtener los freezers:', error);
-
-        if (error.response?.status === 401) {
-          alert('Sesión expirada. Por favor, iniciá sesión de nuevo.');
-          window.location.href = '/login';
-        } else {
-          alert('Ocurrió un error al cargar los datos de los freezers.');
-        }
-      }
-    };
-
-    fetchFreezers();
-  }, []);
+  const fetchFreezers = async () => {
+    try {
+      const res = await instance.get('/freezers');
+      setFreezers(res.data.data || res.data); // según cómo envía tu backend
+    } catch (error) {
+      // maneja errores...
+    }
+  };
+  fetchFreezers();
+}, []);
 
   return (
     <Box sx={{ padding: 4 }}>
