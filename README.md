@@ -14,6 +14,7 @@
 
 ## 📦 Estructura del proyecto
 
+```bash
 logirefrigeracion/
 │
 ├── backend/ # Servidor Express (Node.js)
@@ -32,10 +33,7 @@ logirefrigeracion/
 │ │ └── styles/ # Archivos CSS
 │ └── ...
 └── README.md
-
-markdown
-Copiar
-Editar
+```
 
 ## 🧩 Funcionalidades
 
@@ -54,15 +52,16 @@ Editar
 - [x] Backend funcional con rutas protegidas
 - [x] Autenticación con JWT implementada
 - [x] Sistema de auditoría listo
-- [x] Validaciones de estados de freezers
-- [x] Frontend base con login funcional
+- [x] Validaciones de estados de cada entidad
+- [x] Login funcional
+- [ ] Frontend base
 - [ ] UI de dashboards en desarrollo
 - [ ] Integración completa frontend-backend
 
 ## 📸 Capturas
 
-_Agregá capturas cuando termines la UI para mostrar el sistema funcionando._
-
+![Vista previa de la app](https://i.ibb.co/bMFzw2wx/A6-A7-C528-48-FB-4-E3-E-9-A58-B7-BE91-E92638.png)
+![Vista previa de la app](https://i.ibb.co/gZ08C9RD/image.png)
 ## 🛠️ Instalación local
 
 1. Clonar el repositorio:
@@ -70,11 +69,10 @@ _Agregá capturas cuando termines la UI para mostrar el sistema funcionando._
 ```bash
 git clone https://github.com/tuusuario/logirefrigeracion.git
 cd logirefrigeracion
-Instalar dependencias:
+```
 
-bash
-Copiar
-Editar
+2. Instalar dependencias:
+```bash
 # Backend
 cd backend
 npm install
@@ -83,20 +81,17 @@ npm install
 cd ../frontend
 npm install
 Configurar archivos .env (tanto en frontend como backend)
+```
 
-Levantar el backend:
-
-bash
-Copiar
-Editar
+3. Levantar el backend:
+```bash
+npm start
+```
+4. Levantar el frontend:
+```bash
 npm run dev
-Levantar el frontend:
-
-bash
-Copiar
-Editar
-npm run dev
+```
 Asegurate de tener MySQL corriendo y la base de datos creada según el script logirefrigeracion.sql.
 
 👩‍💻 Autora
-Celina Fioretti – Proyecto académico para la carrera de Desarrollo de Software – Año 2025.
+Celina Fioretti – Proyecto académico para la carrera de Desarrollo de Software – Centro Regional Universitario IUA Universidad de la Defensa Nacional UNDEF Año 2025.
