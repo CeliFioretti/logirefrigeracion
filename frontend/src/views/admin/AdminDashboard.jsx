@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { Box, Toolbar, Paper, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
-import TopBarAdmin from '../../components/TopBarAdmin';
 
 
 export default function AdminDashboard() {
@@ -11,8 +10,7 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <TopBarAdmin title="Panel Administrador" />
+     <Box sx={{ display: 'flex' }}>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Toolbar />
         {/* Tarjetas resumen */}

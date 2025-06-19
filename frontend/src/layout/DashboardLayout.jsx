@@ -1,23 +1,29 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { Box, Toolbar } from '@mui/material';
 
 import SideNav from '../components/SideNav';
 import TopBarAdmin from '../components/TopBarAdmin';
 
-// estos dashboard contienen tambien el sidenav y el topbaradmin, hay que cambiar
 import AdminDashboard from '../views/admin/AdminDashboard';
 import OperatorDashboard from '../views/operador/OperadorDashboard';
 
+const drawerWidth = 240;
+
 function DashboardLayout() {
+  const [open, setOpen] = useState(true);
   const navigate = useNavigate();
   const rol = sessionStorage.getItem('rol');
+
+  const toggleDrawer = () => {
+    setOpen(prev => !prev);
+  };
 
   useEffect(() => {
     if (!rol) {
       navigate('/', { replace: true });
     }
-    // Setea título según rol
+
     if (rol === 'administrador') {
       document.title = 'Dashboard Admin - LogiRefrigeración';
     } else if (rol === 'operador') {
@@ -28,19 +34,25 @@ function DashboardLayout() {
   const renderContent = () => {
     if (rol === 'administrador') return <AdminDashboard />;
     if (rol === 'operador') return <OperatorDashboard />;
-    return (
-      <Box p={3}>
-        <Typography color="error">Rol no reconocido</Typography>
-      </Box>
-    );
+    return <p style={{ padding: 24 }}>Rol no reconocido</p>;
   };
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <SideNav />
-      <Box sx={{ flexGrow: 1 }}>
-        <TopBarAdmin />
-        <Box sx={{ p: 3 }}>{renderContent()}</Box>
+      <TopBarAdmin toggleDrawer={toggleDrawer} />
+      <SideNav open={open} />
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          padding: 3,
+          marginLeft: open ? `${drawerWidth}px` : 0,
+          transition: 'margin 0.3s',
+        }}
+      >
+        <Toolbar /> {/* espacio para que el topbar no tape */}
+        {renderContent()}
       </Box>
     </Box>
   );

@@ -19,7 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-export default function SideNav() {
+export default function SideNav({ open }) {
   const navigate = useNavigate();
 
   const [openMenus, setOpenMenus] = useState({
@@ -37,19 +37,28 @@ export default function SideNav() {
   };
 
   const iconColor = '#14274E';
-  const textColor = '#14274E'; 
+  const textColor = '#14274E';
 
   return (
-    <Drawer variant="permanent" sx={{
-      width: 240,
-      flexShrink: 0,
-      [`& .MuiDrawer-paper`]: {
-        width: 240,
-        boxSizing: 'border-box',
-        backgroundColor: 'rgba(57, 72, 103, 0.53)', // Tu color de fondo con opacidad
-        color: textColor
-      },
-    }}>
+    <Drawer
+      variant="permanent"
+      open={open}
+      sx={{
+        width: open ? 240 : 0,
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+        overflowX: 'hidden',
+        transition: 'width 0.3s',
+        '& .MuiDrawer-paper': {
+          width: open ? 240 : 0,
+          boxSizing: 'border-box',
+          backgroundColor: 'rgba(57, 72, 103, 0.53)',
+          color: textColor,
+          transition: 'width 0.3s',
+        }
+      }}
+    >
+
       <Toolbar />
       <List>
         {/* INICIO */}
