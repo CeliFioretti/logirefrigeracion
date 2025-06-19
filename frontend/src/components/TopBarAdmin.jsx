@@ -1,3 +1,6 @@
+import { useNavigate } from 'react-router-dom';
+
+// Estilos e íconos
 import {
   AppBar,
   Toolbar,
@@ -12,10 +15,22 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
-import { useNavigate } from 'react-router-dom';
 
-export default function TopBarAdmin({ nombre = "Adriana Rodríguez", rol = "Administrador", toggleDrawer }) {
+import { useContext } from 'react';
+import { UserContext } from '../context/UserContext'
+
+
+
+export default function TopBarAdmin({ toggleDrawer }) {
+  // Comprobar el UserContext
+  const userContextData = useContext(UserContext);
+  console.log('Contexto:', userContextData);
+
   const navigate = useNavigate();
+  const { usuario } = useContext(UserContext);
+  const nombre = usuario?.nombre || "Usuario";
+  const rol = usuario?.rol || "Rol";
+
 
   const handleLogout = () => {
     sessionStorage.removeItem('token');
@@ -64,7 +79,7 @@ export default function TopBarAdmin({ nombre = "Adriana Rodríguez", rol = "Admi
             <Typography variant="body1">{nombre}</Typography>
             <Typography variant="caption" sx={{ color: '#ccc' }}>{rol}</Typography>
           </Box>
-          <Avatar alt={nombre} src="/avatar-admin.png" />
+          <Avatar alt={nombre} />
         </Box>
       </Toolbar>
 

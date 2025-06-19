@@ -8,7 +8,6 @@ import TopBarAdmin from '../components/TopBarAdmin';
 import AdminDashboard from '../views/admin/AdminDashboard';
 import OperatorDashboard from '../views/operador/OperadorDashboard';
 
-const drawerWidth = 240;
 
 function DashboardLayout() {
   const [open, setOpen] = useState(true);
@@ -47,7 +46,7 @@ function DashboardLayout() {
         sx={{
           flexGrow: 1,
           padding: 3,
-          marginLeft: open ? `${drawerWidth}px` : 0,
+        
           transition: 'margin 0.3s',
         }}
       >

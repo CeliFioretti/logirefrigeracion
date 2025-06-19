@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { useContext } from 'react';
+import { UserContext } from '../../context/UserContext';
 
 // Iconos y Estilos
 import '../../styles/Login.css';
@@ -22,6 +24,10 @@ function Login() {
   const [nombre, setNombre] = useState('');
   const [password, setPassword] = useState('');
   const [isRedirecting, setIsRedirecting] = useState(true); // controla si se debería o no renderizar el formulario de login
+
+  const { login } = useContext(UserContext);
+
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -53,6 +59,8 @@ function Login() {
         nombre,
         password
       });
+
+      login(data);
 
       sessionStorage.setItem('token', data.token);
       sessionStorage.setItem('rol', data.rol);
