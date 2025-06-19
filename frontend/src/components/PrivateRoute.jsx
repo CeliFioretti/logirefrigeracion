@@ -1,13 +1,17 @@
 import { Navigate, Outlet } from 'react-router-dom';
+import { useContext } from 'react'; 
+import { UserContext } from '../context/UserContext';
 
 function PrivateRoute({ roles }) {
-  const token = sessionStorage.getItem('token');
-  const rol = sessionStorage.getItem('rol');
+  const { usuario } = useContext(UserContext);
 
-  if (!token || !roles.includes(rol)) {
+  // Verifica si hay un usuario y si su rol está incluido en los roles permitidos
+  if (!usuario || !roles.includes(usuario.rol)) {
+    // Si no hay usuario o el rol no es permitido, redirige al login
     return <Navigate to="/" replace />;
   }
 
+  // Si el usuario está autenticado y tiene el rol correcto, renderiza el contenido
   return <Outlet />;
 }
 

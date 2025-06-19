@@ -4,7 +4,7 @@ import App from './App.jsx'
 import { UserProvider } from './context/UserContext.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>ç
+  <StrictMode>
     <UserProvider>
     <App />
     </UserProvider>

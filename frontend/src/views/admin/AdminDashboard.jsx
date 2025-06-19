@@ -12,17 +12,13 @@ export default function AdminDashboard() {
   return (
      <Box sx={{ display: 'flex' }}>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <Toolbar />
-        {/* Tarjetas resumen */}
         <Grid container spacing={2}>
-          {/* Ejemplo tarjeta */}
-          <Grid size={{xs:12, sm:6, md:3}}>
+          <Grid item xs={12} sm={6} md={3}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="subtitle2">Freezers activos</Typography>
               <Typography variant="h4">123</Typography>
             </Paper>
           </Grid>
-          {/* Repetí para otras métricas */}
         </Grid>
 
         {/* Tabla “Últimos registros” */}

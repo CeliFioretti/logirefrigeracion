@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { UserContext } from '../context/UserContext'
 
 // Estilos e íconos
 import {
@@ -15,26 +17,16 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
-
-import { useContext } from 'react';
-import { UserContext } from '../context/UserContext'
-
-
+import { blue } from '@mui/material/colors';
 
 export default function TopBarAdmin({ toggleDrawer }) {
-  // Comprobar el UserContext
-  const userContextData = useContext(UserContext);
-  console.log('Contexto:', userContextData);
-
   const navigate = useNavigate();
-  const { usuario } = useContext(UserContext);
-  const nombre = usuario?.nombre || "Usuario";
-  const rol = usuario?.rol || "Rol";
-
+  const { usuario, logout } = useContext(UserContext);  
+  const nombreUsuario = usuario ? usuario.nombre : 'Invitado';
+  const rolUsuario = usuario ? usuario.rol : '';
 
   const handleLogout = () => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('rol');
+    logout()
     navigate('/', { replace: true });
   };
 
@@ -76,10 +68,11 @@ export default function TopBarAdmin({ toggleDrawer }) {
           </Tooltip>
 
           <Box sx={{ textAlign: 'right', mx: 2 }}>
-            <Typography variant="body1">{nombre}</Typography>
-            <Typography variant="caption" sx={{ color: '#ccc' }}>{rol}</Typography>
+            <Typography variant="body1">{nombreUsuario}</Typography>
+            <Typography variant="caption" sx={{ color: '#ccc' ,textTransform: 'capitalize'}}>{rolUsuario}</Typography>
           </Box>
-          <Avatar alt={nombre} />
+          <Avatar alt={nombreUsuario} sx={{ bgcolor: blue[500] }}>{nombreUsuario[0]}</Avatar>
+          
         </Box>
       </Toolbar>
 

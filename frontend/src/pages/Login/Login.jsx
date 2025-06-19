@@ -23,30 +23,33 @@ import logo from '../../assets/logo-negro-2.png';
 function Login() {
   const [nombre, setNombre] = useState('');
   const [password, setPassword] = useState('');
+
   const [isRedirecting, setIsRedirecting] = useState(true); // controla si se debería o no renderizar el formulario de login
 
-  const { login } = useContext(UserContext);
-
+  const { login: userContextLogin } = useContext(UserContext);
 
   const navigate = useNavigate();
-  const location = useLocation();
 
+  // Nombre de la página
   useEffect(() => {
     document.title = 'Login';
   }, []);
 
+
   useEffect(() => {
     const token = sessionStorage.getItem('token');
-    const rol = sessionStorage.getItem('rol');
+    const usuarioData = sessionStorage.getItem('usuario');
+    const rol = usuarioData ? JSON.parse(usuarioData).rol : null;  
 
     // Si el usuario ya tiene token y rol, no le permite volver al login si este lo escribé en el buscador.
     if (token && rol) {
       navigate('/dashboard', { replace: true });
+      setIsRedirecting(true);
     } else {
       setIsRedirecting(false);
     }
 
-  }, [navigate, location]);
+  }, [navigate]);
 
   if (isRedirecting) return null;
 
@@ -60,10 +63,11 @@ function Login() {
         password
       });
 
-      login(data);
-
-      sessionStorage.setItem('token', data.token);
-      sessionStorage.setItem('rol', data.rol);
+      userContextLogin({
+        token: data.token,
+        nombre: data.nombreUsuario,
+        rol: data.rol
+      })
 
       navigate('/dashboard', { replace: true });
     } catch (error) {
