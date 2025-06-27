@@ -17,3 +17,5 @@ dist/
 # Ignorar caché de la base de datos
 database.sqlite
 
+# Ignorar lista de pendientes
+pendientes.mkd
