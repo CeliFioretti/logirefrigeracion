@@ -11,17 +11,32 @@ import TopBarAdmin from '../components/TopBarAdmin';
 import AdminDashboard from '../views/admin/AdminDashboard';
 import OperatorDashboard from '../views/operador/OperadorDashboard';
 
+const drawerWidth = 240;
+
 
 function DashboardLayout() {
-  const [open, setOpen] = useState(true);
   const navigate = useNavigate();
-
   const { usuario } = useContext(UserContext);
   const rol = usuario ? usuario.rol : null; // Accede al rol a través del objeto usuario
 
-  const toggleDrawer = () => {
-    setOpen(prev => !prev);
-  };
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('md')); // Determina si la pantalla es lo suficientemente grande para el SideNav (desktop)
+
+  // Estado para el Sidenav en pantallas grandes (colapsable)
+  const [sideNavOpen, setSideNavOpen] = useState(false);
+
+  // Estado del Drawer superior en pantallas pequeñas
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Funcion para alternar el SideNav en pantallas grandes
+  const handleSideNavToggle = () => {
+    setSideNavOpen(!sideNavOpen);
+  }
+
+  // Funcion para alternar el Drawer en pantallas pequeñas
+  const handleMobileMenuToggle = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  }
 
   // Si no hay un usuario, el sistema redirige al login
   useEffect(() => {
@@ -41,7 +56,7 @@ function DashboardLayout() {
     }
   }, [usuario?.rol]);
 
-  
+
   const renderContent = () => {
     // Muestra un mensaje de carga o de rol no reconocido si usuario o rol no están definidos
     if (!usuario || !rol) {
@@ -60,16 +75,33 @@ function DashboardLayout() {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <TopBarAdmin toggleDrawer={toggleDrawer} />
-      <SideNav open={open} />
+      {/** El TopBarAdmin siempre visible */}
+      <TopBarAdmin
+        toggleSideNav={handleSideNavToggle} // Para el botón hamburguesa en tamaño grande
+        toggleMobileMenu={handleMobileMenuToggle} // Para el botón hamburguesa en tamaño pequeño
+        isLargeScreen={isLargeScreen} // Para que el TopBarAdmin sepa que boton hamburguesa mostrar y qué acción ejecutar de arriba
+        mobileMenuOpen={mobileMenuOpen} // Estado del Drawer móvil en TopBarAdmin
+        drawerWidth={drawerWidth} // Pasa el ancho para el Drawer, pero se usa de otra forma
+      />
 
+      {/** Solo se renderiza si está en pantallas grandes */}
+      {isLargeScreen && (
+        <SideNav
+          open={sideNavOpen} // Para controlar si el SideNav está abierto
+          toggleDrawer={handleSideNavToggle} // Para cerrar el Sidenav
+          drawerWidth={drawerWidth} // Para el ancho del Sidenav
+        />
+      )}
+
+      {/** Contenido principal */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           padding: 3,
-          marginLeft: open ? 0 : 0,
+          marginLeft: 0,
           transition: 'margin 0.3s',
+          width: '100%'
         }}
       >
         <Toolbar />

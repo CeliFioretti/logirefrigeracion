@@ -19,7 +19,7 @@ import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-export default function SideNav({ open }) {
+export default function SideNav({ open, toggleDrawer, drawerWidth }) {
   const navigate = useNavigate();
 
   const [openMenus, setOpenMenus] = useState({
@@ -38,23 +38,34 @@ export default function SideNav({ open }) {
 
   const iconColor = '#14274E';
   const textColor = '#14274E';
+  const solidSideNavBgColor = '#e1e7ee';
+
+  // Función para navegar y cerrar el SideNav 
+  const handleNavigation = (path) => {
+    navigate(path);
+    toggleDrawer(); // Cierra el SideNav al hacer click en un elemento
+  }
 
   return (
     <Drawer
-      variant="permanent"
+      variant="temporary"
+      anchor='left'
       open={open}
+      onClose={toggleDrawer}
+      ModalProps={{
+        keepMounted: true
+      }}
       sx={{
-        width: open ? 240 : 0,
+        width: drawerWidth,
         flexShrink: 0,
         whiteSpace: 'nowrap',
         overflowX: 'hidden',
         transition: 'width 0.3s',
         '& .MuiDrawer-paper': {
-          width: open ? 240 : 0,
+          width: drawerWidth,
           boxSizing: 'border-box',
-          backgroundColor: 'rgba(57, 72, 103, 0.53)',
+          backgroundColor: solidSideNavBgColor,
           color: textColor,
-          transition: 'width 0.3s',
         }
       }}
     >
@@ -62,7 +73,7 @@ export default function SideNav({ open }) {
       <Toolbar />
       <List>
         {/* INICIO */}
-        <ListItemButton onClick={() => navigate('/dashboard')}>
+        <ListItemButton onClick={() => handleNavigation('/dashboard')}>
           <ListItemIcon><AppsIcon sx={{ color: iconColor }} /></ListItemIcon>
           <ListItemText primary="Inicio" />
         </ListItemButton>
@@ -75,15 +86,15 @@ export default function SideNav({ open }) {
         </ListItemButton>
         <Collapse in={openMenus.freezers} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/freezers')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/freezers')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Listado" />
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/freezers/nuevo')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/freezers/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Nuevo freezer" />
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/freezers/buscar')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/freezers/buscar')}>
               <ListItemIcon><SearchIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Buscar freezer" />
             </ListItemButton>
@@ -98,15 +109,15 @@ export default function SideNav({ open }) {
         </ListItemButton>
         <Collapse in={openMenus.clientes} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/clientes')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/clientes')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Listar clientes" />
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/clientes/nuevo')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/clientes/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Nuevo cliente" />
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/clientes/buscar')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/clientes/buscar')}>
               <ListItemIcon><SearchIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Buscar cliente" />
             </ListItemButton>
@@ -121,11 +132,11 @@ export default function SideNav({ open }) {
         </ListItemButton>
         <Collapse in={openMenus.mantenimientos} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/mantenimientos')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/mantenimientos')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Historial" />
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/mantenimientos/nuevo')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/mantenimientos/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Registrar nuevo" />
             </ListItemButton>
@@ -140,11 +151,11 @@ export default function SideNav({ open }) {
         </ListItemButton>
         <Collapse in={openMenus.usuarios} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/usuarios')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/usuarios')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Gestión de usuarios" />
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/usuarios')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/usuarios')}>
               <ListItemIcon><PersonAddIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Crear usuario" />
             </ListItemButton>
@@ -159,11 +170,11 @@ export default function SideNav({ open }) {
         </ListItemButton>
         <Collapse in={openMenus.eventos} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/eventos')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/eventos')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Todos los eventos" />
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/eventos/nuevo')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/eventos/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Nuevo evento" />
             </ListItemButton>
@@ -178,11 +189,11 @@ export default function SideNav({ open }) {
         </ListItemButton>
         <Collapse in={openMenus.zonas} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/ubicaciones')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/ubicaciones')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Departamentos" />
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/ubicaciones/crear')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/ubicaciones/crear')}>
               <ListItemIcon><AddIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Nuevo Departamento" />
             </ListItemButton>
@@ -197,7 +208,7 @@ export default function SideNav({ open }) {
         </ListItemButton>
         <Collapse in={openMenus.auditoria} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/auditoria')}>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/auditoria')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Ver registros" />
             </ListItemButton>
