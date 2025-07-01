@@ -1,7 +1,7 @@
 // src/layout/DashboardLayout.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Toolbar } from '@mui/material';
+import { Box, Toolbar, useMediaQuery, useTheme } from '@mui/material';
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
 

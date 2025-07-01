@@ -116,18 +116,18 @@ export default function SideNav({ open }) {
         {/* MANTENIMIENTOS */}
         <ListItemButton onClick={() => handleToggle('mantenimientos')}>
           <ListItemIcon><AccessAlarmsIcon sx={{ color: iconColor }} /></ListItemIcon>
-          <ListItemText primary="Mantenimientos" />
+          <ListItemText primary="Mantenimiento" />
           {openMenus.mantenimientos ? <ExpandLess sx={{ color: iconColor }} /> : <ExpandMore sx={{ color: iconColor }} />}
         </ListItemButton>
         <Collapse in={openMenus.mantenimientos} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/mantenimientos')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
-              <ListItemText primary="Historial de Mantenimientos" />
+              <ListItemText primary="Historial" />
             </ListItemButton>
             <ListItemButton sx={{ pl: 4 }} onClick={() => navigate('/mantenimientos/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: iconColor }} /></ListItemIcon>
-              <ListItemText primary="Registrar nuevo mantenimiento" />
+              <ListItemText primary="Registrar nuevo" />
             </ListItemButton>
           </List>
         </Collapse>
