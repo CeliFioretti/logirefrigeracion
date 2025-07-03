@@ -10,9 +10,11 @@ const mostrar = async (req, res, next) => {
                 [mantenimientosResult],
                 [disponiblesResult],
                 [prestadosResult],
-                [entregasResult],
-                [retirosResult],
-                [ultimosFreezers]
+                [entregasMesResult],
+                [retirosMesResult],
+                [ultimosFreezersRows],
+                [entregasDiariasRows],
+                [retirosDiariosRows]
             ] = await Promise.all([
                 db.promise().query('SELECT COUNT(*) AS totalClientes FROM cliente'),
                 db.promise().query('SELECT COUNT(*) AS mantenimientosPendientes FROM asignacionmantenimiento'),
@@ -37,18 +39,61 @@ const mostrar = async (req, res, next) => {
           FROM freezer 
           ORDER BY fecha_creacion DESC 
           LIMIT 5
+        `),
+                db.promise().query(`
+            SELECT DATE_FORMAT(fecha, '%Y-%m-%d') AS dia, COUNT(*) AS total
+            FROM eventofreezer
+            WHERE tipo = 'entrega' AND fecha >= CURDATE() - INTERVAL 30 DAY
+            GROUP BY dia
+            ORDER BY dia ASC
+        `),
+                db.promise().query(`
+            SELECT DATE_FORMAT(fecha, '%Y-%m-%d') AS dia, COUNT(*) AS total
+            FROM eventofreezer
+            WHERE tipo = 'retiro' AND fecha >= CURDATE() - INTERVAL 30 DAY
+            GROUP BY dia
+            ORDER BY dia ASC
         `)
             ]);
+        
+            // Formateo de resultados diarios para el gráfico
+            const formatearDatosDiarios = (data) => {
+                const ultimos30Dias = [];
+                for (let i = 0; i < 30; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - (29 - i)) // empieza 29 días atrás, hasta hoy
+                    const diaFormato = d.toISOString().slice(0, 10);
+                    ultimos30Dias.push({
+                        dia: diaFormato,
+                        total: 0
+                    })
+                }
+
+                data.forEach(item => {
+                    const diaEncontrado = ultimos30Dias.find(d => d.dia === item.dia);
+                    if (diaEncontrado) {
+                        diaEncontrado.total = item.total;
+                    }
+                });
+                return ultimos30Dias;
+
+            }
+
+            const entregasDiarias = formatearDatosDiarios(entregasDiariasRows);
+            const retirosDiarios = formatearDatosDiarios(retirosDiariosRows);
 
             return res.status(200).json({
                 totalClientes: clientesResult[0].totalClientes,
                 mantenimientosPendientes: mantenimientosResult[0].mantenimientosPendientes,
                 freezersDisponibles: disponiblesResult[0].freezersDisponibles,
                 freezersPrestados: prestadosResult[0].freezersPrestados,
-                entregasDelMes: entregasResult[0].entregasDelMes,
-                retirosDelMes: retirosResult[0].retirosDelMes,
-                ultimosFreezers
+                entregasDelMes: entregasMesResult[0].entregasDelMes,
+                retirosDelMes: retirosMesResult[0].retirosDelMes,
+                ultimosFreezers: ultimosFreezersRows,
+                entregasDiarias,
+                retirosDiarios
             });
+
         }
 
         else if (usuario.rol === 'operador') {
@@ -67,6 +112,7 @@ const mostrar = async (req, res, next) => {
         }
 
     } catch (err) {
+        console.error('Error en el dashboard controller:', err)
         next(err);
     }
 };

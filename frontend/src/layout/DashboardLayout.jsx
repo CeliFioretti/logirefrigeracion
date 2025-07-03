@@ -1,15 +1,12 @@
 // src/layout/DashboardLayout.jsx
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { Box, Toolbar, useMediaQuery, useTheme } from '@mui/material';
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
 
 import SideNav from '../components/SideNav';
 import TopBarAdmin from '../components/TopBarAdmin';
-
-import AdminDashboard from '../views/admin/AdminDashboard';
-import OperatorDashboard from '../views/operador/OperadorDashboard';
 
 const drawerWidth = 240;
 
@@ -57,17 +54,6 @@ function DashboardLayout() {
   }, [usuario?.rol]);
 
 
-  const renderContent = () => {
-    // Muestra un mensaje de carga o de rol no reconocido si usuario o rol no están definidos
-    if (!usuario || !rol) {
-      return <p style={{ padding: 24 }}>Cargando o Rol no disponible...</p>;
-    }
-
-    if (rol === 'administrador') return <AdminDashboard />;
-    if (rol === 'operador') return <OperatorDashboard />;
-    return <p style={{ padding: 24 }}>Rol no reconocido</p>;
-  };
-
   // Si no hay usuario no se renderiza para evitar flashes
   if (!usuario) {
     return null;
@@ -105,7 +91,9 @@ function DashboardLayout() {
         }}
       >
         <Toolbar />
-        {renderContent()}
+        
+        <Outlet/>
+
       </Box>
     </Box>
   );

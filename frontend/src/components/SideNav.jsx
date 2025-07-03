@@ -73,7 +73,7 @@ export default function SideNav({ open, toggleDrawer, drawerWidth }) {
       <Toolbar />
       <List>
         {/* INICIO */}
-        <ListItemButton onClick={() => handleNavigation('/dashboard')}>
+        <ListItemButton onClick={() => handleNavigation('/admin-dashboard')}>
           <ListItemIcon><AppsIcon sx={{ color: iconColor }} /></ListItemIcon>
           <ListItemText primary="Inicio" />
         </ListItemButton>

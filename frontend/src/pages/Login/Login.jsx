@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useContext } from 'react';
 import { UserContext } from '../../context/UserContext';
@@ -24,8 +24,6 @@ function Login() {
   const [nombre, setNombre] = useState('');
   const [password, setPassword] = useState('');
 
-  const [isRedirecting, setIsRedirecting] = useState(true); // controla si se debería o no renderizar el formulario de login
-
   const { login: userContextLogin } = useContext(UserContext);
 
   const navigate = useNavigate();
@@ -39,19 +37,19 @@ function Login() {
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     const usuarioData = sessionStorage.getItem('usuario');
-    const rol = usuarioData ? JSON.parse(usuarioData).rol : null;  
+    const rol = usuarioData ? JSON.parse(usuarioData).rol : null;
 
-    // Si el usuario ya tiene token y rol, no le permite volver al login si este lo escribé en el buscador.
     if (token && rol) {
-      navigate('/dashboard', { replace: true });
-      setIsRedirecting(true);
-    } else {
-      setIsRedirecting(false);
+      if (rol === 'administrador') {
+        navigate('/admin-dashboard', { replace: true });
+      } else if (rol === 'operador') {
+        navigate('/operador-dashboard', { replace: true });
+      } else {
+        // En caso de un rol no reconocido o por defecto, redirigir al dashboard de admin o a una página genérica
+        navigate('/admin-dashboard', { replace: true });
+      }
     }
-
   }, [navigate]);
-
-  if (isRedirecting) return null;
 
 
   // Manejo del formulario Login
@@ -69,7 +67,15 @@ function Login() {
         rol: data.rol
       })
 
-      navigate('/dashboard', { replace: true });
+      // Redirigir según el rol después de un login exitoso
+      if (data.rol === 'administrador') {
+        navigate('/admin-dashboard', { replace: true });
+      } else if (data.rol === 'operador') {
+        navigate('/operador-dashboard', { replace: true });
+      } else {
+        // Rol no reconocido después del login, redirigir a un default
+        navigate('/admin-dashboard', { replace: true });
+      }
     } catch (error) {
       alert('Credenciales incorrectas');
     }

@@ -5,12 +5,22 @@ import {
   Grid,
   Paper,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableContainer
 } from '@mui/material';
 import {
   Storefront, People, EventAvailable, EventBusy, Inventory2, Settings, TrendingUp
 } from '@mui/icons-material';
 import axios from 'axios';
+
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 const fondoCard = '#FFFFFF';
 
@@ -44,6 +54,23 @@ export default function AdminDashboard() {
 
     fetchDashboard();
   }, []);
+
+  // Función para preparar los datos del gráfico
+  const getChartData = () => {
+    if (!dashboardData || !dashboardData.entregasDiarias || !dashboardData.retirosDiarios) {
+      return [];
+    }
+
+    // Asegurarse de que ambos arrays tienen la misma longitud y corresponden a los mismos días
+    const mergedData = dashboardData.entregasDiarias.map((entrega, index) => ({
+      dia: new Date(entrega.dia).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+      Entregas: entrega.total,
+      Retiros: dashboardData.retirosDiarios[index]?.total || 0,
+    }));
+    return mergedData;
+  };
+
+  const chartData = getChartData();
 
   return (
     <Container maxWidth={false} sx={{ mb: 4, maxWidth: '1200px' }}>
@@ -140,12 +167,104 @@ export default function AdminDashboard() {
         )}
       </Grid>
 
-      {/* Últimos registros */}
+      {/* Gráfico de Retiros y Entregas del mes */}
       <Box mt={5}>
-        <Typography variant="h6" gutterBottom>
-          Últimos Freezers
-        </Typography>
-        {/* Aquí tu tabla o componente */}
+        <Paper sx={{ p: 3, boxShadow: 3, borderRadius: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            Retiros y Entregas del mes
+          </Typography>
+          {dashboardData && chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart
+                data={chartData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="dia" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="Entregas" stroke="#8884d8" activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="Retiros" stroke="#82ca9d" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center" height={200}>
+              <Typography variant="body1" color="text.secondary">Cargando datos del gráfico...</Typography>
+            </Box>
+          )}
+        </Paper>
+      </Box>
+
+      {/* Últimos registros de Freezers */}
+      <Box mt={5}>
+        <Paper sx={{ p: 3, boxShadow: 3, borderRadius: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            Últimos Freezers Registrados
+          </Typography>
+          {dashboardData && dashboardData.ultimosFreezers && dashboardData.ultimosFreezers.length > 0 ? (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Modelo</TableCell>
+                    <TableCell>Número de Serie</TableCell>
+                    <TableCell>Capacidad</TableCell>
+                    <TableCell>Marca</TableCell>
+                    <TableCell>Estado</TableCell>
+                    <TableCell>Fecha de Registro</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {dashboardData.ultimosFreezers.map((freezer) => (
+                    <TableRow key={freezer.id}>
+                      <TableCell>{freezer.modelo}</TableCell>
+                      <TableCell>{freezer.numero_serie}</TableCell>
+                      <TableCell>{freezer.capacidad}</TableCell>
+                      <TableCell>{freezer.marca}</TableCell>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            display: 'inline-block',
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1,
+                            backgroundColor:
+                              freezer.estado === 'Disponible'
+                                ? '#e8f5e9'
+                                : freezer.estado === 'Asignado'
+                                  ? '#e3f2fd'
+                                  : '#ffebee',
+                            color:
+                              freezer.estado === 'Disponible'
+                                ? '#388e3c' 
+                                : freezer.estado === 'Asignado'
+                                  ? '#1e88e5'
+                                  : '#d32f2f',
+                            fontWeight: 'bold',
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          {freezer.estado}
+                        </Box>
+                      </TableCell>
+                      <TableCell>{new Date(freezer.fecha_creacion).toLocaleDateString()}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center" height={100}>
+              <Typography variant="body1" color="text.secondary">No hay freezers registrados recientemente.</Typography>
+            </Box>
+          )}
+        </Paper>
       </Box>
     </Container>
   );

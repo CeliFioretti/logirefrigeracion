@@ -1,0 +1,449 @@
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import {
+    Box,
+    Container,
+    Typography,
+    CircularProgress,
+    Alert,
+    TableContainer,
+    Table,
+    TableHead,
+    TableBody,
+    TableRow,
+    TableCell,
+    TablePagination,
+    Paper,
+    TextField,
+    Button,
+    Grid,
+    MenuItem,
+    IconButton
+} from '@mui/material';
+import { format } from 'date-fns';
+import axios from 'axios';
+import { UserContext } from '../../context/UserContext';
+import {
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    ContentCopy as ContentCopyIcon,
+    PersonAdd as PersonAddIcon,
+    Search as SearchIcon,
+    Clear as ClearIcon,
+    Add as AddIcon
+} from '@mui/icons-material'; // Iconos de Material-UI
+
+import { useNavigate } from 'react-router-dom';
+
+function FreezersPage() {
+    const { usuario } = useContext(UserContext);
+    const token = usuario?.token;
+    const navigate = useNavigate();
+
+    // Estados para los datos de la tabla
+    const [freezers, setFreezers] = useState([]);
+    const [totalRegistros, setTotalRegistros] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Estados para la paginación
+    const [page, setPage] = useState(0); // Página actual (0-indexed)
+    const [rowsPerPage, setRowsPerPage] = useState(10); // Elementos por página
+
+    // Estados para los filtros
+    const [filtroModelo, setFiltroModelo] = useState('');
+    const [filtroTipo, setFiltroTipo] = useState('');
+    const [filtroCapacidad, setFiltroCapacidad] = useState('');
+    const [filtroEstado, setFiltroEstado] = useState(''); // Puede ser un Select
+    const [filtroNSerie, setFiltroNSerie] = useState('');
+    const [filtroFechaCompra, setFiltroFechaCompra] = useState(''); // Asumiendo formato 'YYYY-MM-DD'
+
+    // Opciones para el filtro de estado (ejemplo, ajusta según tus valores reales)
+    const estadosFreezer = ['Disponible', 'Asignado', 'Mantenimiento', 'Baja', 'Dañado/Baja'];
+
+
+    // Función para obtener los datos de los freezers
+    const fetchFreezers = async (params = {}) => {
+        if (!token) {
+            setError('No autenticado. Por favor, inicie sesión.');
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const queryParams = new URLSearchParams({
+                modelo: filtroModelo,
+                tipo: filtroTipo,
+                capacidad: filtroCapacidad,
+                estado: filtroEstado,
+                nserie: filtroNSerie,
+                fechaCompra: filtroFechaCompra,
+                page,
+                pageSize: rowsPerPage,
+                ...params
+            })
+
+            const url = `http://localhost:3200/api/freezers?${queryParams}`;
+
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            setFreezers(response.data.data);
+            setTotalRegistros(response.data.total);
+        } catch (err) {
+            console.error('Error al obtener freezers:', err);
+            setError('Error al cargar los freezers. Inténtelo de nuevo.');
+
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        document.title = 'Listado de Freezers - Admin';
+        fetchFreezers();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Manejadores de paginación
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+        fetchFreezers({ page: newPage })
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        const newSize = parseInt(event.target.value, 10);
+        setRowsPerPage(newSize);
+        setPage(0); // Volver a la primera página cuando cambian los elementos por página
+        fetchFreezers({ page: 0, pageSize: newSize })
+    };
+
+    // Manejadores de filtros
+    const handleApplyFilters = () => {
+        setPage(0); // Resetear a la primera página al aplicar filtros
+        fetchFreezers({ page: 0 })
+    };
+
+    const handleClearFilters = () => {
+        setFiltroModelo('');
+        setFiltroTipo('');
+        setFiltroCapacidad('');
+        setFiltroEstado('');
+        setFiltroNSerie('');
+        setFiltroFechaCompra('');
+        setPage(0); // Resetear a la primera página
+        fetchFreezers({ page: 0 })
+
+
+    };
+
+    // Funciones de Acciones en la tabla
+    const handleCopyData = (freezer) => {
+        const dataToCopy = `N° Serie: ${freezer.numero_serie}, Modelo: ${freezer.modelo}, Tipo: ${freezer.tipo}, Capacidad: ${freezer.capacidad}, Estado: ${freezer.estado}`;
+        navigator.clipboard.writeText(dataToCopy)
+            .then(() => alert('Datos del freezer copiados al portapapeles'))
+            .catch(err => console.error('Error al copiar:', err));
+    };
+
+    const handleEditFreezer = (id) => {
+        navigate(`/admin/freezers/editar/${id}`);
+    };
+
+    const handleDeleteFreezer = async (id) => {
+        if (!window.confirm(`¿Está seguro que desea eliminar el freezer con ID: ${id}?`)) {
+            return;
+        }
+        setLoading(true);
+        try {
+            const url = `${process.env.REACT_APP_API_BASE_URL}/freezer/${id}`;
+            await axios.delete(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            alert('Freezer eliminado correctamente.');
+            fetchFreezers(); // Refrescar la lista
+        } catch (err) {
+            console.error('Error al eliminar freezer:', err);
+            setError('Error al eliminar el freezer.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAssignClient = (id) => {
+        navigate(`/admin/freezers/asignar/${id}`);
+    };
+
+    // Funciones para los botones grandes
+    const handleRegisterNewFreezer = () => {
+        navigate('/admin/freezers/nuevo');
+    };
+
+    const handleViewEventsHistory = () => {
+        navigate('/admin/eventos');
+    };
+
+    const handleViewStats = () => {
+        navigate('/admin/estadisticas-freezers');
+    };
+
+
+    if (loading && freezers.length === 0) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    return (
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+                LISTA DE FREEZERS
+            </Typography>
+
+            {/* --- Sección de Botones Grandes --- */}
+            <Grid container spacing={2} sx={{ mb: 4 }}>
+                <Grid item xs={12} sm={4}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography variant="h6" gutterBottom>Registrar Freezer</Typography>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={handleRegisterNewFreezer}
+                        >
+                            Nuevo
+                        </Button>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography variant="h6" gutterBottom>Historial de eventos</Typography>
+                        <Button
+                            variant="contained"
+                            onClick={handleViewEventsHistory}
+                        >
+                            Ver actividad
+                        </Button>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography variant="h6" gutterBottom>Entregas vs Retiros</Typography>
+                        <Button
+                            variant="contained"
+                            onClick={handleViewStats}
+                        >
+                            Ver estadísticas
+                        </Button>
+                    </Paper>
+                </Grid>
+            </Grid>
+
+            {/* --- Sección de Filtros --- */}
+            <Paper sx={{ p: 3, mb: 4 }}>
+                <Typography variant="h6" gutterBottom>Filtros</Typography>
+                <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={6} md={3}>
+                        <TextField
+                            label="Modelo"
+                            variant="outlined"
+                            fullWidth
+                            value={filtroModelo}
+                            onChange={(e) => setFiltroModelo(e.target.value)}
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <TextField
+                            label="Tipo"
+                            variant="outlined"
+                            fullWidth
+                            value={filtroTipo}
+                            onChange={(e) => setFiltroTipo(e.target.value)}
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <TextField
+                            label="N° de Serie"
+                            variant="outlined"
+                            fullWidth
+                            value={filtroNSerie}
+                            onChange={(e) => setFiltroNSerie(e.target.value)}
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <TextField
+                            label="Capacidad"
+                            variant="outlined"
+                            fullWidth
+                            value={filtroCapacidad}
+                            onChange={(e) => setFiltroCapacidad(e.target.value)}
+                            type="number"
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <TextField
+                            select
+                            label="Estado"
+                            variant="outlined"
+                            fullWidth
+                            value={filtroEstado}
+                            onChange={(e) => setFiltroEstado(e.target.value)}
+                            size="small"
+                        >
+                            <MenuItem value="">Todos</MenuItem>
+                            {estadosFreezer.map((estado) => (
+                                <MenuItem key={estado} value={estado}>
+                                    {estado}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <TextField
+                            label="Fecha Compra"
+                            type="date"
+                            variant="outlined"
+                            fullWidth
+                            value={filtroFechaCompra}
+                            onChange={(e) => setFiltroFechaCompra(e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            size="small"
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Button
+                            variant="contained"
+                            startIcon={<SearchIcon />}
+                            onClick={handleApplyFilters}
+                            sx={{ mr: 1 }}
+                        >
+                            Aplicar Filtros
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            startIcon={<ClearIcon />}
+                            onClick={handleClearFilters}
+                        >
+                            Limpiar Filtros
+                        </Button>
+                    </Grid>
+                </Grid>
+            </Paper>
+
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+            {loading && freezers.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                    <CircularProgress />
+                </Box>
+            ) : (
+                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                    <TableContainer sx={{ maxHeight: 600 }}>
+                        <Table stickyHeader aria-label="tabla de freezers">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Fecha Compra</TableCell>
+                                    <TableCell>Modelo</TableCell>
+                                    <TableCell>N° de Serie</TableCell>
+                                    <TableCell>Tipo</TableCell>
+                                    <TableCell>Capacidad</TableCell>
+                                    <TableCell>Marca</TableCell>
+                                    <TableCell>Estado</TableCell>
+                                    <TableCell align="right">Acción</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {freezers.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={8} align="center">
+                                            No se encontraron freezers con los filtros aplicados.
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    freezers.map((freezer) => (
+                                        <TableRow hover key={freezer.id}>
+                                            <TableCell>{freezer.fecha_creacion ? format(new Date(freezer.fecha_creacion), 'dd-MM-yyyy') : 'N/A'}</TableCell>
+                                            <TableCell>{freezer.modelo}</TableCell>
+                                            <TableCell>
+                                                {/* Este debería ser un link si hay una ruta para detalle por N° de serie */}
+                                                {freezer.numero_serie}
+                                            </TableCell>
+                                            <TableCell>{freezer.tipo}</TableCell>
+                                            <TableCell>{freezer.capacidad}</TableCell>
+                                            <TableCell>{freezer.marca || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                {/* Aquí puedes añadir lógica para cambiar el color del estado */}
+                                                {freezer.estado}
+                                            </TableCell>
+                                            {/* <TableCell>{freezer.zona || 'N/A'}</TableCell> */}
+                                            <TableCell align="right">
+                                                <IconButton aria-label="copiar" onClick={() => handleCopyData(freezer)}>
+                                                    <ContentCopyIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton aria-label="editar" onClick={() => handleEditFreezer(freezer.id)}>
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton aria-label="eliminar" onClick={() => handleDeleteFreezer(freezer.id)}>
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton aria-label="asignar cliente" onClick={() => handleAssignClient(freezer.id)}>
+                                                    <PersonAddIcon fontSize="small" />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                    <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        component="div"
+                        count={totalRegistros}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        labelRowsPerPage="Filas por página:"
+                        labelDisplayedRows={({ from, to, count }) =>
+                            `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+                        }
+                    />
+                </Paper>
+            )}
+
+            {/* --- Indicadores Inferiores --- */}
+            <Grid container spacing={2} sx={{ mt: 4 }}>
+                <Grid item xs={12} sm={6}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography variant="h6" gutterBottom>Freezers activos</Typography>
+                        {/* Aquí deberías tener un estado o lógica para obtener este número */}
+                        <Typography variant="h3">4</Typography> {/* Valor hardcodeado por ahora */}
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <Typography variant="h6" gutterBottom>Mantenimientos pendientes</Typography>
+                        {/* Aquí deberías tener un estado o lógica para obtener este número */}
+                        <Typography variant="h3">1</Typography> {/* Valor hardcodeado por ahora */}
+                    </Paper>
+                </Grid>
+            </Grid>
+
+        </Container>
+    );
+}
+
+export default FreezersPage;
+

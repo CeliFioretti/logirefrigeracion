@@ -4,52 +4,77 @@ const notificacionController = require('./notificaciones.controller.js');
 
 // Obtener registro completo de freezers
 const listar = async (req, res, next) => {
-    const { modelo, tipo, fechaCompra, capacidad, estado, nserie } = req.query;
+    const { modelo, tipo, fechaCompra, capacidad, estado, nserie, page, pageSize } = req.query;
 
     try {
         let query = 'SELECT * FROM freezer';
+        let countQuery = 'SELECT COUNT(*) as total FROM freezer';
+
         let condiciones = [];
         let params = [];
+        let countParams = [];
 
         if (modelo) {
             condiciones.push('modelo LIKE ?');
             params.push(`%${modelo}%`);
+            countParams.push(`%${modelo}%`);
         }
         if (tipo) {
             condiciones.push('tipo LIKE ?');
             params.push(`%${tipo}%`);
+            countParams.push(`%${tipo}%`);
         }
         if (fechaCompra) {
-            condiciones.push('fecha_compra LIKE ?');
+            condiciones.push('fecha_creacion LIKE ?');
             params.push(`%${fechaCompra}%`);
+            countParams.push(fechaCompra);
         }
         if (capacidad) {
             condiciones.push('capacidad LIKE ?');
             params.push(`%${capacidad}%`);
+            countParams.push(capacidad);
         }
         if (estado) {
             condiciones.push('estado LIKE ?');
             params.push(`%${estado}%`);
+            countParams.push(`%${estado}%`);
         }
         if (nserie) {
             condiciones.push('numero_serie LIKE ?');
             params.push(`%${nserie}%`);
+            countParams.push(`%${nserie}%`);
         }
 
         if (condiciones.length > 0) {
+            const whereClause = ' WHERE ' + condiciones.join(' AND ');
             query += ' WHERE ' + condiciones.join(' AND ');
+            countQuery += whereClause; 
         }
 
-        const [resultado] = await db.promise().query(query, params);
+        const pageNum = parseInt(page) || 0; 
+        const pageSizeNum = parseInt(pageSize) || 10; 
+        const offset = pageNum * pageSizeNum;
 
-        if (resultado.length === 0) {
+        query += ` LIMIT ? OFFSET ?`;
+        params.push(pageSizeNum, offset);
+
+
+
+        const [freezers] = await db.promise().query(query, params);
+        const [totalResult] = await db.promise().query(countQuery, countParams);
+        const totalRegistros = totalResult[0].total; // El total de registros que cumplen los filtros
+
+
+        if (freezers.length === 0) {
             res.status(200).json({
                 message: 'No hay registros de usuario actualmente',
                 data: []
             })
         } else {
             res.status(200).json({
-                data: resultado
+                data: freezers,
+                total: totalRegistros,
+                message: freezers.length === 0 ? 'No se encontraron freezers con los criterios especificados.' : undefined
             })
         }
 
