@@ -24,106 +24,113 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import axios from 'axios';
-import { UserContext } from '../../context/UserContext';  
+import { UserContext } from '../../context/UserContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function AuditoriaPage() {
-  // Contexto
   const { usuario } = useContext(UserContext);
-  const token = usuario?.token; 
-  
-  // Variables de estado
+  const token = usuario?.token;
+
   const [registrosAuditoria, setRegistrosAuditoria] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados para los filtros simplificados
+  // Estados para los filtros (actualizan al escribir, pero no disparan la API)
   const [filtroUsuarioId, setFiltroUsuarioId] = useState('');
   const [filtroUsuarioNombre, setFiltroUsuarioNombre] = useState('');
   const [filtroAccionContenido, setFiltroAccionContenido] = useState('');
   const [filtroFechaDesde, setFiltroFechaDesde] = useState(null);
   const [filtroFechaHasta, setFiltroFechaHasta] = useState(null);
 
-  // Estados para la paginación
-  const [page, setPage] = useState(0); 
-  const [rowsPerPage, setRowsPerPage] = useState(10); // Filas por página deseadas
-  const [totalRegistros, setTotalRegistros] = useState(0); // Total de registros en el Back
+  // Estados para la paginación (disparan la API)
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalRegistros, setTotalRegistros] = useState(0);
 
-  // Función para construir los parámetros de la URL para la API
-  const buildQueryParams = useCallback(() => {
-    const params = new URLSearchParams();
-    if (filtroUsuarioId) params.append('usuarioId', filtroUsuarioId);
-    if (filtroUsuarioNombre) params.append('usuarioNombre', filtroUsuarioNombre);
-    if (filtroAccionContenido) params.append('accion', filtroAccionContenido); 
-    if (filtroFechaDesde) params.append('fechaDesde', format(filtroFechaDesde, 'yyyy-MM-dd'));
-    if (filtroFechaHasta) params.append('fechaHasta', format(filtroFechaHasta, 'yyyy-MM-dd'));
+  // Estado para disparar la búsqueda de filtros y la carga inicial
+  const [triggerSearch, setTriggerSearch] = useState(0);
 
-    // Parámetros para la paginación
-    params.append('page', page); // La página que queremos
-    params.append('pageSize', rowsPerPage); // Cuantos elementos por página queremos 
+  const fetchAuditoria = useCallback(async (searchParams) => {
+    if (!token) {
+      setError('No hay token de autenticación. Por favor, inicia sesión.');
+      setLoading(false);
+      return;
+    }
 
-
-    return params.toString();
-  }, [
-    filtroUsuarioId,
-    filtroUsuarioNombre,
-    filtroAccionContenido,
-    filtroFechaDesde,
-    filtroFechaHasta,
-    page,
-    rowsPerPage
-  ]);
-
-  const fetchAuditoria = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
 
-      if (!token) {
-        setError('No hay token de autenticación. Por favor, inicia sesión.');
-        setLoading(false);
-        return;
+    try {
+      const queryParams = new URLSearchParams();
+
+      // Añadir filtros al queryParams
+      if (searchParams.usuarioId) queryParams.append('usuarioId', searchParams.usuarioId);
+      if (searchParams.usuarioNombre) queryParams.append('usuarioNombre', searchParams.usuarioNombre);
+      if (searchParams.accion) queryParams.append('accion', searchParams.accion);
+      
+      // Formatear fechas si existen
+      if (searchParams.fechaDesde) {
+        queryParams.append('fechaDesde', format(searchParams.fechaDesde, 'yyyy-MM-dd'));
+      }
+      if (searchParams.fechaHasta) {
+        queryParams.append('fechaHasta', format(searchParams.fechaHasta, 'yyyy-MM-dd'));
       }
 
-      const queryParams = buildQueryParams();
-      const url = `http://localhost:3200/api/auditoria${queryParams ? `?${queryParams}` : ''}`;
+      // Añadir paginación al queryParams
+      queryParams.append('page', searchParams.page);
+      queryParams.append('pageSize', searchParams.pageSize);
+
+      const url = `http://localhost:3200/api/auditoria?${queryParams.toString()}`;
 
       const response = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      
-      setRegistrosAuditoria(response.data.data); // registros de la página actual
-      setTotalRegistros(response.data.total) // total de registros que cumplen con los filtros
 
-      setLoading(false);
+      setRegistrosAuditoria(response.data.data);
+      setTotalRegistros(response.data.total);
+
     } catch (err) {
       console.error('Error al obtener registros de auditoría:', err);
       setError('Error al cargar los registros de auditoría. Inténtalo de nuevo más tarde.');
+      setRegistrosAuditoria([]); // Limpiar la tabla en caso de error
+      setTotalRegistros(0);
+    } finally {
       setLoading(false);
     }
-  }, [buildQueryParams]); // Este fetch se ejecutará cada vez que buildQueryParams cambie y este cambia si page o rowsPerPage cambia tambien 
+  }, [token]);
 
   useEffect(() => {
     document.title = 'Auditoría - Admin';
-    fetchAuditoria();
-  }, [fetchAuditoria]);
 
-  // Manejadores de eventos para la paginación de Material-UI
+    const currentSearchParams = {
+      usuarioId: filtroUsuarioId,
+      usuarioNombre: filtroUsuarioNombre,
+      accion: filtroAccionContenido,
+      fechaDesde: filtroFechaDesde,
+      fechaHasta: filtroFechaHasta,
+      page: page,
+      pageSize: rowsPerPage,
+    };
+    fetchAuditoria(currentSearchParams);
+  }, [fetchAuditoria, page, rowsPerPage, triggerSearch]); // Dependencias que disparan la búsqueda
+
+  // Manejadores de eventos para la paginación
   const handleChangePage = (event, newPage) => {
-    setPage(newPage); // Actualiza el estado de la página. Esto activará fetchAuditoria por la dependencia.
+    setPage(newPage);
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10)); // Actualiza el estado de filas por página
-    setPage(0); // Al cambiar la cantidad de filas, siempre volvemos a la primera página
+    const newSize = parseInt(event.target.value, 10);
+    setRowsPerPage(newSize);
+    setPage(0); // Volver a la primera página.
   };
 
   const handleApplyFilters = () => {
-    setPage(0); // Cuando se apliquen filtros, siempre volvemos a la primera página de los resultados filtrados.
-    fetchAuditoria();
+    setPage(0); // Resetear a la primera página al aplicar filtros
+    setTriggerSearch(prev => prev + 1); // Incrementa el contador para forzar el useEffect
   };
 
   const handleClearFilters = () => {
@@ -132,9 +139,9 @@ export default function AuditoriaPage() {
     setFiltroAccionContenido('');
     setFiltroFechaDesde(null);
     setFiltroFechaHasta(null);
-    setPage(0); // Resetreamos la página al limpiar filtros
-    setRowsPerPage(10) // Resetea las filas por página a su valor por defecto
-    // fetchAuditoria se ejecutará automáticamente debido al cambio de estado en los filtros
+    setPage(0);
+    setRowsPerPage(10); // Restablece filas por página al limpiar
+    setTriggerSearch(prev => prev + 1); // Incrementa el contador para forzar el useEffect
   };
 
   return (
@@ -220,22 +227,22 @@ export default function AuditoriaPage() {
             {/* Botones de acción */}
             <Grid item xs={12} sm={6} md={2}>
               <Button
-                            variant="contained"
-                            startIcon={<SearchIcon />}
-                            onClick={handleApplyFilters}
-                            sx={{ mr: 1 }}
-                        >
-                            Aplicar Filtros
-                        </Button>
+                variant="contained"
+                startIcon={<SearchIcon />}
+                onClick={handleApplyFilters}
+                sx={{ mr: 1 }}
+              >
+                Aplicar Filtros
+              </Button>
             </Grid>
             <Grid item xs={12} sm={6} md={2}>
               <Button
-                            variant="outlined"
-                            startIcon={<ClearIcon />}
-                            onClick={handleClearFilters}
-                        >
-                            Limpiar Filtros
-                        </Button>
+                variant="outlined"
+                startIcon={<ClearIcon />}
+                onClick={handleClearFilters}
+              >
+                Limpiar Filtros
+              </Button>
             </Grid>
           </Grid>
         </Paper>
@@ -290,16 +297,16 @@ export default function AuditoriaPage() {
             </TableContainer>
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, 50]}
-              component="div" 
-              count={totalRegistros} // ¡Este es el total de registros que se obtienen del back
-              rowsPerPage={rowsPerPage} // La cantidad de filas que se muestran actualmente por página
-              page={page} 
-              onPageChange={handleChangePage} 
-              onRowsPerPageChange={handleChangeRowsPerPage} 
-              labelRowsPerPage="Filas por página:" 
+              component="div"
+              count={totalRegistros}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Filas por página:"
               labelDisplayedRows={({ from, to, count }) =>
                 `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-              } 
+              }
             />
           </Paper>
         )}

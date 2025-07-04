@@ -45,24 +45,26 @@ function FreezersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Estados para la paginación
-    const [page, setPage] = useState(0); // Página actual (0-indexed)
-    const [rowsPerPage, setRowsPerPage] = useState(10); // Elementos por página
-
     // Estados para los filtros
     const [filtroModelo, setFiltroModelo] = useState('');
     const [filtroTipo, setFiltroTipo] = useState('');
     const [filtroCapacidad, setFiltroCapacidad] = useState('');
-    const [filtroEstado, setFiltroEstado] = useState(''); // Puede ser un Select
+    const [filtroEstado, setFiltroEstado] = useState('');
     const [filtroNSerie, setFiltroNSerie] = useState('');
-    const [filtroFechaCompra, setFiltroFechaCompra] = useState(''); // Asumiendo formato 'YYYY-MM-DD'
+    const [filtroFechaCompra, setFiltroFechaCompra] = useState('');
+
+    // Estados para la paginación
+    const [page, setPage] = useState(0); // Página actual (0-indexed)
+    const [rowsPerPage, setRowsPerPage] = useState(10); // Elementos por página
 
     // Opciones para el filtro de estado (ejemplo, ajusta según tus valores reales)
     const estadosFreezer = ['Disponible', 'Asignado', 'Mantenimiento', 'Baja', 'Dañado/Baja'];
 
+    // Estado para disparar la búsqueda de filtros y la carga inicial
+    const [triggerSearch, setTriggerSearch] = useState(0);
 
     // Función para obtener los datos de los freezers
-    const fetchFreezers = async (params = {}) => {
+    const fetchFreezers = useCallback(async (searchParams) => {
         if (!token) {
             setError('No autenticado. Por favor, inicie sesión.');
             setLoading(false);
@@ -73,19 +75,20 @@ function FreezersPage() {
         setError(null);
 
         try {
-            const queryParams = new URLSearchParams({
-                modelo: filtroModelo,
-                tipo: filtroTipo,
-                capacidad: filtroCapacidad,
-                estado: filtroEstado,
-                nserie: filtroNSerie,
-                fechaCompra: filtroFechaCompra,
-                page,
-                pageSize: rowsPerPage,
-                ...params
-            })
+            const queryParams = new URLSearchParams();
 
-            const url = `http://localhost:3200/api/freezers?${queryParams}`;
+            if (searchParams.modelo) queryParams.append('modelo', searchParams.modelo);
+            if (searchParams.tipo) queryParams.append('tipo', searchParams.tipo);
+            if (searchParams.capacidad) queryParams.append('capacidad', searchParams.capacidad);
+            if (searchParams.estado) queryParams.append('estado', searchParams.estado);
+            if (searchParams.nserie) queryParams.append('nserie', searchParams.nserie);
+
+            if (searchParams.fechaCompra) queryParams.append('fechaCompra', format(searchParams.fechaCompra, 'yyyy-MM-dd'));
+
+            queryParams.append('page', searchParams.page);
+            queryParams.append('pageSize', searchParams.pageSize);
+
+            const url = `http://localhost:3200/api/freezers?${queryParams.toString()}`;
 
             const response = await axios.get(url, {
                 headers: {
@@ -102,18 +105,28 @@ function FreezersPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [token]);
 
     useEffect(() => {
         document.title = 'Listado de Freezers - Admin';
-        fetchFreezers();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+
+        const currentSearchParams = {
+            modelo: filtroModelo,
+            tipo: filtroTipo,
+            capacidad: filtroCapacidad,
+            estado: filtroEstado,
+            nserie: filtroNSerie,
+            fechaCompra: filtroFechaCompra,
+            page: page,
+            pageSize: rowsPerPage,
+        };
+
+        fetchFreezers(currentSearchParams);
+    }, [fetchFreezers, page, rowsPerPage, triggerSearch]);
 
     // Manejadores de paginación
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
-        fetchFreezers({ page: newPage })
     };
 
     const handleChangeRowsPerPage = (event) => {
@@ -126,7 +139,7 @@ function FreezersPage() {
     // Manejadores de filtros
     const handleApplyFilters = () => {
         setPage(0); // Resetear a la primera página al aplicar filtros
-        fetchFreezers({ page: 0 })
+        setTriggerSearch(prev => prev + 1); 
     };
 
     const handleClearFilters = () => {
@@ -138,8 +151,7 @@ function FreezersPage() {
         setFiltroFechaCompra('');
         setPage(0); // Resetear a la primera página
         fetchFreezers({ page: 0 })
-
-
+        setTriggerSearch(prev => prev + 1); 
     };
 
     // Funciones de Acciones en la tabla
