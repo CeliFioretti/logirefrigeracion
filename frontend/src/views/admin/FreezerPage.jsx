@@ -17,7 +17,8 @@ import {
     Button,
     Grid,
     MenuItem,
-    IconButton
+    IconButton,
+    Chip
 } from '@mui/material';
 import { format } from 'date-fns';
 import axios from 'axios';
@@ -365,14 +366,14 @@ function FreezersPage() {
                         <Table stickyHeader aria-label="tabla de freezers">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>Fecha Compra</TableCell>
-                                    <TableCell>Modelo</TableCell>
-                                    <TableCell>N° de Serie</TableCell>
-                                    <TableCell>Tipo</TableCell>
-                                    <TableCell>Capacidad</TableCell>
-                                    <TableCell>Marca</TableCell>
-                                    <TableCell>Estado</TableCell>
-                                    <TableCell align="right">Acción</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Fecha Compra</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Modelo</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>N° de Serie</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Capacidad</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Marca</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
+                                    <TableCell sx={{ fontWeight: 'bold' }} align="right">Acción</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -388,17 +389,32 @@ function FreezersPage() {
                                             <TableCell>{freezer.fecha_creacion ? format(new Date(freezer.fecha_creacion), 'dd-MM-yyyy') : 'N/A'}</TableCell>
                                             <TableCell>{freezer.modelo}</TableCell>
                                             <TableCell>
-                                                {/* Este debería ser un link si hay una ruta para detalle por N° de serie */}
                                                 {freezer.numero_serie}
                                             </TableCell>
                                             <TableCell>{freezer.tipo}</TableCell>
                                             <TableCell>{freezer.capacidad}</TableCell>
                                             <TableCell>{freezer.marca || 'N/A'}</TableCell>
-                                            <TableCell>
-                                                {/* Aquí puedes añadir lógica para cambiar el color del estado */}
-                                                {freezer.estado}
+                                            <TableCell >
+                                                <Chip
+                                                    label={freezer.estado}
+                                                    sx={{
+                                                        backgroundColor:
+                                                            freezer.estado === 'Disponible'
+                                                                ? '#e8f5e9' // Verde claro
+                                                                : freezer.estado === 'Asignado'
+                                                                    ? '#e3f2fd' // Azul claro
+                                                                    : '#ffebee', // Rojo claro
+                                                        color:
+                                                            freezer.estado === 'Disponible'
+                                                                ? '#388e3c' // Verde oscuro
+                                                                : freezer.estado === 'Asignado'
+                                                                    ? '#1e88e5' // Azul oscuro
+                                                                    : '#d32f2f', // Rojo oscuro
+                                                        fontWeight: 'bold',
+                                                        fontSize: '0.75rem',
+                                                    }}
+                                                />
                                             </TableCell>
-                                            {/* <TableCell>{freezer.zona || 'N/A'}</TableCell> */}
                                             <TableCell align="right">
                                                 <IconButton aria-label="copiar" onClick={() => handleCopyData(freezer)}>
                                                     <ContentCopyIcon fontSize="small" />
@@ -407,7 +423,7 @@ function FreezersPage() {
                                                     <EditIcon fontSize="small" />
                                                 </IconButton>
                                                 <IconButton aria-label="eliminar" onClick={() => handleDeleteFreezer(freezer.id)}>
-                                                    <DeleteIcon fontSize="small" />
+                                                    <DeleteIcon sx={{ color: '#ff443b'}} fontSize="small" />
                                                 </IconButton>
                                                 <IconButton aria-label="asignar cliente" onClick={() => handleAssignClient(freezer.id)}>
                                                     <PersonAddIcon fontSize="small" />
@@ -440,14 +456,14 @@ function FreezersPage() {
                 <Grid item xs={12} sm={6}>
                     <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography variant="h6" gutterBottom>Freezers activos</Typography>
-                        {/* Aquí deberías tener un estado o lógica para obtener este número */}
+                        {/* Lógica para obtener este número */}
                         <Typography variant="h3">4</Typography> {/* Valor hardcodeado por ahora */}
                     </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6}>
                     <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                         <Typography variant="h6" gutterBottom>Mantenimientos pendientes</Typography>
-                        {/* Aquí deberías tener un estado o lógica para obtener este número */}
+                        {/* Lógica para obtener este número */}
                         <Typography variant="h3">1</Typography> {/* Valor hardcodeado por ahora */}
                     </Paper>
                 </Grid>

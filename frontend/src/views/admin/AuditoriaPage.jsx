@@ -58,6 +58,7 @@ export default function AuditoriaPage() {
       return;
     }
 
+    // Antes de iniciar la petición, activa el estado de carga para mostrar el spinner y borrar cualquier error anterior
     setLoading(true);
     setError(null);
 
@@ -114,6 +115,7 @@ export default function AuditoriaPage() {
       page: page,
       pageSize: rowsPerPage,
     };
+    
     fetchAuditoria(currentSearchParams);
   }, [fetchAuditoria, page, rowsPerPage, triggerSearch]); // Dependencias que disparan la búsqueda
 
@@ -196,7 +198,7 @@ export default function AuditoriaPage() {
                 onChange={(e) => setFiltroUsuarioNombre(e.target.value)}
               />
             </Grid>
-            {/* Filtro por Contenido de Acción (ahora un TextField simple para buscar texto) */}
+            {/* Filtro por Contenido de Acción */}
             <Grid item xs={12} sm={6} md={4}>
               <TextField
                 label="Contenido de Acción"
@@ -279,7 +281,6 @@ export default function AuditoriaPage() {
                       <TableCell>{registro.id}</TableCell>
                       <TableCell>{registro.usuario_id || 'N/A'}</TableCell>
                       <TableCell>{registro.usuario_nombre || 'N/A'}</TableCell>
-                      {/* Formatea la fecha y hora para la visualización en la tabla */}
                       <TableCell>{new Date(registro.fecha_hora).toLocaleString('es-ES', {
                           year: 'numeric',
                           month: '2-digit',
@@ -289,7 +290,7 @@ export default function AuditoriaPage() {
                           second: '2-digit',
                           hour12: false // Formato 24 horas
                         })}</TableCell>
-                      <TableCell>{registro.accion || 'N/A'}</TableCell>
+                      <TableCell>{registro.accion}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

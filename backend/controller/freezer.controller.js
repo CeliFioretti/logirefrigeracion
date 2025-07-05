@@ -58,8 +58,6 @@ const listar = async (req, res, next) => {
         query += ` LIMIT ? OFFSET ?`;
         params.push(pageSizeNum, offset);
 
-
-
         const [freezers] = await db.promise().query(query, params);
         const [totalResult] = await db.promise().query(countQuery, countParams);
         const totalRegistros = totalResult[0].total; // El total de registros que cumplen los filtros

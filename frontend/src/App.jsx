@@ -7,6 +7,10 @@ import PrivateRoute from './components/PrivateRoute';
 // Páginas
 import AdminDashboard from './views/admin/AdminDashboard';
 import FreezersListadoPage from './views/admin/FreezerPage'
+import ClientesListadoPage from './views/admin/ClientesPage'
+import MantenimientosListadoPage from './views/admin/MantenimientoPage'
+import EventosListadoPage from './views/admin/EventosPage'
+import UbicacionesListadoPage from './views/admin/UbicacionesPage'
 import AuditoriaPage from './views/admin/AuditoriaPage'
 import OperatorDashboard from './views/operador/OperadorDashboard'
 
@@ -26,6 +30,10 @@ function App() {
             {/* Rutas para ADMIN */}
             <Route path='/admin-dashboard' element={<AdminDashboard />} />
             <Route path='/freezers' element={<FreezersListadoPage />} />
+            <Route path='/clientes' element={<ClientesListadoPage />} />
+            <Route path='/mantenimientos' element={<MantenimientosListadoPage />} />
+            <Route path='/eventos' element={<EventosListadoPage />} />
+            <Route path='/ubicaciones' element={<UbicacionesListadoPageListadoPage />} />
             <Route path='/auditoria' element={<AuditoriaPage />} />
 
             {/* Rutas para OPERADOR */}

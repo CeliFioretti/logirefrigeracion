@@ -2,44 +2,63 @@ const db = require('../config/db.js')
 
 // Obtener registro completo de clientes
 const listar = async (req, res, next) => {
-    const { nombreCliente, tipoNegocio, nombreNegocio, cuit } = req.query;
+    const { nombreCliente, tipoNegocio, nombreNegocio, cuit, page, pageSize } = req.query;
 
     try {
         let query = 'SELECT * FROM cliente';
+        let countQuery = 'SELECT COUNT(*) as total FROM cliente'
+
         let condiciones = [];
         let params = [];
+        let countParams = [];
 
         if (nombreCliente) {
             condiciones.push('nombre_responsable LIKE ?');
             params.push(`%${nombreCliente}%`);
+            countParams.push(`%${nombreCliente}%`);
         }
         if (tipoNegocio) {
             condiciones.push('tipo_negocio LIKE ?');
             params.push(`%${tipoNegocio}%`);
+            countParams.push(`%${tipoNegocio}%`);
         }
         if (nombreNegocio) {
             condiciones.push('nombre_negocio LIKE ?');
             params.push(`%${nombreNegocio}%`);
+            countParams.push(`%${nombreNegocio}%`);
         }
         if (cuit) {
             condiciones.push("REPLACE(cuit, '-', '') LIKE ?");
             params.push(`%${cuit}%`);
+            countParams.push(`%${cuit}%`);
         }
 
         if (condiciones.length > 0) {
             query += ' WHERE ' + condiciones.join(' AND ');
+            countQuery += ' WHERE ' + condiciones.join(' AND '); 
         }
 
-        const [resultado] = await db.promise().query(query, params);
+        const pageNum = parseInt(page) || 0;
+        const pageSizeNum = parseInt(pageSize) || 10;
+        const offset = pageNum * pageSizeNum;
 
-        if (resultado.length === 0) {
+        query += ` LIMIT ? OFFSET ?`
+        params.push(pageSizeNum, offset);
+
+        const [clientes] = await db.promise().query(query, params);
+        const [totalResult] = await db.promise().query(countQuery, countParams);
+        const totalRegistros = totalResult[0].total;
+
+        if (clientes.length === 0) {
             res.status(200).json({
                 message: 'No hay registros de clientes actualmente',
                 data: []
             })
         } else {
             res.status(200).json({
-                data: resultado
+                data: clientes,
+                total: totalRegistros,
+                message: clientes.length === 0 ? 'No se encontraron freezers con los criterios especificados.' : undefined
             })
         }
 
