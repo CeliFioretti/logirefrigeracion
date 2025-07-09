@@ -1,53 +1,82 @@
 const db = require('../config/db.js')
 
-
 // Ver todos los mantenimientos - GET
 const listar = async (req, res, next) => {
-    const { fecha, operador, freezer, tipo } = req.query;
+    const { usuario_nombre, fechaDesde, fechaHasta, descripcion, tipo, observaciones, page, pageSize } = req.query;
 
     try {
-        let query = `SELECT * FROM mantenimiento`
+        let query = 'SELECT * FROM mantenimiento';
+        let countQuery = 'SELECT COUNT(*) as total FROM mantenimiento';
+
         let condiciones = [];
         let params = [];
+        let countParams = [];
 
-        if (fecha) {
-            condiciones.push('fecha LIKE ?');
-            params.push(`%${fecha}%`)
-        }
-        if (operador) {
+        if (usuario_nombre) {
             condiciones.push('usuario_nombre LIKE ?');
-            params.push(`%${operador}%`)
+            params.push(`%${usuario_nombre}%`);
+            countParams.push(`%${usuario_nombre}%`);
         }
-        if (freezer) {
-            condiciones.push('freezer_id = ?');
-            params.push(freezer)
+        if (fechaDesde) {
+            condiciones.push('fecha >= ?');
+            params.push(`${fechaDesde} 00:00:00`);
+            countParams.push(`${fechaDesde} 00:00:00`);
+        }
+
+        if (fechaHasta) {
+            condiciones.push('fecha <= ?');
+            params.push(`${fechaHasta} 23:59:59`); 
+            countParams.push(`${fechaHasta} 23:59:59`);
+        }
+        if (descripcion) {
+            condiciones.push('descripcion LIKE ?');
+            params.push(`%${descripcion}%`);
+            countParams.push(`%${descripcion}%`);
         }
         if (tipo) {
             condiciones.push('tipo LIKE ?');
-            params.push(`%${tipo}%`)
+            params.push(`%${tipo}%`);
+            countParams.push(`%${tipo}%`);
+        }
+        if (observaciones) {
+            condiciones.push('observaciones LIKE ?');
+            params.push(`%${observaciones}%`);
+            countParams.push(`%${observaciones}%`);
         }
 
         if (condiciones.length > 0) {
-            query += ' WHERE ' + condiciones.join(' AND ')
+            const whereClause = ' WHERE ' + condiciones.join(' AND ');
+            query += whereClause;
+            countQuery += whereClause;
         }
 
-        query += ' ORDER BY fecha DESC';
+        query += ' ORDER BY fecha DESC'; 
 
-        const [results] = condiciones.length > 0 ? await db.promise().query(query, params) : await db.promise().query(query);
+        const pageNum = parseInt(page) || 0;
+        const pageSizeNum = parseInt(pageSize) || 10;
+        const offset = pageNum * pageSizeNum;
 
-        if (results.length === 0) {
-            return res.status(200).json({
-                message: 'No existen mantenimientos registrados aún',
+        query += ` LIMIT ? OFFSET ?`;
+        params.push(pageSizeNum, offset);
+
+        const [mantenimientos] = await db.promise().query(query, params);
+        const [totalResult] = await db.promise().query(countQuery, countParams);
+        const totalRegistros = totalResult[0].total;
+
+        if (mantenimientos.length === 0) {
+            res.status(200).json({
+                message: 'No se encontraron mantenimientos con los criterios especificados.',
                 data: []
             });
         } else {
             res.status(200).json({
-                data: results
+                data: mantenimientos,
+                total: totalRegistros
             });
         }
 
     } catch (error) {
-        next(error)
+        next(error);
     }
 
 }

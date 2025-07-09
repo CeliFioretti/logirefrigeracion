@@ -4,45 +4,90 @@ const notificacionController = require('./notificaciones.controller.js');
 
 // Obtener todos los eventos - GET
 const listar = async (req, res, next) => {
-  const { tipo, cliente_nombre } = req.query;
+  const { usuario_nombre, cliente_nombre, fechaDesde, fechaHasta, tipo, observaciones, page, pageSize } = req.query;
 
-  try {
+    try {
+        let query = `
+            SELECT 
+                ef.*, 
+                f.modelo AS modelo_freezer, 
+                f.numero_serie AS numero_serie_freezer
+            FROM 
+                eventofreezer ef
+            LEFT JOIN 
+                freezer f ON ef.freezer_id = f.id
+        `;
+        let countQuery = 'SELECT COUNT(*) as total FROM eventofreezer';
 
-    let query = 'SELECT * FROM eventofreezer';
-    let condiciones = [];
-    let params = [];
+        let condiciones = [];
+        let params = [];
+        let countParams = [];
 
-    if (tipo) {
-      condiciones.push('tipo LIKE ?');
-      params.push(`%${tipo}%`);
+        if (usuario_nombre) {
+            condiciones.push('usuario_nombre LIKE ?');
+            params.push(`%${usuario_nombre}%`);
+            countParams.push(`%${usuario_nombre}%`);
+        }
+        if (cliente_nombre) {
+            condiciones.push('cliente_nombre LIKE ?');
+            params.push(`%${cliente_nombre}%`);
+            countParams.push(`%${cliente_nombre}%`);
+        }
+        if (fechaDesde) {
+            condiciones.push('fecha >= ?');
+            params.push(`${fechaDesde} 00:00:00`);
+            countParams.push(`${fechaDesde} 00:00:00`);
+        }
+        if (fechaHasta) {
+            condiciones.push('fecha >= ?');
+            params.push(`${fechaHasta} 23:59:59`);
+            countParams.push(`${fechaHasta} 23:59:59`);
+        }
+        if (tipo) {
+            condiciones.push('tipo LIKE ?');
+            params.push(`%${tipo}%`);
+            countParams.push(`%${tipo}%`);
+        }
+        if (observaciones) {
+            condiciones.push('observaciones LIKE ?');
+            params.push(`%${observaciones}%`);
+            countParams.push(`%${observaciones}%`);
+        }
+
+        if (condiciones.length > 0) {
+            const whereClause = ' WHERE ' + condiciones.join(' AND ');
+            query += whereClause;
+            countQuery += whereClause;
+        }
+
+        query += ' ORDER BY fecha DESC'; // Mantener el orden por fecha
+
+        const pageNum = parseInt(page) || 0;
+        const pageSizeNum = parseInt(pageSize) || 10;
+        const offset = pageNum * pageSizeNum;
+
+        query += ` LIMIT ? OFFSET ?`;
+        params.push(pageSizeNum, offset);
+
+        const [eventos] = await db.promise().query(query, params);
+        const [totalResult] = await db.promise().query(countQuery, countParams);
+        const totalRegistros = totalResult[0].total;
+
+        if (eventos.length === 0) {
+            res.status(200).json({
+                message: 'No se encontraron eventos con los criterios especificados.',
+                data: []
+            });
+        } else {
+            res.status(200).json({
+                data: eventos,
+                total: totalRegistros
+            });
+        }
+
+    } catch (error) {
+        next(error);
     }
-
-    if (cliente_nombre) {
-      condiciones.push('cliente_nombre LIKE ?');
-      params.push(`%${cliente_nombre}%`);
-    }
-
-    if (condiciones.length > 0) {
-      query += ' WHERE ' + condiciones.join(' AND ');
-    }
-
-    query += ' ORDER BY fecha DESC';
-
-    const [eventos] = await db.promise().query(query, params);
-
-    if (eventos.length === 0) {
-      return res.status(200).json({
-        message: 'No hay eventos registrados con esos criterios',
-        data: []
-      });
-    }
-
-
-    res.status(200).json({ data: eventos });
-
-  } catch (error) {
-    next(error);
-  }
 };
 
 // Crea un evento - POST

@@ -14,6 +14,9 @@ router.get('/', soloAdmin, ubicacionController.listarDepartamentos);
 // Crear departamento - POST
 router.post('/', soloAdmin, ubicacionController.crearDepartamento);
 
+// Obtener departamento por ID - GET
+router.get('/:id', soloAdmin, ubicacionController.verDepartamentoPorId);
+
 // ZONAS
 // Ver zona - GET
 router.get('/zonas/:id', soloAdmin, ubicacionController.verZona);

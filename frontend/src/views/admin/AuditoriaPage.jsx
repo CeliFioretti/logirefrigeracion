@@ -156,26 +156,6 @@ export default function AuditoriaPage() {
         <Paper sx={{ p: 3, boxShadow: 3, borderRadius: 3, mb: 3 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>Filtros de Búsqueda</Typography>
           <Grid container spacing={2} alignItems="center">
-            {/* Filtro por Fecha Desde */}
-            <Grid item xs={12} sm={6} md={3}>
-              <DatePicker
-                label="Fecha Desde"
-                value={filtroFechaDesde}
-                onChange={(newValue) => setFiltroFechaDesde(newValue)}
-                format='dd/MM/yyyy'
-                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
-              />
-            </Grid>
-            {/* Filtro por Fecha Hasta */}
-            <Grid item xs={12} sm={6} md={3}>
-              <DatePicker
-                label="Fecha Hasta"
-                value={filtroFechaHasta}
-                onChange={(newValue) => setFiltroFechaHasta(newValue)}
-                format='dd/MM/yyyy'
-                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
-              />
-            </Grid>
             {/* Filtro por ID de Usuario */}
             <Grid item xs={12} sm={6} md={2}>
               <TextField
@@ -223,6 +203,26 @@ export default function AuditoriaPage() {
                     </InputAdornment>
                   ),
                 }}
+              />
+            </Grid>
+            {/* Filtro por Fecha Desde */}
+            <Grid item xs={12} sm={6} md={3}>
+              <DatePicker
+                label="Fecha Desde"
+                value={filtroFechaDesde}
+                onChange={(newValue) => setFiltroFechaDesde(newValue)}
+                format='dd/MM/yyyy'
+                slotProps={{ textField: { size: 'small', fullWidth: true } }}
+              />
+            </Grid>
+            {/* Filtro por Fecha Hasta */}
+            <Grid item xs={12} sm={6} md={3}>
+              <DatePicker
+                label="Fecha Hasta"
+                value={filtroFechaHasta}
+                onChange={(newValue) => setFiltroFechaHasta(newValue)}
+                format='dd/MM/yyyy'
+                slotProps={{ textField: { size: 'small', fullWidth: true } }}
               />
             </Grid>
 

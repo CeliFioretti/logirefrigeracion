@@ -4,32 +4,53 @@ const { enviarCorreo } = require('../services/emailService.js');
 // DEPARTAMENTOS
 // Lista todos los departamentos - GET
 const listarDepartamentos = async (req, res, next) => {
-    const { nombre } = req.query;
+    const { nombre, page, pageSize } = req.query;
 
     try {
         let query = 'SELECT * FROM departamento';
+        let countQuery = 'SELECT COUNT(*) as total FROM departamento';
+
+        let condiciones = [];
         let params = [];
+        let countParams = [];
 
         if (nombre) {
-            query += ' WHERE nombre LIKE ?';
-            params.push(`%${nombre}%`)
+            condiciones.push('nombre LIKE ?');
+            params.push(`%${nombre}%`);
+            countParams.push(`%${nombre}%`);
         }
 
-        const [results] = await db.promise().query(query, params)
+        if (condiciones.length > 0) {
+            const whereClause = ' WHERE ' + condiciones.join(' AND ');
+            query += whereClause;
+            countQuery += whereClause;
+        }
 
-        if (results.length === 0) {
-            return res.status(200).json({
-                message: 'No hay departamentos registrados aún',
+        const pageNum = parseInt(page) || 0;
+        const pageSizeNum = parseInt(pageSize) || 10;
+        const offset = pageNum * pageSizeNum;
+
+        query += ` LIMIT ? OFFSET ?`;
+        params.push(pageSizeNum, offset);
+
+        const [departamentos] = await db.promise().query(query, params);
+        const [totalResult] = await db.promise().query(countQuery, countParams);
+        const totalRegistros = totalResult[0].total;
+
+        if (departamentos.length === 0) {
+            res.status(200).json({
+                message: 'No se encontraron departamentos con los criterios especificados.',
                 data: []
             });
         } else {
             res.status(200).json({
-                data: results
+                data: departamentos,
+                total: totalRegistros
             });
         }
 
     } catch (err) {
-        next(err)
+        next(err);
     }
 }
 
@@ -63,6 +84,26 @@ const crearDepartamento = async (req, res, next) => {
 }
 
 // ZONAS
+
+const verDepartamentoPorId = async (req, res, next) => {
+    const { id } = req.params;
+    
+    try {
+        const [departamento] = await db.promise().query('SELECT id, nombre FROM departamento WHERE id = ?', [id]);
+
+        if (departamento.length === 0) {
+            return res.status(404).json({ message: 'Departamento no encontrado'})
+        } else{
+            res.status(200).json(departamento[0])
+        }
+
+    } catch (err) {
+        next(err);
+    }
+
+}
+
+
 // Muestra todas las zonas de un departamento - GET
 const verZonasPorDepartamento = async (req, res, next) => {
     const idDepartamento = req.params.id;
@@ -269,6 +310,7 @@ module.exports = {
     // Departamentos
     listarDepartamentos,
     crearDepartamento,
+    verDepartamentoPorId,
 
     // Zonas
     crearZona,

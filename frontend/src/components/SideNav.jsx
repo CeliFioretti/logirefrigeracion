@@ -18,6 +18,11 @@ import ListAltIcon from '@mui/icons-material/ListAlt';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import PersonIcon from '@mui/icons-material/Person'; 
+
+const AdminIcon = SupervisorAccountIcon;
+const OperadorIcon = PersonIcon;
 
 export default function SideNav({ open, toggleDrawer, drawerWidth }) {
   const navigate = useNavigate();
@@ -27,6 +32,7 @@ export default function SideNav({ open, toggleDrawer, drawerWidth }) {
     clientes: false,
     mantenimientos: false,
     usuarios: false,
+    gestionUsuarios: false,
     eventos: false,
     zonas: false,
     auditoria: false,
@@ -151,14 +157,36 @@ export default function SideNav({ open, toggleDrawer, drawerWidth }) {
         </ListItemButton>
         <Collapse in={openMenus.usuarios} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/usuarios')}>
+
+            {/* GESTIÓN DE USUARIOS */}
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleToggle('gestionUsuarios')}>
               <ListItemIcon><ListAltIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Gestión de usuarios" />
+              {openMenus.gestionUsuarios ? <ExpandLess sx={{ color: iconColor }} /> : <ExpandMore sx={{ color: iconColor }} />}
             </ListItemButton>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/usuarios')}>
+
+            <Collapse in={openMenus.gestionUsuarios} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {/* ADMINISTRADORES */}
+                <ListItemButton sx={{ pl: 6 }} onClick={() => handleNavigation('/usuarios/administradores')}>
+                  <ListItemIcon><AdminIcon sx={{ color: iconColor }} /></ListItemIcon>
+                  <ListItemText primary="Administradores" />
+                </ListItemButton>
+
+                {/* OPERADORES */}
+                <ListItemButton sx={{ pl: 6 }} onClick={() => handleNavigation('/usuarios/operadores')}>
+                  <ListItemIcon><OperadorIcon sx={{ color: iconColor }} /></ListItemIcon>
+                  <ListItemText primary="Operadores" />
+                </ListItemButton>
+              </List>
+            </Collapse>
+
+            {/* CREAR USUARIO */}
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/usuarios/crear')}>
               <ListItemIcon><PersonAddIcon sx={{ color: iconColor }} /></ListItemIcon>
               <ListItemText primary="Crear usuario" />
             </ListItemButton>
+
           </List>
         </Collapse>
 

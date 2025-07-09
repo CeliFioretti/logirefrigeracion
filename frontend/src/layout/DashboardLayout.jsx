@@ -8,7 +8,7 @@ import { UserContext } from '../context/UserContext';
 import SideNav from '../components/SideNav';
 import TopBarAdmin from '../components/TopBarAdmin';
 
-const drawerWidth = 240;
+const drawerWidth = 300;
 
 
 function DashboardLayout() {

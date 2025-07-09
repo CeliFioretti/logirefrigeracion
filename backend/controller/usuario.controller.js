@@ -1,39 +1,59 @@
 const db = require('../config/db.js')
 const bcrypt = require('bcrypt');
+const { param } = require('../routes/usuario.routes.js');
 
 
 // Obtener registro completo de usuarios
 const listar = async (req, res, next) => {
-    const { nombre, rol } = req.query;
+    const { nombre, rol , page, pageSize} = req.query;
 
     try {
         let query = 'SELECT * FROM usuario';
+        let countQuery = 'SELECT COUNT(*) as total FROM usuario';
+
         let condiciones = [];
         let params = [];
+        let countParams = [];
 
         if (nombre) {
-            condiciones.push('nombre_responsable LIKE ?');
+            condiciones.push('nombre LIKE ?');
             params.push(`%${nombre}%`);
+            countParams.push(`%${nombre}%`);
         }
         if (rol) {
-            condiciones.push('tipo_negocio LIKE ?');
-            params.push(`%${rol}%`);
+            condiciones.push('rol LIKE ?');
+            params.push(`${rol}`);
+            countParams.push(`${rol}`);
         }
 
         if (condiciones.length > 0) {
             query += ' WHERE ' + condiciones.join(' AND ');
+            countQuery += ' WHERE ' + condiciones.join(' AND ');
         }
+
+        query += ' ORDER BY nombre ASC'
+
+        const limit = parseInt(pageSize);
+        offset = parseInt(page) * limit;
+
+        query += ' LIMIT ?, ?'
+        params.push(offset, limit)
+
+        const [totalResult] = await db.promise().query(countQuery, countParams)
+        const totalRegistros = totalResult[0].total;
 
         const [resultado] = await db.promise().query(query, params);
 
         if (resultado.length === 0) {
             res.status(200).json({
                 message: 'No hay registros de usuario actualmente',
-                data: []
+                data: [],
+                total: 0
             })
         } else {
             res.status(200).json({
-                data: resultado
+                data: resultado,
+                total: totalRegistros
             })
         }
 

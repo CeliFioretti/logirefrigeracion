@@ -400,16 +400,16 @@ function FreezersPage() {
                                                     sx={{
                                                         backgroundColor:
                                                             freezer.estado === 'Disponible'
-                                                                ? '#e8f5e9' // Verde claro
+                                                                ? '#e8f5e9'
                                                                 : freezer.estado === 'Asignado'
-                                                                    ? '#e3f2fd' // Azul claro
-                                                                    : '#ffebee', // Rojo claro
+                                                                    ? '#e3f2fd' 
+                                                                    : '#ffebee', 
                                                         color:
                                                             freezer.estado === 'Disponible'
-                                                                ? '#388e3c' // Verde oscuro
+                                                                ? '#388e3c' 
                                                                 : freezer.estado === 'Asignado'
-                                                                    ? '#1e88e5' // Azul oscuro
-                                                                    : '#d32f2f', // Rojo oscuro
+                                                                    ? '#1e88e5' 
+                                                                    : '#d32f2f', 
                                                         fontWeight: 'bold',
                                                         fontSize: '0.75rem',
                                                     }}

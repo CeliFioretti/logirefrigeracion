@@ -85,7 +85,7 @@ const listar = async (req, res, next) => {
 
     } catch (error) {
         console.error('Error en el controlador de auditoría:', error);
-        next(error); // Pasa el error al siguiente middleware de manejo de errores
+        next(error); 
     }
 };
 
