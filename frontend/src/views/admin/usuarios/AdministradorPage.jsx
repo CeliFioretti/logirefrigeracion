@@ -157,13 +157,10 @@ function AdministradoresPage() {
     };
 
     const handleEditClick = (userId) => {
-        // Asumiendo que tienes una ruta para editar usuarios, por ejemplo: /usuarios/editar/:id
         navigate(`/usuarios/editar/${userId}`);
     };
 
     const handleResetPasswordClick = (userId) => {
-        // Asumiendo que tienes una ruta para reiniciar contraseña, por ejemplo: /usuarios/resetear-password/:id
-        // O podrías tener un modal aquí mismo para el reseteo.
         navigate(`/usuarios/resetear-password/${userId}`);
     };
 
