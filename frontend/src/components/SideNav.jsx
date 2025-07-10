@@ -1,4 +1,3 @@
-// src/components/SideNav.jsx
 import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Collapse, Toolbar } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';

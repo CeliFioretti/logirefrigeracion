@@ -366,6 +366,7 @@ function FreezersPage() {
                         <Table stickyHeader aria-label="tabla de freezers">
                             <TableHead>
                                 <TableRow>
+                                    <TableCell sx={{ fontWeight: 'bold' }}>Imagen</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>Fecha Compra</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>Modelo</TableCell>
                                     <TableCell sx={{ fontWeight: 'bold' }}>N° de Serie</TableCell>
@@ -379,18 +380,45 @@ function FreezersPage() {
                             <TableBody>
                                 {freezers.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} align="center">
+                                        <TableCell colSpan={9} align="center">
                                             No se encontraron freezers con los filtros aplicados.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     freezers.map((freezer) => (
                                         <TableRow hover key={freezer.id}>
+                                            <TableCell>
+                                                {freezer.imagen ? (
+                                                    <Box 
+                                                    component={"img"}
+                                                    src={freezer.imagen}
+                                                    alt={`Imagen de ${freezer.modelo}`}
+                                                    sx={{
+                                                        width: 50,
+                                                        height: 50,
+                                                        objectFit: 'cover',
+                                                        borderRadius: '4px',
+                                                    }}
+                                                    />
+                                                ) : (<Box 
+                                                    component={"img"}
+                                                    src='https://img.freepik.com/premium-vector/modern-refrigerator-vector-illustration-white-background_1138840-2108.jpg' 
+                                                    alt='Imagen no disponible'
+                                                    sx={{
+                                                        width: 50,
+                                                        height: 50,
+                                                        objectFit: 'cover',
+                                                        borderRadius: '4px',
+                                                        backgroundColor: '#f0f0f0'
+                                                    }} /> )}
+                                            </TableCell>
                                             <TableCell>{freezer.fecha_creacion ? format(new Date(freezer.fecha_creacion), 'dd-MM-yyyy') : 'N/A'}</TableCell>
                                             <TableCell>{freezer.modelo}</TableCell>
+                                            
                                             <TableCell>
                                                 {freezer.numero_serie}
                                             </TableCell>
+                                            
                                             <TableCell>{freezer.tipo}</TableCell>
                                             <TableCell>{freezer.capacidad}</TableCell>
                                             <TableCell>{freezer.marca || 'N/A'}</TableCell>
