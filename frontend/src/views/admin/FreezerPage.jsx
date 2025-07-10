@@ -164,7 +164,7 @@ function FreezersPage() {
     };
 
     const handleEditFreezer = (id) => {
-        navigate(`/admin/freezers/editar/${id}`);
+        navigate(`/freezers/editar/${id}`);
     };
 
     const handleDeleteFreezer = async (id) => {
@@ -189,21 +189,24 @@ function FreezersPage() {
         }
     };
 
+    const handleViewFreezerDetail = (id) => {
+        navigate(`/freezers/${id}`)
+    }
+
     const handleAssignClient = (id) => {
-        navigate(`/admin/freezers/asignar/${id}`);
+        navigate(`/freezers/${id}/asignar`);
     };
 
-    // Funciones para los botones grandes
     const handleRegisterNewFreezer = () => {
-        navigate('/admin/freezers/nuevo');
+        navigate('/freezers/nuevo');
     };
 
     const handleViewEventsHistory = () => {
-        navigate('/admin/eventos');
+        navigate('/eventos');
     };
 
     const handleViewStats = () => {
-        navigate('/admin/estadisticas-freezers');
+        navigate('/estadisticas-freezers');
     };
 
 
@@ -416,7 +419,19 @@ function FreezersPage() {
                                             <TableCell>{freezer.modelo}</TableCell>
                                             
                                             <TableCell>
-                                                {freezer.numero_serie}
+                                                <Typography 
+                                                    component='span' 
+                                                    onClick={() => handleViewFreezerDetail(freezer.id)}
+                                                    sx={{
+                                                        cursor: 'pointer',
+                                                        color: 'primary.main',
+                                                        textDecoration: 'underline',
+                                                        '&:hover' : {
+                                                            color: 'primary.dark'
+                                                        }
+                                                    }}>
+                                                    {freezer.numero_serie}
+                                                </Typography>
                                             </TableCell>
                                             
                                             <TableCell>{freezer.tipo}</TableCell>

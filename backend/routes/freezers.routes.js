@@ -32,6 +32,9 @@ router.get('/cliente/:id', soloAdmin, freezerController.freezersPorCliente);
 // Liberar un freezer asignado - PUT
 router.put('/:id/liberar', soloAdmin, freezerController.liberar);
 
+// Obtener mantenimientos del freezer especifico - GET
+router.get('/:id/mantenimientos', soloAdmin, freezerController.obtenerMantenimientosPropios)
+
 
 
 module.exports = router;

@@ -97,7 +97,7 @@ const detalle = async (req, res, next) => {
             });
         } else {
             res.status(200).json({
-                data: results
+                data: results[0]
             });
         }
     } catch (err) {
@@ -435,6 +435,86 @@ const liberar = async (req, res, next) => {
     }
 };
 
+const obtenerMantenimientosPropios = async (req, res, next) => {
+    const {id} = req.params;
+    const {usuario_nombre, fechaDesde, fechaHasta, tipo, page, pageSize} = req.query
+
+    try {
+        let query = 'SELECT * from mantenimiento WHERE freezer_id = ?'
+        let countQuery = 'SELECT COUNT(*) as total FROM mantenimiento WHERE freezer_id = ?';
+
+        let condiciones = [];
+        let params = [id];
+        let countParams = [id];
+
+        if (usuario_nombre) {
+            condiciones.push('usuario_nombre LIKE ?');
+            params.push(`%${usuario_nombre}%`);
+            countParams.push(`%${usuario_nombre}%`);
+        }
+        if (fechaDesde) {
+            condiciones.push('fecha >= ?');
+            params.push(`${fechaDesde} 00:00:00`);
+            countParams.push(`${fechaDesde} 00:00:00`);
+        }
+        if (fechaHasta) {
+            condiciones.push('fecha <= ?');
+            params.push(`${fechaHasta} 23:59:59`);
+            countParams.push(`${fechaHasta} 23:59:59`);
+        }
+        if (tipo) {
+            condiciones.push('tipo LIKE ?');
+            params.push(`%${tipo}%`);
+            countParams.push(`%${tipo}%`);
+        }
+
+        if (condiciones.length > 0) {
+            const whereClause = ' AND ' + condiciones.join(' AND ');
+            query += whereClause;
+            countQuery += whereClause;
+        }
+
+        query += ' ORDER BY fecha DESC';
+
+        const pageNum = parseInt(page) || 0; 
+        const pageSizeNum = parseInt(pageSize) || 10;
+        const offset = pageNum * pageSizeNum;
+
+        query += ` LIMIT ? OFFSET ?`;
+        params.push(pageSizeNum, offset);
+
+        const [mantenimientos] = await db.promise().query(query, params);
+        const [totalResult] = await db.promise().query(countQuery, countParams);
+        const totalRegistros = totalResult[0].total;
+
+
+        if (mantenimientos.length === 0 && condiciones.length > 0) {
+            
+            return res.status(200).json({
+                message: 'No se encontraron mantenimientos para este freezer con los criterios especificados.',
+                data: [],
+                total: 0 
+            });
+        } else if (mantenimientos.length === 0) {
+            return res.status(200).json({
+                message: 'No existen mantenimientos para este freezer.',
+                data: [],
+                total: 0
+            });
+        }
+
+        res.status(200).json({
+            data: mantenimientos,
+            total: totalRegistros
+        });
+    
+    } catch (err) {
+        console.error('Error al obtener mantenimientos del freezer:', err);
+        next(err)
+    }
+
+}
+
 
 
 module.exports = {
@@ -445,5 +525,6 @@ module.exports = {
     eliminar,
     freezersPorCliente,
     asignarFreezer,
-    liberar
+    liberar,
+    obtenerMantenimientosPropios
 }
