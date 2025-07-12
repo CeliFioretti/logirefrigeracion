@@ -82,7 +82,7 @@ const detalle = async (req, res, next) => {
             });
         } else {
             res.status(200).json({
-                data: results
+                data: results[0]
             });
         }
     } catch (err) {

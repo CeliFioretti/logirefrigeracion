@@ -25,7 +25,8 @@ import {
     CardMedia,
     IconButton,
     Chip,
-    TablePagination
+    TablePagination,
+    Link
 } from '@mui/material';
 
 import {
@@ -33,7 +34,8 @@ import {
     ContentCopy as ContentCopyIcon,
     Search as SearchIcon,
     Clear as ClearIcon,
-    Visibility as VisibilityIcon
+    Visibility as VisibilityIcon,
+    Try
 } from '@mui/icons-material';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -49,13 +51,20 @@ function FreezerDetailPage() {
     const { usuario } = useContext(UserContext);
     const token = usuario?.token;
 
+    // Estados Freezer
     const [freezer, setFreezer] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Estados Mantenimientos
     const [mantenimientos, setMantenimientos] = useState([]);
     const [loadingMantenimientos, setLoadingMantenimientos] = useState(false);
     const [errorMantenimientos, setErrorMantenimientos] = useState(null);
+
+    // Estados Cliente
+    const [clienteAsignado, setClienteAsignado] = useState(null);
+    const [loadingCliente, setLoadingCliente] = useState(false);
+    const [errorCliente, setErrorCliente] = useState(null)
 
     const [filtroUsuarioNombre, setFiltroUsuarioNombre] = useState('');
     const [filtroFechaDesde, setFiltroFechaDesde] = useState(null);
@@ -95,7 +104,7 @@ function FreezerDetailPage() {
         }
     }, [id, token]);
 
-    // Obtener mantenimientos del Freezer
+    // Obtener datos de mantenimientos del Freezer
     const fetchMantenimientos = useCallback(async (searchParams) => {
         if (!token || !id) {
             setErrorMantenimientos('No autenticado o ID de freezer no disponible.');
@@ -139,15 +148,44 @@ function FreezerDetailPage() {
         }
     }, [id, token, filtroFechaDesde, filtroFechaHasta, filtroUsuarioNombre, pageMant, rowsPerPageMant]);
 
+    // Obtener datos del cliente asignado
+    const fetchClienteDetails = useCallback(async (clienteId) => {
+        if (!token || !clienteId) {
+            setClienteAsignado(null);
+            return;
+        }
+
+        setLoadingCliente(true);
+        setErrorCliente(null);
+
+        try {
+            const response = await axios.get(`http://localhost:3200/api/clientes/${clienteId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            setClienteAsignado(response.data.data);
+        } catch (err) {
+            console.error('Error fetching client details:', err);
+            setErrorCliente('Error al cargar los detalles del cliente asignado');
+            setClienteAsignado(null)
+        }
+        finally {
+            setLoadingCliente(false);
+        }
+    }, [token])
 
     useEffect(() => {
         if (freezer) {
             document.title = `Freezer #${freezer.numero_serie || ''} - Admin`
+
+            // Comprobación de cliente para el freezer
+            if (freezer.estado === 'Asignado' && freezer.cliente_id) {
+                fetchClienteDetails(freezer.cliente_id)
+            } else {
+                setClienteAsignado(null);
+            }
         } else {
             document.title = 'Detalle del Freezer - Admin'
         }
-
-
     }, [freezer]);
 
 
@@ -218,6 +256,7 @@ function FreezerDetailPage() {
 
     };
 
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -248,27 +287,26 @@ function FreezerDetailPage() {
         );
     }
 
+    console.log(clienteAsignado);
 
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
             {/* Flecha de vuelta */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <IconButton onClick={handleGoBack} aria-label="Volver">
-                    <ArrowBackIcon />
+                    <ArrowBackIcon fontSize='large' />
                 </IconButton>
-                <Typography variant="h5" component="h1">
-                    Detalles del Freezer
-                </Typography>
             </Box>
             <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
                 <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
-                    FREEZER #{freezer.numero_serie || 'N/A'}
+                    Freezer #{freezer.numero_serie || 'N/A'}
                 </Typography>
 
                 {/* Sección de Detalles del Freezer */}
                 <Paper elevation={3} sx={{ p: 3, mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
                     <Box sx={{ flex: 1 }}>
-                      
+                        <Typography variant="h6" gutterBottom>Detalles del Freezer</Typography>
+                        <Divider sx={{ mb: 2 }} />
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
                                 <Typography variant="subtitle1" color="text.secondary">Número de Serie:</Typography>
@@ -294,15 +332,50 @@ function FreezerDetailPage() {
                                 <Typography variant="subtitle1" color="text.secondary">Estado:</Typography>
                                 <Chip
                                     label={freezer.estado || 'Desconocido'}
-                                    color={freezer.estado === 'Activo' ? 'success' : 'error'}
-                                    sx={{ fontWeight: 'bold' }}
+                                    sx={{
+                                        backgroundColor:
+                                            freezer.estado === 'Disponible'
+                                                ? '#e8f5e9'
+                                                : freezer.estado === 'Asignado'
+                                                    ? '#e3f2fd'
+                                                    : '#ffebee',
+                                        color:
+                                            freezer.estado === 'Disponible'
+                                                ? '#388e3c'
+                                                : freezer.estado === 'Asignado'
+                                                    ? '#1e88e5'
+                                                    : '#d32f2f',
+                                        fontWeight: 'bold'
+                                    }}
                                 />
                             </Grid>
 
                         </Grid>
-                        
+                        {/** Sección para Cliente */}
+                        {freezer.estado === 'Asignado' && (
+                            <Grid>
+                                <Typography variant="subtitle1" color="text.secondary">Cliente Asignado:</Typography>
+                                {loadingCliente ? (
+                                    <CircularProgress size={20} />
+                                ) : errorCliente ? (
+                                    <Typography variant="body1" color="error">{errorCliente}</Typography>
+                                ) : clienteAsignado ? (
+                                    <Link
+                                        component="button"
+                                        variant="body1"
+                                        onClick={() => handleViewClientDetail(clienteAsignado.id)}
+                                        sx={{ fontWeight: 'bold' }}
+                                    >
+                                        {clienteAsignado.nombre_responsable || 'No posee cliente asignado'}
+                                    </Link>
+                                ) : (
+                                    <Typography variant="body1" fontStyle="italic" color="text.secondary">
+                                        No se pudo obtener la información del cliente.
+                                    </Typography>
+                                )}
+                            </Grid>
+                        )}
                     </Box>
-                    
                     <Box sx={{ flexShrink: 0, width: { xs: '100%', md: 250 }, height: { xs: 200, md: 'auto' }, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         {freezer.imagen ? (
                             <CardMedia
@@ -339,6 +412,9 @@ function FreezerDetailPage() {
                     </Box>
                 </Paper>
 
+                <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
+                    Mantenimientos
+                </Typography>
                 {/* Sección de Filtros de Mantenimientos */}
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros de Mantenimiento</Typography>

@@ -48,7 +48,6 @@ function MantenimientoPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Estados para los filtros
     const [filtroUsuarioNombre, setFiltroUsuarioNombre] = useState('');
     const [filtroFechaDesde, setFiltroFechaDesde] = useState(null);
     const [filtroFechaHasta, setFiltroFechaHasta] = useState(null);
@@ -56,11 +55,9 @@ function MantenimientoPage() {
     const [filtroTipo, setFiltroTipo] = useState('');
     const [filtroObservaciones, setFiltroObservaciones] = useState('');
 
-    // Estados para la paginación
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    // Opciones para el filtro de tipo
     const tiposMantenimiento = ['Preventivo', 'Correctivo', 'Inspección', 'Reparación'];
 
     const [triggerSearch, setTriggerSearch] = useState(0);
