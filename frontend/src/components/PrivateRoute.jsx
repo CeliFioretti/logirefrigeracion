@@ -1,15 +1,32 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useContext } from 'react'; 
 import { UserContext } from '../context/UserContext';
+import { CircularProgress, Box } from '@mui/material';
 
-function PrivateRoute({ roles }) {
-  const { usuario } = useContext(UserContext);
+function PrivateRoute({ roles, children }) {
+  const { usuario, loadingUser } = useContext(UserContext);
+  const location = useLocation();
 
-  // Verifica si hay un usuario y si su rol está incluido en los roles permitidos
-  if (!usuario || !roles.includes(usuario.rol)) {
-    // Si no hay usuario o el rol no es permitido, redirige al login
-    return <Navigate to="/" replace />;
+  if (loadingUser) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+          <CircularProgress/>
+      </Box>
+    )
   }
+
+  // Verifica si NO hay un usuario autenticado
+  if (!usuario || !usuario.token) {
+    return <Navigate to='/' replace />
+  }
+
+  // Verificar los roles en caso de tener
+  if (roles && roles.length > 0) {
+    if (!usuario.rol || !roles.includes(usuario.rol)) {
+      return <Navigate to='/' replace />
+    }
+  }
+  
 
   // Si el usuario está autenticado y tiene el rol correcto, renderiza el contenido
   return <Outlet />;

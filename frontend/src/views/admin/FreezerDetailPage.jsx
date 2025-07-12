@@ -287,8 +287,6 @@ function FreezerDetailPage() {
         );
     }
 
-    console.log(clienteAsignado);
-
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
             {/* Flecha de vuelta */}
@@ -366,7 +364,7 @@ function FreezerDetailPage() {
                                         onClick={() => handleViewClientDetail(clienteAsignado.id)}
                                         sx={{ fontWeight: 'bold' }}
                                     >
-                                        {clienteAsignado.nombre_responsable || 'No posee cliente asignado'}
+                                        {clienteAsignado.nombre_responsable}
                                     </Link>
                                 ) : (
                                     <Typography variant="body1" fontStyle="italic" color="text.secondary">
