@@ -27,7 +27,11 @@ import {
 } from '@mui/icons-material';
 import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { es } from 'date-fns/locale';
 
 function DepartamentosPage() {
     const { usuario } = useContext(UserContext);
@@ -89,6 +93,10 @@ function DepartamentosPage() {
         setPage(newPage);
     };
 
+    const handleGoBack = () => {
+        navigate(-1);
+    };
+
     const handleChangeRowsPerPage = (event) => {
         const newSize = parseInt(event.target.value, 10);
         setRowsPerPage(newSize);
@@ -103,7 +111,7 @@ function DepartamentosPage() {
     const handleClearFilters = () => {
         setFiltroNombre('');
         setPage(0);
-        setRowsPerPage(10); 
+        setRowsPerPage(10);
         setTriggerSearch(prev => prev + 1);
     };
 
@@ -124,119 +132,127 @@ function DepartamentosPage() {
     }
 
     return (
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                LISTA DE DEPARTAMENTOS
-            </Typography>
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+            {/* Flecha de vuelta */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <IconButton onClick={handleGoBack} aria-label="Volver">
+                    <ArrowBackIcon fontSize='large' />
+                </IconButton>
+            </Box>
+            <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+                <Typography variant="h4" component="h1" gutterBottom>
+                    LISTA DE DEPARTAMENTOS
+                </Typography>
 
-            <Grid container spacing={2} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="h6" gutterBottom>Registrar Departamento</Typography>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={handleCreateDepartamento}
-                        >
-                            Nuevo
-                        </Button>
-                    </Paper>
-                </Grid>
-            </Grid>
-
-            <Paper sx={{ p: 3, mb: 4 }}>
-                <Typography variant="h6" gutterBottom>Filtros</Typography>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={6} md={4}>
-                        <TextField
-                            label="Nombre del Departamento"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroNombre}
-                            onChange={(e) => setFiltroNombre(e.target.value)}
-                            size="small"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
-                        <Button
-                            variant="contained"
-                            startIcon={<SearchIcon />}
-                            onClick={handleApplyFilters}
-                            sx={{ mr: 1 }}
-                        >
-                            Aplicar Filtros
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<ClearIcon />}
-                            onClick={handleClearFilters}
-                        >
-                            Limpiar Filtros
-                        </Button>
+                <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <Grid item xs={12} sm={4}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" gutterBottom>Registrar Departamento</Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={handleCreateDepartamento}
+                            >
+                                Nuevo
+                            </Button>
+                        </Paper>
                     </Grid>
                 </Grid>
-            </Paper>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                <Paper sx={{ p: 3, mb: 4 }}>
+                    <Typography variant="h6" gutterBottom>Filtros</Typography>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={6} md={4}>
+                            <TextField
+                                label="Nombre del Departamento"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroNombre}
+                                onChange={(e) => setFiltroNombre(e.target.value)}
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={4}>
+                            <Button
+                                variant="contained"
+                                startIcon={<SearchIcon />}
+                                onClick={handleApplyFilters}
+                                sx={{ mr: 1 }}
+                            >
+                                Aplicar Filtros
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<ClearIcon />}
+                                onClick={handleClearFilters}
+                            >
+                                Limpiar Filtros
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Paper>
 
-            {loading && departamentos.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                    <TableContainer sx={{ maxHeight: 600 }}>
-                        <Table stickyHeader aria-label="tabla de departamentos">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Nombre</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }} align="right">Acciones</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {departamentos.length === 0 ? (
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+                {loading && departamentos.length === 0 ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                        <TableContainer sx={{ maxHeight: 600 }}>
+                            <Table stickyHeader aria-label="tabla de departamentos">
+                                <TableHead>
                                     <TableRow>
-                                        <TableCell colSpan={3} align="center">
-                                            No se encontraron departamentos.
-                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Nombre</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }} align="right">Acciones</TableCell>
                                     </TableRow>
-                                ) : (
-                                    departamentos.map((departamento) => (
-                                        <TableRow hover key={departamento.id}>
-                                            <TableCell>{departamento.id}</TableCell>
-                                            <TableCell>{departamento.nombre}</TableCell>
-                                            <TableCell align="right">
-                                                <IconButton
-                                                    aria-label="ver zonas"
-                                                    onClick={() => handleViewZonas(departamento.id)}
-                                                    color="primary"
-                                                >
-                                                    <VisibilityIcon fontSize="small" />
-                                                </IconButton>
+                                </TableHead>
+                                <TableBody>
+                                    {departamentos.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={3} align="center">
+                                                No se encontraron departamentos.
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        component="div"
-                        count={totalRegistros}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                        labelRowsPerPage="Filas por página:"
-                        labelDisplayedRows={({ from, to, count }) =>
-                            `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-                        }
-                    />
-                </Paper>
-            )}
-        </Container>
+                                    ) : (
+                                        departamentos.map((departamento) => (
+                                            <TableRow hover key={departamento.id}>
+                                                <TableCell>{departamento.id}</TableCell>
+                                                <TableCell>{departamento.nombre}</TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton
+                                                        aria-label="ver zonas"
+                                                        onClick={() => handleViewZonas(departamento.id)}
+                                                        color="primary"
+                                                    >
+                                                        <VisibilityIcon fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25]}
+                            component="div"
+                            count={totalRegistros}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            labelRowsPerPage="Filas por página:"
+                            labelDisplayedRows={({ from, to, count }) =>
+                                `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+                            }
+                        />
+                    </Paper>
+                )}
+            </Container>
+        </LocalizationProvider>
     );
 }
 

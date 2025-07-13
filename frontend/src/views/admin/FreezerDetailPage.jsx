@@ -291,6 +291,7 @@ function FreezerDetailPage() {
                     <ArrowBackIcon fontSize='large' />
                 </IconButton>
             </Box>
+            
             <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
                 <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
                     Freezer #{freezer.numero_serie || 'N/A'}

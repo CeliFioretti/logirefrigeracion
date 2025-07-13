@@ -18,15 +18,17 @@ import {
     Grid,
     Link,
     MenuItem,
-    Chip
+    Chip,
+    IconButton
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { es } from 'date-fns/locale';
 import { format } from 'date-fns';
 import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
-import { es } from 'date-fns/locale';
 import {
     Search as SearchIcon,
     Clear as ClearIcon
@@ -121,6 +123,10 @@ function EventosPage() {
         setPage(0);
     };
 
+    const handleGoBack = () => {
+        navigate(-1);
+    };
+
     const handleApplyFilters = () => {
         setPage(0);
         setTriggerSearch(prev => prev + 1);
@@ -147,6 +153,13 @@ function EventosPage() {
 
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+            {/* Flecha de vuelta */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <IconButton onClick={handleGoBack} aria-label="Volver">
+                    <ArrowBackIcon fontSize='large' />
+                </IconButton>
+            </Box>
+
             <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
                 <Typography variant="h4" component="h1" gutterBottom>
                     HISTORIAL DE EVENTOS

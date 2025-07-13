@@ -27,10 +27,14 @@ import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useNavigate } from 'react-router-dom';
 
 export default function AuditoriaPage() {
+
   const { usuario } = useContext(UserContext);
   const token = usuario?.token;
+  const navigate = useNavigate();
 
   const [registrosAuditoria, setRegistrosAuditoria] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +73,7 @@ export default function AuditoriaPage() {
       if (searchParams.usuarioId) queryParams.append('usuarioId', searchParams.usuarioId);
       if (searchParams.usuarioNombre) queryParams.append('usuarioNombre', searchParams.usuarioNombre);
       if (searchParams.accion) queryParams.append('accion', searchParams.accion);
-      
+
       // Formatear fechas si existen
       if (searchParams.fechaDesde) {
         queryParams.append('fechaDesde', format(searchParams.fechaDesde, 'yyyy-MM-dd'));
@@ -111,7 +115,7 @@ export default function AuditoriaPage() {
       page: page,
       pageSize: rowsPerPage,
     };
-    
+
     fetchAuditoria(currentSearchParams);
   }, [fetchAuditoria, page, rowsPerPage, triggerSearch]); // Dependencias que disparan la búsqueda
 
@@ -131,6 +135,10 @@ export default function AuditoriaPage() {
     setTriggerSearch(prev => prev + 1); // Incrementa el contador para forzar el useEffect
   };
 
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
   const handleClearFilters = () => {
     setFiltroUsuarioId('');
     setFiltroUsuarioNombre('');
@@ -144,6 +152,12 @@ export default function AuditoriaPage() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+      {/* Flecha de vuelta */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <IconButton onClick={handleGoBack} aria-label="Volver">
+          <ArrowBackIcon fontSize='large' />
+        </IconButton>
+      </Box>
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
           Auditoría de Actividades
@@ -278,14 +292,14 @@ export default function AuditoriaPage() {
                       <TableCell>{registro.usuario_id || 'N/A'}</TableCell>
                       <TableCell>{registro.usuario_nombre || 'N/A'}</TableCell>
                       <TableCell>{new Date(registro.fecha_hora).toLocaleString('es-ES', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit',
-                          hour12: false // Formato 24 horas
-                        })}</TableCell>
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false // Formato 24 horas
+                      })}</TableCell>
                       <TableCell>{registro.accion}</TableCell>
                     </TableRow>
                   ))}

@@ -21,11 +21,12 @@ import {
     Chip
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; 
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'; 
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { format } from 'date-fns';
 import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { es } from 'date-fns/locale';
 import {
     Edit as EditIcon,
@@ -133,6 +134,10 @@ function MantenimientoPage() {
         setTriggerSearch(prev => prev + 1);
     };
 
+    const handleGoBack = () => {
+        navigate(-1);
+    };
+
     const handleClearFilters = () => {
         setFiltroUsuarioNombre('');
         setFiltroFechaDesde(null);
@@ -186,206 +191,212 @@ function MantenimientoPage() {
     }
 
     return (
-        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}> 
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                LISTA DE MANTENIMIENTOS
-            </Typography>
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+            {/* Flecha de vuelta */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <IconButton onClick={handleGoBack} aria-label="Volver">
+                    <ArrowBackIcon fontSize='large' />
+                </IconButton>
+            </Box>
+            <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+                <Typography variant="h4" component="h1" gutterBottom>
+                    LISTA DE MANTENIMIENTOS
+                </Typography>
 
-            <Grid container spacing={2} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="h6" gutterBottom>Registrar Mantenimiento</Typography>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={handleRegisterNewMantenimiento}
-                        >
-                            Nuevo
-                        </Button>
-                    </Paper>
+                <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <Grid item xs={12} sm={4}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" gutterBottom>Registrar Mantenimiento</Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={handleRegisterNewMantenimiento}
+                            >
+                                Nuevo
+                            </Button>
+                        </Paper>
+                    </Grid>
                 </Grid>
-            </Grid>
 
-            <Paper sx={{ p: 3, mb: 4 }}>
-                <Typography variant="h6" gutterBottom>Filtros</Typography>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            label="Nombre de Usuario"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroUsuarioNombre}
-                            onChange={(e) => setFiltroUsuarioNombre(e.target.value)}
-                            size="small"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            label="Descripción"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroDescripcion}
-                            onChange={(e) => setFiltroDescripcion(e.target.value)}
-                            size="small"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            select
-                            label="Tipo"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroTipo}
-                            onChange={(e) => setFiltroTipo(e.target.value)}
-                            size="small"
-                        >
-                    <Grid item xs={12} sm={6} md={3}>
-                            <DatePicker
-                                label="Fecha Desde"
-                                value={filtroFechaDesde}
-                                onChange={(newValue) => setFiltroFechaDesde(newValue)}
-                                format='dd/MM/yyyy'
-                                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                <Paper sx={{ p: 3, mb: 4 }}>
+                    <Typography variant="h6" gutterBottom>Filtros</Typography>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                label="Nombre de Usuario"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroUsuarioNombre}
+                                onChange={(e) => setFiltroUsuarioNombre(e.target.value)}
+                                size="small"
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={3}>
-                            <DatePicker
-                                label="Fecha Hasta"
-                                value={filtroFechaHasta}
-                                onChange={(newValue) => setFiltroFechaHasta(newValue)}
-                                format='dd/MM/yyyy'
-                                minDate={filtroFechaDesde}
-                                renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                            <TextField
+                                label="Descripción"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroDescripcion}
+                                onChange={(e) => setFiltroDescripcion(e.target.value)}
+                                size="small"
                             />
                         </Grid>
-                            <MenuItem value="">Todos</MenuItem>
-                            {tiposMantenimiento.map((tipo) => (
-                                <MenuItem key={tipo} value={tipo}>
-                                    {tipo}
-                                </MenuItem>
-                            ))}
-                        </TextField>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                select
+                                label="Tipo"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroTipo}
+                                onChange={(e) => setFiltroTipo(e.target.value)}
+                                size="small"
+                            >
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <DatePicker
+                                        label="Fecha Desde"
+                                        value={filtroFechaDesde}
+                                        onChange={(newValue) => setFiltroFechaDesde(newValue)}
+                                        format='dd/MM/yyyy'
+                                        renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6} md={3}>
+                                    <DatePicker
+                                        label="Fecha Hasta"
+                                        value={filtroFechaHasta}
+                                        onChange={(newValue) => setFiltroFechaHasta(newValue)}
+                                        format='dd/MM/yyyy'
+                                        minDate={filtroFechaDesde}
+                                        renderInput={(params) => <TextField {...params} fullWidth size="small" />}
+                                    />
+                                </Grid>
+                                <MenuItem value="">Todos</MenuItem>
+                                {tiposMantenimiento.map((tipo) => (
+                                    <MenuItem key={tipo} value={tipo}>
+                                        {tipo}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                label="Observaciones"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroObservaciones}
+                                onChange={(e) => setFiltroObservaciones(e.target.value)}
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Button
+                                variant="contained"
+                                startIcon={<SearchIcon />}
+                                onClick={handleApplyFilters}
+                                sx={{ mr: 1 }}
+                            >
+                                Aplicar Filtros
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<ClearIcon />}
+                                onClick={handleClearFilters}
+                            >
+                                Limpiar Filtros
+                            </Button>
+                        </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            label="Observaciones"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroObservaciones}
-                            onChange={(e) => setFiltroObservaciones(e.target.value)}
-                            size="small"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Button
-                            variant="contained"
-                            startIcon={<SearchIcon />}
-                            onClick={handleApplyFilters}
-                            sx={{ mr: 1 }}
-                        >
-                            Aplicar Filtros
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<ClearIcon />}
-                            onClick={handleClearFilters}
-                        >
-                            Limpiar Filtros
-                        </Button>
-                    </Grid>
-                </Grid>
-            </Paper>
+                </Paper>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-            {loading && mantenimientos.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                    <TableContainer sx={{ maxHeight: 600 }}>
-                        <Table stickyHeader aria-label="tabla de mantenimientos">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Usuario</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Descripción</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Observaciones</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }} align="right">Acción</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {mantenimientos.length === 0 ? (
+                {loading && mantenimientos.length === 0 ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                        <TableContainer sx={{ maxHeight: 600 }}>
+                            <Table stickyHeader aria-label="tabla de mantenimientos">
+                                <TableHead>
                                     <TableRow>
-                                        <TableCell colSpan={6} align="center">
-                                            No se encontraron mantenimientos con los filtros aplicados.
-                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Usuario</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Descripción</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Observaciones</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }} align="right">Acción</TableCell>
                                     </TableRow>
-                                ) : (
-                                    mantenimientos.map((mantenimiento) => (
-                                        <TableRow hover key={mantenimiento.id}>
-                                            <TableCell>{mantenimiento.fecha ? format(new Date(mantenimiento.fecha), 'dd-MM-yyyy') : 'N/A'}</TableCell>
-                                            <TableCell>{mantenimiento.usuario_nombre}</TableCell>
-                                            <TableCell>{mantenimiento.descripcion}</TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={mantenimiento.tipo}
-                                                    sx={{
-                                                        backgroundColor:
-                                                            mantenimiento.tipo === 'Preventivo'
-                                                                ? '#e8f5e9'
-                                                                : mantenimiento.tipo === 'Correctivo'
-                                                                    ? '#ffebee'
-                                                                    : '#e3f2fd',
-                                                        color:
-                                                            mantenimiento.tipo === 'Preventivo'
-                                                                ? '#388e3c'
-                                                                : mantenimiento.tipo === 'Correctivo'
-                                                                    ? '#d32f2f'
-                                                                    : '#1e88e5',
-                                                        fontWeight: 'bold',
-                                                        fontSize: '0.75rem',
-                                                    }}
-                                                />
-                                            </TableCell>
-                                            <TableCell>{mantenimiento.observaciones || 'N/A'}</TableCell>
-                                            <TableCell align="right">
-                                                <IconButton aria-label="copiar" onClick={() => handleCopyData(mantenimiento)}>
-                                                    <ContentCopyIcon fontSize="small" />
-                                                </IconButton>
-                                                <IconButton aria-label="editar" onClick={() => handleEditMantenimiento(mantenimiento.id)}>
-                                                    <EditIcon fontSize="small" />
-                                                </IconButton>
-                                                <IconButton aria-label="eliminar" onClick={() => handleDeleteMantenimiento(mantenimiento.id)}>
-                                                    <DeleteIcon sx={{ color: '#ff443b'}} fontSize="small" />
-                                                </IconButton>
+                                </TableHead>
+                                <TableBody>
+                                    {mantenimientos.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} align="center">
+                                                No se encontraron mantenimientos con los filtros aplicados.
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        component="div"
-                        count={totalRegistros}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                        labelRowsPerPage="Filas por página:"
-                        labelDisplayedRows={({ from, to, count }) =>
-                            `${from}-${to} de ${count !== -1 ? count : `más de ${to}`} `
-                        }
-                    />
-                </Paper>
-            )}
+                                    ) : (
+                                        mantenimientos.map((mantenimiento) => (
+                                            <TableRow hover key={mantenimiento.id}>
+                                                <TableCell>{mantenimiento.fecha ? format(new Date(mantenimiento.fecha), 'dd-MM-yyyy') : 'N/A'}</TableCell>
+                                                <TableCell>{mantenimiento.usuario_nombre}</TableCell>
+                                                <TableCell>{mantenimiento.descripcion}</TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={mantenimiento.tipo}
+                                                        sx={{
+                                                            backgroundColor:
+                                                                mantenimiento.tipo === 'Preventivo'
+                                                                    ? '#e8f5e9'
+                                                                    : mantenimiento.tipo === 'Correctivo'
+                                                                        ? '#ffebee'
+                                                                        : '#e3f2fd',
+                                                            color:
+                                                                mantenimiento.tipo === 'Preventivo'
+                                                                    ? '#388e3c'
+                                                                    : mantenimiento.tipo === 'Correctivo'
+                                                                        ? '#d32f2f'
+                                                                        : '#1e88e5',
+                                                            fontWeight: 'bold',
+                                                            fontSize: '0.75rem',
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>{mantenimiento.observaciones || 'N/A'}</TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton aria-label="copiar" onClick={() => handleCopyData(mantenimiento)}>
+                                                        <ContentCopyIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton aria-label="editar" onClick={() => handleEditMantenimiento(mantenimiento.id)}>
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton aria-label="eliminar" onClick={() => handleDeleteMantenimiento(mantenimiento.id)}>
+                                                        <DeleteIcon sx={{ color: '#ff443b' }} fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25]}
+                            component="div"
+                            count={totalRegistros}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            labelRowsPerPage="Filas por página:"
+                            labelDisplayedRows={({ from, to, count }) =>
+                                `${from}-${to} de ${count !== -1 ? count : `más de ${to}`} `
+                            }
+                        />
+                    </Paper>
+                )}
 
-        </Container>
+            </Container>
         </LocalizationProvider>
     );
 }

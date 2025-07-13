@@ -21,6 +21,10 @@ import {
     IconButton
 } from '@mui/material';
 import axiosInstance from '../../api/axios'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { es } from 'date-fns/locale';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { UserContext } from '../../context/UserContext';
 import {
     Edit as EditIcon,
@@ -152,7 +156,7 @@ function ClientesPage() {
                 .catch(err => {
                     console.error('Error al copiar el correo:', err);
                 });
-        } 
+        }
     };
 
     const handleEditCliente = (id) => {
@@ -190,6 +194,10 @@ function ClientesPage() {
         navigate('/admin/eventos');
     };
 
+    const handleGoBack = () => {
+        navigate(-1);
+    };
+
 
     if (loading && clientes.length === 0) {
         return (
@@ -200,210 +208,218 @@ function ClientesPage() {
     }
 
     return (
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                LISTA DE CLIENTES
-            </Typography>
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+            {/* Flecha de vuelta */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <IconButton onClick={handleGoBack} aria-label="Volver">
+                    <ArrowBackIcon fontSize='large' />
+                </IconButton>
+            </Box>
+            <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+                <Typography variant="h4" component="h1" gutterBottom>
+                    LISTA DE CLIENTES
+                </Typography>
 
-            {/* --- Sección de Botones Grandes --- */}
-            <Grid container spacing={2} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="h6" gutterBottom>Registrar nuevo Cliente</Typography>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={handleRegisterNewCliente}
-                        >
-                            Nuevo
-                        </Button>
-                    </Paper>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="h6" gutterBottom>Exportar datos de Clientes</Typography>
-                        <Button
-                            variant="contained"
-                            onClick={handleViewEventsHistory}
-                        >
-                            Descargar PDF
-                        </Button>
-                    </Paper>
-                </Grid>
-            </Grid>
-
-            {/* --- Sección de Filtros --- */}
-            <Paper sx={{ p: 3, mb: 4 }}>
-                <Typography variant="h6" gutterBottom>Filtros</Typography>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            label="Nombre Responsable"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroNombreCliente}
-                            onChange={(e) => setFiltroNombreCliente(e.target.value)}
-                            size="small"
-                        />
+                {/* --- Sección de Botones Grandes --- */}
+                <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <Grid item xs={12} sm={4}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" gutterBottom>Registrar nuevo Cliente</Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={handleRegisterNewCliente}
+                            >
+                                Nuevo
+                            </Button>
+                        </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            label="Tipo de Negocio"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroTipoNegocio}
-                            onChange={(e) => setFiltroTipoNegocio(e.target.value)}
-                            size="small"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            label="Nombre de Negocio"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroNombreNegocio}
-                            onChange={(e) => setFiltroNombreNegocio(e.target.value)}
-                            size="small"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                            label="CUIT"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroCuit}
-                            onChange={(e) => setFiltroCuit(e.target.value)}
-                            type="number"
-                            size="small"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Button
-                            variant="contained"
-                            startIcon={<SearchIcon />}
-                            onClick={handleApplyFilters}
-                            sx={{ mr: 1 }}
-                        >
-                            Aplicar Filtros
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<ClearIcon />}
-                            onClick={handleClearFilters}
-                        >
-                            Limpiar Filtros
-                        </Button>
+                    <Grid item xs={12} sm={4}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" gutterBottom>Exportar datos de Clientes</Typography>
+                            <Button
+                                variant="contained"
+                                onClick={handleViewEventsHistory}
+                            >
+                                Descargar PDF
+                            </Button>
+                        </Paper>
                     </Grid>
                 </Grid>
-            </Paper>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {/* --- Sección de Filtros --- */}
+                <Paper sx={{ p: 3, mb: 4 }}>
+                    <Typography variant="h6" gutterBottom>Filtros</Typography>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                label="Nombre Responsable"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroNombreCliente}
+                                onChange={(e) => setFiltroNombreCliente(e.target.value)}
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                label="Tipo de Negocio"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroTipoNegocio}
+                                onChange={(e) => setFiltroTipoNegocio(e.target.value)}
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                label="Nombre de Negocio"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroNombreNegocio}
+                                onChange={(e) => setFiltroNombreNegocio(e.target.value)}
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <TextField
+                                label="CUIT"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroCuit}
+                                onChange={(e) => setFiltroCuit(e.target.value)}
+                                type="number"
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Button
+                                variant="contained"
+                                startIcon={<SearchIcon />}
+                                onClick={handleApplyFilters}
+                                sx={{ mr: 1 }}
+                            >
+                                Aplicar Filtros
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<ClearIcon />}
+                                onClick={handleClearFilters}
+                            >
+                                Limpiar Filtros
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Paper>
 
-            {loading && clientes.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                    <TableContainer sx={{ maxHeight: 600 }}>
-                        <Table stickyHeader aria-label="tabla de clientes">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>CUIT</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Negocio</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Responsable</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Teléfono</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Correo</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Dirección del Negocio</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }} align="center">Acción</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {clientes.length === 0 ? (
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+                {loading && clientes.length === 0 ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                        <TableContainer sx={{ maxHeight: 600 }}>
+                            <Table stickyHeader aria-label="tabla de clientes">
+                                <TableHead>
                                     <TableRow>
-                                        <TableCell colSpan={7} align="center">
-                                            No se encontraron clientes con los filtros aplicados.
-                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>CUIT</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Negocio</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Responsable</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Teléfono</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Correo</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Dirección del Negocio</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }} align="center">Acción</TableCell>
                                     </TableRow>
-                                ) : (
-                                    clientes.map((cliente) => (
-                                        <TableRow hover key={cliente.id}>
-                                            <TableCell>{cliente.cuit}</TableCell>
-                                            <TableCell>{cliente.nombre_negocio}</TableCell>
-                                            <TableCell>{cliente.tipo_negocio}</TableCell>
-                                            <TableCell>{cliente.nombre_responsable}</TableCell>
-                                            <TableCell>{cliente.telefono}</TableCell>
-                                            <TableCell>
-                                                {cliente.correo && (
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Link href={`mailto:${cliente.correo}`} target='_blank' rel='noopener noreferrer' sx={{ mr: 0.5 }}>
-                                                            {cliente.correo}
-                                                        </Link>
-                                                        <IconButton
-                                                            aria-label="copiar correo"
-                                                            onClick={() => handleCopyEmail(cliente.correo)}
-                                                            size="small"
-                                                            sx={{ p: 0.5 }} 
-                                                        >
-                                                            <ContentCopyIcon fontSize="inherit" /> 
-                                                        </IconButton>
-                                                    </Box>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>{cliente.direccion}</TableCell>
-                                            <TableCell align="right">
-                                                <IconButton aria-label="copiar" onClick={() => handleCopyData(cliente)}>
-                                                    <ContentCopyIcon fontSize="small" />
-                                                </IconButton>
-                                                <IconButton aria-label="editar" onClick={() => handleEditCliente(cliente.id)}>
-                                                    <EditIcon fontSize="small" />
-                                                </IconButton>
-                                                <IconButton aria-label="eliminar" onClick={() => handleDeleteCliente(cliente.id)}>
-                                                    <DeleteIcon sx={{ color: '#ff443b'}} fontSize="small" />
-                                                </IconButton>
+                                </TableHead>
+                                <TableBody>
+                                    {clientes.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} align="center">
+                                                No se encontraron clientes con los filtros aplicados.
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        component="div"
-                        count={totalRegistros}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                        labelRowsPerPage="Filas por página:"
-                        labelDisplayedRows={({ from, to, count }) =>
-                            `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-                        }
-                    />
-                </Paper>
-            )}
-
-            {/* --- Indicadores Inferiores --- */}
-            <Grid container spacing={2} sx={{ mt: 4 }}>
-                <Grid item xs={12} sm={6}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="h6" gutterBottom>Clientes activos</Typography>
-                        {/* Lógica para obtener este número */}
-                        <Typography variant="h3">4</Typography> {/* Valor hardcodeado por ahora */}
+                                    ) : (
+                                        clientes.map((cliente) => (
+                                            <TableRow hover key={cliente.id}>
+                                                <TableCell>{cliente.cuit}</TableCell>
+                                                <TableCell>{cliente.nombre_negocio}</TableCell>
+                                                <TableCell>{cliente.tipo_negocio}</TableCell>
+                                                <TableCell>{cliente.nombre_responsable}</TableCell>
+                                                <TableCell>{cliente.telefono}</TableCell>
+                                                <TableCell>
+                                                    {cliente.correo && (
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <Link href={`mailto:${cliente.correo}`} target='_blank' rel='noopener noreferrer' sx={{ mr: 0.5 }}>
+                                                                {cliente.correo}
+                                                            </Link>
+                                                            <IconButton
+                                                                aria-label="copiar correo"
+                                                                onClick={() => handleCopyEmail(cliente.correo)}
+                                                                size="small"
+                                                                sx={{ p: 0.5 }}
+                                                            >
+                                                                <ContentCopyIcon fontSize="inherit" />
+                                                            </IconButton>
+                                                        </Box>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>{cliente.direccion}</TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton aria-label="copiar" onClick={() => handleCopyData(cliente)}>
+                                                        <ContentCopyIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton aria-label="editar" onClick={() => handleEditCliente(cliente.id)}>
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton aria-label="eliminar" onClick={() => handleDeleteCliente(cliente.id)}>
+                                                        <DeleteIcon sx={{ color: '#ff443b' }} fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25]}
+                            component="div"
+                            count={totalRegistros}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            labelRowsPerPage="Filas por página:"
+                            labelDisplayedRows={({ from, to, count }) =>
+                                `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+                            }
+                        />
                     </Paper>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="h6" gutterBottom>Cliente con más Freezers</Typography>
-                        {/* Lógica para obtener este número */}
-                        <Typography variant="h3">Raúl Suarez</Typography> {/* Valor hardcodeado por ahora */}
-                    </Paper>
-                </Grid>
-            </Grid>
+                )}
 
-        </Container>
+                {/* --- Indicadores Inferiores --- */}
+                <Grid container spacing={2} sx={{ mt: 4 }}>
+                    <Grid item xs={12} sm={6}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" gutterBottom>Clientes activos</Typography>
+                            {/* Lógica para obtener este número */}
+                            <Typography variant="h3">4</Typography> {/* Valor hardcodeado por ahora */}
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" gutterBottom>Cliente con más Freezers</Typography>
+                            {/* Lógica para obtener este número */}
+                            <Typography variant="h3">Raúl Suarez</Typography> {/* Valor hardcodeado por ahora */}
+                        </Paper>
+                    </Grid>
+                </Grid>
+
+            </Container>
+        </LocalizationProvider>
     );
 }
 
