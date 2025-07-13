@@ -21,12 +21,12 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { es } from 'date-fns/locale';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
 
@@ -136,7 +136,7 @@ export default function AuditoriaPage() {
   };
 
   const handleGoBack = () => {
-    navigate(-1);
+    navigate('/admin-dashboard');
   };
 
   const handleClearFilters = () => {

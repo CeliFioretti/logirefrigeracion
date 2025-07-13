@@ -209,7 +209,7 @@ function FreezersPage() {
     };
 
     const handleGoBack = () => {
-        navigate(-1);
+        navigate('/admin-dashboard');
     };
 
 

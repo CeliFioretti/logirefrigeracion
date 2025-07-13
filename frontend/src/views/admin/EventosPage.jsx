@@ -124,7 +124,7 @@ function EventosPage() {
     };
 
     const handleGoBack = () => {
-        navigate(-1);
+        navigate('/admin-dashboard');
     };
 
     const handleApplyFilters = () => {
