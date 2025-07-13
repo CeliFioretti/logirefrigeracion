@@ -16,7 +16,7 @@ import {
 import {
   Storefront, People, EventAvailable, EventBusy, Inventory2, Settings, TrendingUp
 } from '@mui/icons-material';
-import axios from 'axios';
+import axiosInstance from '../../api/axios'
 
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -41,11 +41,7 @@ export default function AdminDashboard() {
 
     const fetchDashboard = async () => {
       try {
-        const { data } = await axios.get('http://localhost:3200/api/dashboard', {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem('token')}`
-          }
-        });
+        const { data } = await axiosInstance.get('/dashboard');
         setDashboardData(data);
       } catch (err) {
         console.error('Error al obtener datos del dashboard:', err);

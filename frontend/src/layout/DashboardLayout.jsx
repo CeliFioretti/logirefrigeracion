@@ -4,6 +4,7 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { Box, Toolbar, useMediaQuery, useTheme } from '@mui/material';
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
+import { setupAxiosInterceptors } from '../api/axios';
 
 import SideNav from '../components/SideNav';
 import TopBarAdmin from '../components/TopBarAdmin';
@@ -12,6 +13,11 @@ const drawerWidth = 300;
 
 
 function DashboardLayout() {
+
+  const { logout } = useContext(UserContext);
+  
+
+
   const navigate = useNavigate();
   const { usuario } = useContext(UserContext);
   const rol = usuario ? usuario.rol : null; // Accede al rol a través del objeto usuario
@@ -34,6 +40,10 @@ function DashboardLayout() {
   const handleMobileMenuToggle = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   }
+
+  useEffect(() => {
+    setupAxiosInterceptors(logout, navigate);
+  }, []);
 
   // Si no hay un usuario, el sistema redirige al login
   useEffect(() => {

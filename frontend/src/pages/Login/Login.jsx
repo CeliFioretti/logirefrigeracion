@@ -25,6 +25,7 @@ function Login() {
   const [password, setPassword] = useState('');
 
   const { login: userContextLogin } = useContext(UserContext);
+  const { usuario } = useContext(UserContext);
 
   const navigate = useNavigate();
 
@@ -35,21 +36,16 @@ function Login() {
 
 
   useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const usuarioData = sessionStorage.getItem('usuario');
-    const rol = usuarioData ? JSON.parse(usuarioData).rol : null;
-
-    if (token && rol) {
-      if (rol === 'administrador') {
+    if (usuario && usuario.token) {
+      if (usuario.rol === 'administrador') {
         navigate('/admin-dashboard', { replace: true });
-      } else if (rol === 'operador') {
+      } else if (usuario.rol === 'operador') {
         navigate('/operador-dashboard', { replace: true });
       } else {
-        // En caso de un rol no reconocido o por defecto, redirigir al dashboard de admin o a una página genérica
-        navigate('/admin-dashboard', { replace: true });
+        navigate('/', { replace: true });
       }
     }
-  }, [navigate]);
+  }, [usuario, navigate]);
 
 
   // Manejo del formulario Login

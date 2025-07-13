@@ -24,7 +24,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'; 
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'; 
 import { format } from 'date-fns';
-import axios from 'axios';
+import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import { es } from 'date-fns/locale';
 import {
@@ -85,13 +85,9 @@ function MantenimientoPage() {
             queryParams.append('page', searchParams.page);
             queryParams.append('pageSize', searchParams.pageSize);
 
-            const url = `http://localhost:3200/api/mantenimientos?${queryParams.toString()}`;
+            const url = `/mantenimientos?${queryParams.toString()}`;
 
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await axiosInstance.get(url)
 
             setMantenimientos(response.data.data);
             setTotalRegistros(response.data.total);
@@ -165,12 +161,8 @@ function MantenimientoPage() {
         }
         setLoading(true);
         try {
-            const url = `http://localhost:3200/api/mantenimiento/${id}`;
-            await axios.delete(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const url = `/mantenimiento/${id}`;
+            await axiosInstance.delete(url)
             alert('Mantenimiento eliminado correctamente.');
             setTriggerSearch(prev => prev + 1);
         } catch (err) {

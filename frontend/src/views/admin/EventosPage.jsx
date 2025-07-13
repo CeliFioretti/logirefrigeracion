@@ -24,7 +24,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { format } from 'date-fns';
-import axios from 'axios';
+import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import { es } from 'date-fns/locale';
 import {
@@ -80,13 +80,9 @@ function EventosPage() {
             queryParams.append('page', searchParams.page);
             queryParams.append('pageSize', searchParams.pageSize);
 
-            const url = `http://localhost:3200/api/eventos?${queryParams.toString()}`;
+            const url = `/eventos?${queryParams.toString()}`;
 
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await axiosInstance.get(url)
 
             setEventos(response.data.data);
             setTotalRegistros(response.data.total);

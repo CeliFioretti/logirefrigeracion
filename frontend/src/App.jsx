@@ -6,7 +6,7 @@ import Login from './pages/Login/Login';
 import DashboardLayout from './layout/DashboardLayout';
 import PrivateRoute from './components/PrivateRoute';
 
-// Páginas
+// Páginas de la aplicación
 import AdminDashboard from './views/admin/AdminDashboard';
 import FreezersListadoPage from './views/admin/FreezerPage'
 import FreezerDetallePage from './views/admin/FreezerDetailPage'
@@ -19,10 +19,18 @@ import DepartamentoListadoPage from './views/admin/DepartamentosPage'
 import ZonasListadoPage from './views/admin/ZonasPage'
 import AuditoriaPage from './views/admin/AuditoriaPage'
 
+// Págionas de error
+import NotFoundPage from './views/error/NotFoundPage'
+import ForbiddenPage from './views/error/ForbiddenPage'
+import SessionExpiredPage from './views/error/SessionExpiredPage';
+
 // Estilos
 import './styles/App.css';
 
+
 function App() {
+  
+
   return (
     <BrowserRouter>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -65,12 +73,18 @@ function App() {
               {/* RUTAS PARA OPERADOR */}
 
 
+              {/* Ruta para acceso denegado (Forbidden) */}
+              <Route path='/acceso-denegado' element={<ForbiddenPage />} />
+
+              {/* Ruta para la página de Sesión expirada */}
+              <Route path='/sesion-expirada' element={<SessionExpiredPage />} />
 
             </Route>
           </Route>
 
           {/* Redirección para rutas inexistentes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
+
         </Routes>
       </LocalizationProvider>
     </BrowserRouter>

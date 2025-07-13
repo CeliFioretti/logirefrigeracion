@@ -26,7 +26,7 @@ import {
     Search as SearchIcon,
     Clear as ClearIcon
 } from '@mui/icons-material';
-import axios from 'axios';
+import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -55,9 +55,8 @@ function ZonasPage() {
     const fetchDepartamentoNombre = useCallback(async () => {
         if (!token || !departamentoId) return; 
         try {
-            const response = await axios.get(`http://localhost:3200/api/ubicaciones/${departamentoId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const url = `/ubicaciones/${departamentoId}`
+            const response = await axiosInstance.get(url)
             setDepartamentoNombre(response.data.nombre); // Guarda el nombre del departamento
         } catch (err) {
             console.error('Error al obtener nombre del departamento:', err);
@@ -82,13 +81,9 @@ function ZonasPage() {
             if (searchParams.nombreZona) queryParams.append('nombre', searchParams.nombreZona);
             if (searchParams.nombreOperador) queryParams.append('operador', searchParams.nombreOperador);
 
-            const url = `http://localhost:3200/api/ubicaciones/${departamentoId}/zonas?${queryParams.toString()}`;
+            const url = `/ubicaciones/${departamentoId}/zonas?${queryParams.toString()}`;
 
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await axiosInstance.get(url)
 
             setZonas(response.data.data);
             setTotalRegistros(response.data.data.length); 
@@ -152,12 +147,8 @@ function ZonasPage() {
         }
         setLoading(true);
         try {
-            const url = `http://localhost:3200/api/ubicaciones/zonas/${zonaId}`;
-            await axios.delete(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const url = `/ubicaciones/zonas/${zonaId}`;
+            await axiosInstance.delete(url)
             alert('Zona eliminada correctamente.');
             setTriggerSearch(prev => prev + 1); // Refrescar la lista de zonas después de eliminar
         } catch (err) {

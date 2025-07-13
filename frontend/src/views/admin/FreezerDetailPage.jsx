@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../api/axios'
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -90,9 +90,8 @@ function FreezerDetailPage() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`http://localhost:3200/api/freezers/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const url = `http://localhost:3200/api/freezers/${id}`
+            const response = await axiosInstance.get(url)
 
             setFreezer(response.data.data);
 
@@ -131,11 +130,9 @@ function FreezerDetailPage() {
             queryParams.append('page', pageMant);
             queryParams.append('pageSize', rowsPerPageMant);
 
+            const url = `http://localhost:3200/api/freezers/${id}/mantenimientos?${queryParams.toString()}`
 
-            const response = await axios.get(`http://localhost:3200/api/freezers/${id}/mantenimientos?${queryParams.toString()}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
+            const response = await axiosInstance.get(url)
 
             setMantenimientos(response.data.data);
             setTotalMantenimientos(response.data.total);
@@ -159,9 +156,8 @@ function FreezerDetailPage() {
         setErrorCliente(null);
 
         try {
-            const response = await axios.get(`http://localhost:3200/api/clientes/${clienteId}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
+            const url = `http://localhost:3200/api/clientes/${clienteId}`
+            const response = await axiosInstance.get(url)
             setClienteAsignado(response.data.data);
         } catch (err) {
             console.error('Error fetching client details:', err);

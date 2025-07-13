@@ -20,7 +20,7 @@ import {
     MenuItem,
     IconButton
 } from '@mui/material';
-import axios from 'axios';
+import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import {
     Edit as EditIcon,
@@ -80,13 +80,9 @@ function ClientesPage() {
             queryParams.append('page', searchParams.page);
             queryParams.append('pageSize', searchParams.pageSize);
 
-            const url = `http://localhost:3200/api/clientes?${queryParams.toString()}`;
+            const url = `/clientes?${queryParams.toString()}`;
 
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await axiosInstance.get(url)
 
             setClientes(response.data.data);
             setTotalRegistros(response.data.total);

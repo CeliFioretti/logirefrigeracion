@@ -25,7 +25,7 @@ import {
     Visibility as VisibilityIcon, // Icono para ver zonas
     Add as AddIcon
 } from '@mui/icons-material';
-import axios from 'axios';
+import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -61,13 +61,9 @@ function DepartamentosPage() {
             queryParams.append('page', searchParams.page);
             queryParams.append('pageSize', searchParams.pageSize);
 
-            const url = `http://localhost:3200/api/ubicaciones?${queryParams.toString()}`;
+            const url = `/ubicaciones?${queryParams.toString()}`;
 
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await axiosInstance.get(url)
 
             setDepartamentos(response.data.data);
             setTotalRegistros(response.data.total);

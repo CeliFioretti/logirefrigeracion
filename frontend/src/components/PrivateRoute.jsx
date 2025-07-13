@@ -17,13 +17,13 @@ function PrivateRoute({ roles, children }) {
 
   // Verifica si NO hay un usuario autenticado
   if (!usuario || !usuario.token) {
-    return <Navigate to='/' replace />
+    return <Navigate to='/' replace state={{ from: location }} />
   }
 
   // Verificar los roles en caso de tener
   if (roles && roles.length > 0) {
     if (!usuario.rol || !roles.includes(usuario.rol)) {
-      return <Navigate to='/' replace />
+      return <Navigate to='/acceso-denegado' replace />
     }
   }
   

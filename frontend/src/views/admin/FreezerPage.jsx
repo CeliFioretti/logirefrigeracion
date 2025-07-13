@@ -21,7 +21,7 @@ import {
     Chip
 } from '@mui/material';
 import { format } from 'date-fns';
-import axios from 'axios';
+import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import {
     Edit as EditIcon,
@@ -92,13 +92,9 @@ function FreezersPage() {
             queryParams.append('page', searchParams.page);
             queryParams.append('pageSize', searchParams.pageSize);
 
-            const url = `http://localhost:3200/api/freezers?${queryParams.toString()}`;
+            const url = `/freezers?${queryParams.toString()}`;
 
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const response = await axiosInstance.get(url)
 
             setFreezers(response.data.data);
             setTotalRegistros(response.data.total);
