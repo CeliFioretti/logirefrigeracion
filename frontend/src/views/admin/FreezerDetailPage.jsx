@@ -291,7 +291,6 @@ function FreezerDetailPage() {
                     <ArrowBackIcon fontSize='large' />
                 </IconButton>
             </Box>
-            
             <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
                 <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
                     Freezer #{freezer.numero_serie || 'N/A'}
@@ -583,15 +582,7 @@ function FreezerDetailPage() {
                         >
                             Copiar datos
                         </Button>
-                    </Grid>
-                    <Grid item>
-                        <Button
-                            variant="text"
-                            onClick={() => navigate('/admin/freezers')}
-                        >
-                            Volver al Listado
-                        </Button>
-                    </Grid>
+                    </Grid>                
                 </Grid>
             </Container>
         </LocalizationProvider>

@@ -190,6 +190,10 @@ function ClientesPage() {
         navigate('/admin/clientes/nuevo');
     };
 
+    const handleViewClienteDetail = (id) => {
+        navigate(`/clientes/${id}`)
+    }
+
     const handleViewEventsHistory = () => {
         navigate('/admin/eventos');
     };
@@ -347,7 +351,21 @@ function ClientesPage() {
                                                 <TableCell>{cliente.cuit}</TableCell>
                                                 <TableCell>{cliente.nombre_negocio}</TableCell>
                                                 <TableCell>{cliente.tipo_negocio}</TableCell>
-                                                <TableCell>{cliente.nombre_responsable}</TableCell>
+                                                <TableCell>
+                                                    <Typography
+                                                        component='span'
+                                                        onClick={() => handleViewClienteDetail(cliente.id)}
+                                                        sx={{
+                                                            cursor: 'pointer',
+                                                            color: 'primary.main',
+                                                            textDecoration: 'underline',
+                                                            '&:hover': {
+                                                                color: 'primary.dark'
+                                                            }
+                                                        }}>
+                                                        {cliente.nombre_responsable}
+                                                    </Typography>
+                                                </TableCell>
                                                 <TableCell>{cliente.telefono}</TableCell>
                                                 <TableCell>
                                                     {cliente.correo && (

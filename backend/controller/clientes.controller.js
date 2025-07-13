@@ -71,21 +71,32 @@ const listar = async (req, res, next) => {
 // Obtiene los detalles de un cliente
 const detalle = async (req, res, next) => {
     const idCliente = req.params.id;
-    try {
-        let query = 'SELECT * FROM cliente WHERE id = ?';
-        const [results] = await db.promise().query(query, [idCliente])
 
-        if (results.length === 0) {
-            return res.status(200).json({
-                message: 'No hay registros del cliente',
-                data: []
-            });
-        } else {
-            res.status(200).json({
-                data: results[0]
-            });
+    try {
+        let clienteQuery = 'SELECT id, cuit, nombre_negocio, nombre_responsable, DATE_FORMAT(fecha_registro, "%d-%m-%Y") as fecha_registro, telefono, correo, direccion, tipo_negocio, imagen FROM cliente WHERE id = ?'
+        const [clienteResults] = await db.promise().query(clienteQuery, [idCliente]);
+
+        if (clienteResults.length === 0) {
+            return res.status(404).json({
+                message: 'Cliente no encontrado'
+            })
         }
+
+        const cliente = clienteResults[0];
+
+        let freezerQuery = 'SELECT id, numero_serie, modelo, marca, tipo, capacidad, estado, imagen FROM freezer WHERE cliente_id = ?'
+        const [freezersResults] = await db.promise().query(freezerQuery, [idCliente]);
+
+        res.status(200).json({
+            data: {
+                cliente: cliente,
+                freezersAsignados: freezersResults,
+                totalFreezers: freezersResults.length
+            }
+        })
+        
     } catch (err) {
+        console.error('Error al obtener detalles del cliente:', err)
         next(err)
     }
 }
