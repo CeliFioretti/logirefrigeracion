@@ -25,6 +25,10 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import { UserContext } from '../../../context/UserContext';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { es } from 'date-fns/locale';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import {
     Search as SearchIcon,
     Clear as ClearIcon,
@@ -110,6 +114,10 @@ function OperadoresPage() {
         setPage(0);
     };
 
+    const handleGoBack = () => {
+        navigate(-1);
+    }
+
     const handleSearch = () => {
         setPage(0);
         fetchOperadores({ nombre: filtroNombre, page: 0, pageSize: rowsPerPage });
@@ -171,150 +179,158 @@ function OperadoresPage() {
     }
 
     return (
-        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                OPERADORES
-            </Typography>
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+            {/* Flecha de vuelta */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <IconButton onClick={handleGoBack} aria-label="Volver">
+                    <ArrowBackIcon fontSize='large' />
+                </IconButton>
+            </Box>
+            <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+                <Typography variant="h4" component="h1" gutterBottom>
+                    OPERADORES
+                </Typography>
 
-            <Paper sx={{ p: 3, mb: 4 }}>
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={6} md={4}>
-                        <TextField
-                            label="Buscar por Nombre"
-                            variant="outlined"
-                            fullWidth
-                            value={filtroNombre}
-                            onChange={(e) => setFiltroNombre(e.target.value)}
-                            size="small"
-                        />
+                <Paper sx={{ p: 3, mb: 4 }}>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={6} md={4}>
+                            <TextField
+                                label="Buscar por Nombre"
+                                variant="outlined"
+                                fullWidth
+                                value={filtroNombre}
+                                onChange={(e) => setFiltroNombre(e.target.value)}
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={8}>
+                            <Button
+                                variant="contained"
+                                startIcon={<SearchIcon />}
+                                onClick={handleSearch}
+                                sx={{ mr: 1 }}
+                            >
+                                Buscar
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                startIcon={<ClearIcon />}
+                                onClick={handleClearSearch}
+                            >
+                                Limpiar
+                            </Button>
+                        </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={8}>
-                        <Button
-                            variant="contained"
-                            startIcon={<SearchIcon />}
-                            onClick={handleSearch}
-                            sx={{ mr: 1 }}
-                        >
-                            Buscar
-                        </Button>
-                        <Button
-                            variant="outlined"
-                            startIcon={<ClearIcon />}
-                            onClick={handleClearSearch}
-                        >
-                            Limpiar
-                        </Button>
-                    </Grid>
-                </Grid>
-            </Paper>
+                </Paper>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-            {loading && usuarios.length === 0 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                    <TableContainer sx={{ maxHeight: 600 }}>
-                        <Table stickyHeader aria-label="tabla de operadores">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Nombre</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Correo</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Acción</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {usuarios.length === 0 ? (
+                {loading && usuarios.length === 0 ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+                        <TableContainer sx={{ maxHeight: 600 }}>
+                            <Table stickyHeader aria-label="tabla de operadores">
+                                <TableHead>
                                     <TableRow>
-                                        <TableCell colSpan={4} align="center">
-                                            No se encontraron operadores con los filtros aplicados.
-                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Nombre</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Correo</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Acción</TableCell>
                                     </TableRow>
-                                ) : (
-                                    usuarios.map((usuarioItem) => (
-                                        <TableRow hover key={usuarioItem.id}>
-                                            <TableCell>{usuarioItem.nombre}</TableCell>
-                                            <TableCell>{usuarioItem.correo}</TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={usuarioItem.activo ? 'Activo' : 'Inactivo'}
-                                                    color={usuarioItem.activo ? 'success' : 'error'}
-                                                    size="small"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <IconButton
-                                                    aria-label="editar"
-                                                    onClick={() => handleEditClick(usuarioItem.id)}
-                                                    size="small"
-                                                >
-                                                    <EditIcon />
-                                                </IconButton>
-                                                <IconButton
-                                                    aria-label="resetear contraseña"
-                                                    onClick={() => handleResetPasswordClick(usuarioItem.id)}
-                                                    size="small"
-                                                >
-                                                    <LockResetIcon />
-                                                </IconButton>
-                                                <IconButton
-                                                    aria-label="eliminar"
-                                                    onClick={() => handleDeleteClick(usuarioItem.id, usuarioItem.nombre)}
-                                                    size="small"
-                                                    color="error"
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
+                                </TableHead>
+                                <TableBody>
+                                    {usuarios.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={4} align="center">
+                                                No se encontraron operadores con los filtros aplicados.
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        component="div"
-                        count={totalRegistros}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
-                        labelRowsPerPage="Filas por página:"
-                        labelDisplayedRows={({ from, to, count }) =>
-                            `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-                        }
-                    />
-                </Paper>
-            )}
+                                    ) : (
+                                        usuarios.map((usuarioItem) => (
+                                            <TableRow hover key={usuarioItem.id}>
+                                                <TableCell>{usuarioItem.nombre}</TableCell>
+                                                <TableCell>{usuarioItem.correo}</TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={usuarioItem.activo ? 'Activo' : 'Inactivo'}
+                                                        color={usuarioItem.activo ? 'success' : 'error'}
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <IconButton
+                                                        aria-label="editar"
+                                                        onClick={() => handleEditClick(usuarioItem.id)}
+                                                        size="small"
+                                                    >
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        aria-label="resetear contraseña"
+                                                        onClick={() => handleResetPasswordClick(usuarioItem.id)}
+                                                        size="small"
+                                                    >
+                                                        <LockResetIcon />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        aria-label="eliminar"
+                                                        onClick={() => handleDeleteClick(usuarioItem.id, usuarioItem.nombre)}
+                                                        size="small"
+                                                        color="error"
+                                                    >
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <TablePagination
+                            rowsPerPageOptions={[5, 10, 25]}
+                            component="div"
+                            count={totalRegistros}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            labelRowsPerPage="Filas por página:"
+                            labelDisplayedRows={({ from, to, count }) =>
+                                `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+                            }
+                        />
+                    </Paper>
+                )}
 
-            {/* Diálogo de Confirmación de Eliminación */}
-            <Dialog
-                open={openDeleteDialog}
-                onClose={handleCancelDelete}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <DialogTitle id="alert-dialog-title">{"Confirmar Eliminación"}</DialogTitle>
-                <DialogContent>
-                    <Typography>
-                        ¿Está seguro de que desea eliminar al operador " **{userNameToDelete}** "?
-                        Esta acción no se puede deshacer.
-                    </Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCancelDelete} color="primary">
-                        Cancelar
-                    </Button>
-                    <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                        Eliminar
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
+                {/* Diálogo de Confirmación de Eliminación */}
+                <Dialog
+                    open={openDeleteDialog}
+                    onClose={handleCancelDelete}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                >
+                    <DialogTitle id="alert-dialog-title">{"Confirmar Eliminación"}</DialogTitle>
+                    <DialogContent>
+                        <Typography>
+                            ¿Está seguro de que desea eliminar al operador " **{userNameToDelete}** "?
+                            Esta acción no se puede deshacer.
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCancelDelete} color="primary">
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleConfirmDelete} color="error" autoFocus>
+                            Eliminar
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Container>
+        </LocalizationProvider>
     );
 }
 

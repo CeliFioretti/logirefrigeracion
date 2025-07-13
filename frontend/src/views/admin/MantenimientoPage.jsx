@@ -23,11 +23,11 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { es } from 'date-fns/locale';
 import { format } from 'date-fns';
 import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { es } from 'date-fns/locale';
 import {
     Edit as EditIcon,
     Delete as DeleteIcon,
