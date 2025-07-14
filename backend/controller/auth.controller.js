@@ -118,7 +118,7 @@ const solicitarRecuperacion = async (req, res) => {
 
         res.status(200).json({
             message: 'Solicitud de recuperación creada',
-            tokenRecuperacion: token  // El frontend lo usaría en un enlace del tipo: /recuperar?token=...
+            tokenRecuperacion: token 
         });
 
     } catch (error) {

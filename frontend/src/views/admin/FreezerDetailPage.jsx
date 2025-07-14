@@ -230,7 +230,7 @@ function FreezerDetailPage() {
     };
 
     const handleGoBack = () => {
-        navigate(-1);
+        navigate('/freezers');
     };
 
     const handleApplyFilters = () => {
@@ -302,27 +302,27 @@ function FreezerDetailPage() {
                         <Typography variant="h6" gutterBottom>Detalles del Freezer</Typography>
                         <Divider sx={{ mb: 2 }} />
                         <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid >
                                 <Typography variant="subtitle1" color="text.secondary">Número de Serie:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{freezer.numero_serie || 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid >
                                 <Typography variant="subtitle1" color="text.secondary">Modelo:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{freezer.modelo || 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid >
                                 <Typography variant="subtitle1" color="text.secondary">Marca:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{freezer.marca || 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid >
                                 <Typography variant="subtitle1" color="text.secondary">Tipo:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{freezer.tipo || 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid >
                                 <Typography variant="subtitle1" color="text.secondary">Capacidad:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{freezer.capacidad ? `${freezer.capacidad} Litros` : 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid >
                                 <Typography variant="subtitle1" color="text.secondary">Estado:</Typography>
                                 <Chip
                                     label={freezer.estado || 'Desconocido'}
@@ -413,7 +413,7 @@ function FreezerDetailPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros de Mantenimiento</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={4} md={3}>
+                        <Grid >
                             <TextField
                                 label="Operador (Nombre de Usuario)" // Actualizado el label
                                 variant="outlined"
@@ -423,7 +423,7 @@ function FreezerDetailPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={4} md={3}>
+                        <Grid >
                             <DatePicker
                                 label="Fecha Desde"
                                 value={filtroFechaDesde}
@@ -432,7 +432,7 @@ function FreezerDetailPage() {
                                 slotProps={{ textField: { fullWidth: true, size: 'small' } }}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={4} md={3}>
+                        <Grid >
                             <DatePicker
                                 label="Fecha Hasta"
                                 value={filtroFechaHasta}
@@ -442,7 +442,7 @@ function FreezerDetailPage() {
                                 slotProps={{ textField: { fullWidth: true, size: 'small' } }}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={4} md={3}>
+                        <Grid >
                             <TextField
                                 select
                                 label="Tipo"
@@ -460,7 +460,7 @@ function FreezerDetailPage() {
                                 ))}
                             </TextField>
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}
@@ -565,7 +565,7 @@ function FreezerDetailPage() {
 
                 {/* Sección de Botones de Acción */}
                 <Grid container spacing={2} justifyContent="flex-end" sx={{ mt: 4 }}>
-                    <Grid item>
+                    <Grid >
                         <Button
                             variant="contained"
                             startIcon={<EditIcon />}
@@ -574,7 +574,7 @@ function FreezerDetailPage() {
                             Editar datos del Freezer
                         </Button>
                     </Grid>
-                    <Grid item>
+                    <Grid >
                         <Button
                             variant="outlined"
                             startIcon={<ContentCopyIcon />}
