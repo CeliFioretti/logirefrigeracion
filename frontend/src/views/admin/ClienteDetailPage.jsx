@@ -92,13 +92,8 @@ function ClienteDetailPage() {
         setErrorClient(null);
         try {
             const url = `/clientes/${id}`;
-            const response = await axiosInstance.get(url, {
-                headers: {
-                    'x-access-token': token,
-                },
-            });
+            const response = await axiosInstance.get(url)
             setCurrentClient(response.data.data.cliente);
-            console.log(currentClient)
         } catch (err) {
             console.error('Error fetching client details:', err);
             setErrorClient('Error al cargar los detalles del cliente. Inténtelo de nuevo.');
@@ -120,11 +115,7 @@ function ClienteDetailPage() {
         try {
 
             const url = `/freezers/cliente/${id}?pageSize=999`; 
-            const response = await axiosInstance.get(url, {
-                headers: {
-                    'x-access-token': token,
-                },
-            });
+            const response = await axiosInstance.get(url)
 
             setFreezersAsignados(response.data.data || []);
         } catch (err) {
@@ -253,23 +244,23 @@ function ClienteDetailPage() {
                         <Typography variant="h6" gutterBottom>Detalles del Cliente</Typography>
                         <Divider sx={{ mb: 2 }} />
                         <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid>
                                 <Typography variant="subtitle1" color="text.secondary">CUIT:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{currentClient.cuit || 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid>
                                 <Typography variant="subtitle1" color="text.secondary">Email:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{currentClient.correo || 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid>
                                 <Typography variant="subtitle1" color="text.secondary">Teléfono:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{currentClient.telefono || 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid>
                                 <Typography variant="subtitle1" color="text.secondary">Dirección:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{currentClient.direccion || 'N/A'}</Typography>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid>
                                 <Typography variant="subtitle1" color="text.secondary">Tipo de Negocio:</Typography>
                                 <Typography variant="body1" fontWeight="bold">{currentClient.tipo_negocio || 'N/A'}</Typography>
                             </Grid>
@@ -447,7 +438,7 @@ function ClienteDetailPage() {
 
                 {/* Sección de Botones de Acción */}
                 <Grid container spacing={2} justifyContent="flex-end" sx={{ mt: 4 }}>
-                    <Grid item>
+                    <Grid>
                         <Button
                             variant="contained"
                             startIcon={<EditIcon />}
@@ -456,7 +447,7 @@ function ClienteDetailPage() {
                             Editar datos del Cliente
                         </Button>
                     </Grid>
-                    <Grid item>
+                    <Grid>
                         <Button
                             variant="outlined"
                             startIcon={<ContentCopyIcon />}

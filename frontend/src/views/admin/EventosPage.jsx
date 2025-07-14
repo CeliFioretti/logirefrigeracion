@@ -168,7 +168,7 @@ function EventosPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Usuario"
                                 variant="outlined"
@@ -178,7 +178,7 @@ function EventosPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Cliente"
                                 variant="outlined"
@@ -188,7 +188,7 @@ function EventosPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Tipo de Evento"
                                 select
@@ -206,7 +206,7 @@ function EventosPage() {
                                 ))}
                             </TextField>
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Observaciones"
                                 variant="outlined"
@@ -216,7 +216,7 @@ function EventosPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <DatePicker
                                 label="Fecha Desde"
                                 value={filtroFechaDesde}
@@ -225,7 +225,7 @@ function EventosPage() {
                                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <DatePicker
                                 label="Fecha Hasta"
                                 value={filtroFechaHasta}
@@ -235,7 +235,7 @@ function EventosPage() {
                                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}

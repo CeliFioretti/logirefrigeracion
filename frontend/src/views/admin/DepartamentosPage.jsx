@@ -145,7 +145,7 @@ function DepartamentosPage() {
                 </Typography>
 
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Registrar Departamento</Typography>
                             <Button
@@ -162,7 +162,7 @@ function DepartamentosPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={4}>
+                        <Grid >
                             <TextField
                                 label="Nombre del Departamento"
                                 variant="outlined"
@@ -172,7 +172,7 @@ function DepartamentosPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
+                        <Grid >
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}

@@ -122,7 +122,7 @@ function ZonasPage() {
     };
 
     const handleGoBack = () => {
-        navigate(-1);
+        navigate('/ubicaciones');
     };
 
     const handleChangeRowsPerPage = (event) => {
@@ -195,16 +195,13 @@ function ZonasPage() {
             </Box>
             <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <IconButton onClick={handleBackToDepartamentos} sx={{ mr: 1 }}>
-                        <ArrowBackIcon />
-                    </IconButton>
                     <Typography variant="h4" component="h1" gutterBottom>
                         ZONAS DE: {departamentoNombre}
                     </Typography>
                 </Box>
 
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Registrar Zona</Typography>
                             <Button
@@ -221,7 +218,7 @@ function ZonasPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Nombre de la Zona"
                                 variant="outlined"
@@ -231,7 +228,7 @@ function ZonasPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Nombre del Operador"
                                 variant="outlined"
@@ -241,7 +238,7 @@ function ZonasPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={4}>
+                        <Grid >
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}

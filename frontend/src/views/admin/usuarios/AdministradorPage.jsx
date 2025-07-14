@@ -196,7 +196,7 @@ function AdministradoresPage() {
 
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={4}>
+                        <Grid >
                             <TextField
                                 label="Buscar por Nombre"
                                 variant="outlined"
@@ -206,7 +206,7 @@ function AdministradoresPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={8}>
+                        <Grid >
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}

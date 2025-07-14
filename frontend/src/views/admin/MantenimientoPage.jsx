@@ -204,7 +204,7 @@ function MantenimientoPage() {
                 </Typography>
 
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Registrar Mantenimiento</Typography>
                             <Button
@@ -221,7 +221,7 @@ function MantenimientoPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Nombre de Usuario"
                                 variant="outlined"
@@ -231,7 +231,7 @@ function MantenimientoPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Descripción"
                                 variant="outlined"
@@ -241,7 +241,7 @@ function MantenimientoPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 select
                                 label="Tipo"
@@ -251,7 +251,7 @@ function MantenimientoPage() {
                                 onChange={(e) => setFiltroTipo(e.target.value)}
                                 size="small"
                             >
-                                <Grid item xs={12} sm={6} md={3}>
+                                <Grid >
                                     <DatePicker
                                         label="Fecha Desde"
                                         value={filtroFechaDesde}
@@ -260,7 +260,7 @@ function MantenimientoPage() {
                                         renderInput={(params) => <TextField {...params} fullWidth size="small" />}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={6} md={3}>
+                                <Grid >
                                     <DatePicker
                                         label="Fecha Hasta"
                                         value={filtroFechaHasta}
@@ -278,7 +278,7 @@ function MantenimientoPage() {
                                 ))}
                             </TextField>
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <TextField
                                 label="Observaciones"
                                 variant="outlined"
@@ -288,7 +288,7 @@ function MantenimientoPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid >
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}

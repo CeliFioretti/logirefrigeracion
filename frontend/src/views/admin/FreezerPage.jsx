@@ -37,7 +37,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useNavigate } from 'react-router-dom';
 import { es } from 'date-fns/locale';
-import axios from 'axios';
 
 function FreezersPage() {
     const { usuario } = useContext(UserContext);
@@ -90,7 +89,7 @@ function FreezersPage() {
             if (searchParams.estado) queryParams.append('estado', searchParams.estado);
             if (searchParams.nserie) queryParams.append('nserie', searchParams.nserie);
 
-            if (searchParams.fechaCompra) queryParams.append('fechaCompra', format(searchParams.fechaCompra, 'yyyy-MM-dd'));
+            if (searchParams.fechaCompra) queryParams.append('fechaCompra', searchParams.fechaCompra);
 
             queryParams.append('page', searchParams.page);
             queryParams.append('pageSize', searchParams.pageSize);
@@ -126,7 +125,7 @@ function FreezersPage() {
         };
 
         fetchFreezers(currentSearchParams);
-    }, [fetchFreezers, page, rowsPerPage, triggerSearch]);
+    }, [fetchFreezers, page, rowsPerPage, triggerSearch, filtroModelo, filtroTipo, filtroCapacidad, filtroEstado, filtroNSerie, filtroFechaCompra]);
 
     // Manejadores de paginación
     const handleChangePage = (event, newPage) => {
@@ -154,7 +153,6 @@ function FreezersPage() {
         setFiltroNSerie('');
         setFiltroFechaCompra('');
         setPage(0); // Resetear a la primera página
-        fetchFreezers({ page: 0 })
         setTriggerSearch(prev => prev + 1);
     };
 
@@ -179,7 +177,7 @@ function FreezersPage() {
             const url = `/freezers/${id}`;
             await axiosInstance.delete(url)
             alert('Freezer eliminado correctamente.');
-
+            setTriggerSearch(prev => prev + 1); // Para recargar la lista
 
         } catch (err) {
             console.error('Error al eliminar freezer:', err);
@@ -237,7 +235,7 @@ function FreezersPage() {
 
                 {/* --- Sección de Botones Grandes --- */}
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid >
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Registrar Freezer</Typography>
                             <Button
@@ -249,7 +247,7 @@ function FreezersPage() {
                             </Button>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
+                    <Grid >
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Historial de eventos</Typography>
                             <Button
@@ -260,7 +258,7 @@ function FreezersPage() {
                             </Button>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
+                    <Grid >
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Entregas vs Retiros</Typography>
                             <Button
@@ -277,7 +275,7 @@ function FreezersPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="Modelo"
                                 variant="outlined"
@@ -287,7 +285,7 @@ function FreezersPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="Tipo"
                                 variant="outlined"
@@ -297,7 +295,7 @@ function FreezersPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="N° de Serie"
                                 variant="outlined"
@@ -307,7 +305,7 @@ function FreezersPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="Capacidad"
                                 variant="outlined"
@@ -318,7 +316,7 @@ function FreezersPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 select
                                 label="Estado"
@@ -336,7 +334,7 @@ function FreezersPage() {
                                 ))}
                             </TextField>
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="Fecha Compra"
                                 type="date"
@@ -348,7 +346,7 @@ function FreezersPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}
@@ -507,14 +505,14 @@ function FreezersPage() {
 
                 {/* --- Indicadores Inferiores --- */}
                 <Grid container spacing={2} sx={{ mt: 4 }}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Freezers activos</Typography>
                             {/* Lógica para obtener este número */}
                             <Typography variant="h3">4</Typography> {/* Valor hardcodeado por ahora */}
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Mantenimientos pendientes</Typography>
                             {/* Lógica para obtener este número */}

@@ -19,9 +19,7 @@ export const UserProvider = ({ children }) => {
             
             sessionStorage.removeItem('usuario'); 
           }
-        } else {
-          console.log('UserContext: No hay usuario en sessionStorage.'); 
-        }
+        } 
       } catch (e) {
         console.error('Error al cargar usuario de sessionStorage:', e);
         sessionStorage.removeItem('usuario');

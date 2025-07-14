@@ -199,7 +199,7 @@ function ClientesPage() {
     };
 
     const handleGoBack = () => {
-        navigate(-1);
+        navigate('/admin-dashboard');
     };
 
 
@@ -226,7 +226,7 @@ function ClientesPage() {
 
                 {/* --- Sección de Botones Grandes --- */}
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Registrar nuevo Cliente</Typography>
                             <Button
@@ -238,7 +238,7 @@ function ClientesPage() {
                             </Button>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Exportar datos de Clientes</Typography>
                             <Button
@@ -255,7 +255,7 @@ function ClientesPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="Nombre Responsable"
                                 variant="outlined"
@@ -265,7 +265,7 @@ function ClientesPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="Tipo de Negocio"
                                 variant="outlined"
@@ -275,7 +275,7 @@ function ClientesPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="Nombre de Negocio"
                                 variant="outlined"
@@ -285,7 +285,7 @@ function ClientesPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <TextField
                                 label="CUIT"
                                 variant="outlined"
@@ -296,7 +296,7 @@ function ClientesPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6} md={3}>
+                        <Grid>
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}
@@ -420,14 +420,14 @@ function ClientesPage() {
 
                 {/* --- Indicadores Inferiores --- */}
                 <Grid container spacing={2} sx={{ mt: 4 }}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Clientes activos</Typography>
                             {/* Lógica para obtener este número */}
                             <Typography variant="h3">4</Typography> {/* Valor hardcodeado por ahora */}
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={6}>
+                    <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Cliente con más Freezers</Typography>
                             {/* Lógica para obtener este número */}

@@ -167,7 +167,7 @@ export default function AuditoriaPage() {
           <Typography variant="h6" sx={{ mb: 2 }}>Filtros de Búsqueda</Typography>
           <Grid container spacing={2} alignItems="center">
             {/* Filtro por ID de Usuario */}
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid >
               <TextField
                 label="ID Usuario"
                 variant="outlined"
@@ -178,7 +178,7 @@ export default function AuditoriaPage() {
               />
             </Grid>
             {/* Filtro por Nombre de Usuario */}
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid >
               <TextField
                 label="Nombre Usuario"
                 variant="outlined"
@@ -189,7 +189,7 @@ export default function AuditoriaPage() {
               />
             </Grid>
             {/* Filtro por Contenido de Acción */}
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid >
               <TextField
                 label="Contenido de Acción"
                 variant="outlined"
@@ -216,7 +216,7 @@ export default function AuditoriaPage() {
               />
             </Grid>
             {/* Filtro por Fecha Desde */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid >
               <DatePicker
                 label="Fecha Desde"
                 value={filtroFechaDesde}
@@ -226,7 +226,7 @@ export default function AuditoriaPage() {
               />
             </Grid>
             {/* Filtro por Fecha Hasta */}
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid >
               <DatePicker
                 label="Fecha Hasta"
                 value={filtroFechaHasta}
@@ -237,7 +237,7 @@ export default function AuditoriaPage() {
             </Grid>
 
             {/* Botones de acción */}
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid >
               <Button
                 variant="contained"
                 startIcon={<SearchIcon />}
@@ -247,7 +247,7 @@ export default function AuditoriaPage() {
                 Aplicar Filtros
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid >
               <Button
                 variant="outlined"
                 startIcon={<ClearIcon />}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Container,
@@ -36,20 +36,20 @@ const resumenes = [
 export default function AdminDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
 
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const {data} = await axiosInstance.get('/dashboard')
+      setDashboardData(data);
+
+    } catch (err) {
+      console.error('Error al obtener datos del dashboard:', err)
+    }
+  }, [])
+
   useEffect(() => {
     document.title = 'Dashboard - Admin';
-
-    const fetchDashboard = async () => {
-      try {
-        const { data } = await axiosInstance.get('/dashboard');
-        setDashboardData(data);
-      } catch (err) {
-        console.error('Error al obtener datos del dashboard:', err);
-      }
-    };
-
     fetchDashboard();
-  }, []);
+  }, [fetchDashboard])
 
   // Función para preparar los datos del gráfico
   const getChartData = () => {
@@ -76,14 +76,14 @@ export default function AdminDashboard() {
 
       <Grid container spacing={5} justifyContent="center">
         {!dashboardData ? (
-          <Grid item xs={12}>
+          <Grid>
             <Box display="flex" justifyContent="center" >
               <CircularProgress />
             </Box>
           </Grid>
         ) : (
           resumenes.map((item, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}
+            <Grid key={index}
               sx={{ display: 'flex', justifyContent: 'center' }}
             >
               <Paper
