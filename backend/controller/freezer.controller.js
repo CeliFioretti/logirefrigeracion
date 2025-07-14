@@ -1,12 +1,19 @@
 const db = require('../config/db.js')
 const notificacionController = require('./notificaciones.controller.js');
 
-
 const listar = async (req, res, next) => {
     const { modelo, tipo, fechaCompra, capacidad, estado, nserie, page, pageSize } = req.query;
 
     try {
-        let query = 'SELECT * FROM freezer';
+        let query = `
+            SELECT 
+                f.*, 
+                c.nombre_responsable AS nombre_responsable_cliente 
+            FROM 
+                freezer f
+            LEFT JOIN 
+                cliente c ON f.cliente_id = c.id
+        `;
         let countQuery = 'SELECT COUNT(*) as total FROM freezer';
 
         let condiciones = [];
@@ -14,39 +21,39 @@ const listar = async (req, res, next) => {
         let countParams = [];
 
         if (modelo) {
-            condiciones.push('modelo LIKE ?');
+            condiciones.push('f.modelo LIKE ?');
             params.push(`%${modelo}%`);
             countParams.push(`%${modelo}%`);
         }
         if (tipo) {
-            condiciones.push('tipo LIKE ?');
+            condiciones.push('f.tipo LIKE ?');
             params.push(`%${tipo}%`);
             countParams.push(`%${tipo}%`);
         }
         if (fechaCompra) {
-            condiciones.push('fecha_creacion LIKE ?');
+            condiciones.push('f.fecha_creacion LIKE ?');
             params.push(`%${fechaCompra}%`);
             countParams.push(fechaCompra);
         }
         if (capacidad) {
-            condiciones.push('capacidad LIKE ?');
+            condiciones.push('f.capacidad LIKE ?');
             params.push(`%${capacidad}%`);
             countParams.push(capacidad);
         }
         if (estado) {
-            condiciones.push('estado LIKE ?');
+            condiciones.push('f.estado LIKE ?');
             params.push(`%${estado}%`);
             countParams.push(`%${estado}%`);
         }
         if (nserie) {
-            condiciones.push('numero_serie LIKE ?');
+            condiciones.push('f.numero_serie LIKE ?');
             params.push(`%${nserie}%`);
             countParams.push(`%${nserie}%`);
         }
 
         if (condiciones.length > 0) {
             const whereClause = ' WHERE ' + condiciones.join(' AND ');
-            query += ' WHERE ' + condiciones.join(' AND ');
+            query += whereClause;
             countQuery += whereClause;
         }
 
@@ -61,25 +68,16 @@ const listar = async (req, res, next) => {
         const [totalResult] = await db.promise().query(countQuery, countParams);
         const totalRegistros = totalResult[0].total;
 
-
-        if (freezers.length === 0) {
-            res.status(200).json({
-                message: 'No hay registros de usuario actualmente',
-                data: []
-            })
-        } else {
-            res.status(200).json({
-                data: freezers,
-                total: totalRegistros,
-                message: freezers.length === 0 ? 'No se encontraron freezers con los criterios especificados.' : undefined
-            })
-        }
+        res.status(200).json({
+            data: freezers,
+            total: totalRegistros,
+            message: freezers.length === 0 ? 'No se encontraron freezers con los criterios especificados.' : undefined
+        });
 
     } catch (error) {
-        next(error)
+        next(error);
     }
-
-}
+};
 
 const detalle = async (req, res, next) => {
     const idFreezer = req.params.id;
@@ -273,27 +271,31 @@ const eliminar = async (req, res, next) => {
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-        let querySelect = 'SELECT * FROM freezer WHERE id = ?';
-        let queryDelete = 'DELETE FROM freezer WHERE id =?';
+        const [freezers] = await db.promise().query('SELECT id, numero_serie, cliente_id FROM freezer WHERE id = ?', [id]);
 
-        const [freezer] = await db.promise().query(querySelect, [id]);
-
-        if (freezer.length === 0) {
+        if (freezers.length === 0) {
             return res.status(404).json({
                 message: 'Freezer no encontrado'
-            })
+            });
         }
 
-        const nserieFreezer = freezer[0].numero_serie;
+        const freezer = freezers[0];
+        const nserieFreezer = freezer.numero_serie;
 
-        await db.promise().query(queryDelete, [id])
+        if (freezer.cliente_id !== null) {
+            return res.status(409).json({ 
+                message: 'No se puede eliminar el freezer porque está asignado a un cliente. Primero debe desasignarlo.'
+            });
+        }
 
-        const mensaje = `Eliminación de freezer con nº: ${nserieFreezer.replace(/'/g, "")}`
+        await db.promise().query('DELETE FROM freezer WHERE id = ?', [id]);
+
+        const mensaje = `Eliminación de freezer con nº de serie: ${nserieFreezer.replace(/'/g, "")} (ID: ${id})`;
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(200).json({
             message: 'Freezer eliminado correctamente'
-        })
+        });
     } catch (err) {
         next(err);
     }
@@ -328,6 +330,43 @@ const asignarFreezer = async (req, res, next) => {
         );
 
         res.status(200).json({ message: 'Freezer asignado correctamente' });
+
+    } catch (err) {
+        next(err);
+    }
+};
+
+const desasignarFreezer = async (req, res, next) => {
+    const id = req.params.id;
+
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    try {
+        const [ freezers ] = await db.promise().query('SELECT id, numero_serie, cliente_id, estado FROM freezer WHERE id = ?', [id])
+
+        if (freezers.length === 0) {
+            return res.status(404).json({ error: 'Freezer no encontrado'});
+        }
+
+        const freezer = freezers[0];
+        const nserieFreezer = freezer.numero_serie;
+
+        if (freezer.cliente_id === null || freezer.estado === 'Disponible') {
+            return res.status(400).json({ error: 'El freezer ya no está asignado o está disponible'});
+        }
+
+        await db.promise().query('UPDATE freezer SET cliente_id = NULL, estado = "Disponible" WHERE id = ?', [id]);
+
+        const mensaje = `Desasignación de freezer ID ${id} (N° Serie: ${nserieFreezer.replace(/'/g, "")})`;
+        await db.promise().query(`
+            INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
+            VALUES (?, ?, NOW(), ?)`,
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
+        );
+
+        res.status(200).json({ message: 'Freezer desasignado correctamente' });
+
 
     } catch (err) {
         next(err);
@@ -481,5 +520,6 @@ module.exports = {
     freezersPorCliente,
     asignarFreezer,
     liberar,
-    obtenerMantenimientosPropios
+    obtenerMantenimientosPropios,
+    desasignarFreezer
 }

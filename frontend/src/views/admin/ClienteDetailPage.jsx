@@ -159,6 +159,10 @@ function ClienteDetailPage() {
         navigate(-1);
     };
 
+    const handleViewFreezerDetail = (freezerId) => {
+        navigate(`/freezers/${freezerId}`);
+    };
+
     // Lógica del Carrusel
     const handleNextFreezer = () => {
         setCurrentFreezerIndex((prevIndex) => {

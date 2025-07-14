@@ -158,7 +158,7 @@ function FreezerDetailPage() {
         try {
             const url = `http://localhost:3200/api/clientes/${clienteId}`
             const response = await axiosInstance.get(url)
-            setClienteAsignado(response.data.data);
+            setClienteAsignado(response.data.data.cliente);
         } catch (err) {
             console.error('Error fetching client details:', err);
             setErrorCliente('Error al cargar los detalles del cliente asignado');
@@ -250,6 +250,9 @@ function FreezerDetailPage() {
     const handleViewMantenimientoDetail = (mantenimientoId) => {
         console.log(`Ver detalles del mantenimiento ID: ${mantenimientoId}`);
 
+    };
+    const handleViewClientDetail = (clienteId) => {
+        navigate(`/clientes/${clienteId}`)
     };
 
 

@@ -26,6 +26,9 @@ router.delete('/:id', soloAdmin, freezerController.eliminar);
 // Asignar freezer - PUT
 router.put('/:id/asignar', soloAdmin, freezerController.asignarFreezer);
 
+// Desasignar freezer - PUT
+router.patch('/:id/desasignar', soloAdmin, freezerController.desasignarFreezer);
+
 // Ver freezers de un cliente - GET
 router.get('/cliente/:id', soloAdmin, freezerController.freezersPorCliente);
 

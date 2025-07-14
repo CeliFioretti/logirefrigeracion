@@ -18,16 +18,17 @@ import {
     Grid,
     MenuItem,
     IconButton,
-    Chip
+    Chip,
+    Tooltip
 } from '@mui/material';
 import { format } from 'date-fns';
 import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import {
     Edit as EditIcon,
-    Delete as DeleteIcon,
     ContentCopy as ContentCopyIcon,
     PersonAdd as PersonAddIcon,
+    PersonRemove as PersonRemoveIcon,
     Search as SearchIcon,
     Clear as ClearIcon,
     Add as AddIcon
@@ -57,6 +58,8 @@ function FreezersPage() {
     const [filtroNSerie, setFiltroNSerie] = useState('');
     const [filtroFechaCompra, setFiltroFechaCompra] = useState('');
 
+    const [dashboardData, setDashboardData] = useState(null);
+
     // Estados para la paginación
     const [page, setPage] = useState(0); // Página actual (0-indexed)
     const [rowsPerPage, setRowsPerPage] = useState(10); // Elementos por página
@@ -69,11 +72,11 @@ function FreezersPage() {
 
     // Función para obtener los datos de los freezers
     const fetchFreezers = useCallback(async (searchParams) => {
-        
+
         if (!token) {
             setError('No autenticado. Por favor, inicie sesión.');
             setLoading(false);
-            
+
             return;
         }
 
@@ -110,6 +113,17 @@ function FreezersPage() {
         }
     }, [token]);
 
+    const fetchDashboard = useCallback(async () => {
+        try {
+            const { data } = await axiosInstance.get('/dashboard')
+            setDashboardData(data);
+
+        } catch (err) {
+            console.error('Error al obtener datos del dashboard:', err)
+        }
+
+    }, [])
+
     useEffect(() => {
         document.title = 'Listado de Freezers - Admin';
 
@@ -125,7 +139,11 @@ function FreezersPage() {
         };
 
         fetchFreezers(currentSearchParams);
-    }, [fetchFreezers, page, rowsPerPage, triggerSearch, filtroModelo, filtroTipo, filtroCapacidad, filtroEstado, filtroNSerie, filtroFechaCompra]);
+
+        fetchDashboard();
+
+    }, [fetchFreezers, fetchDashboard, page, rowsPerPage, triggerSearch, filtroModelo, filtroTipo, filtroCapacidad, filtroEstado, filtroNSerie, filtroFechaCompra]);
+
 
     // Manejadores de paginación
     const handleChangePage = (event, newPage) => {
@@ -168,25 +186,6 @@ function FreezersPage() {
         navigate(`/freezers/editar/${id}`);
     };
 
-    const handleDeleteFreezer = async (id) => {
-        if (!window.confirm(`¿Está seguro que desea eliminar el freezer con ID: ${id}?`)) {
-            return;
-        }
-        setLoading(true);
-        try {
-            const url = `/freezers/${id}`;
-            await axiosInstance.delete(url)
-            alert('Freezer eliminado correctamente.');
-            setTriggerSearch(prev => prev + 1); // Para recargar la lista
-
-        } catch (err) {
-            console.error('Error al eliminar freezer:', err);
-            setError('Error al eliminar el freezer.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleViewFreezerDetail = (id) => {
         navigate(`/freezers/${id}`)
     }
@@ -210,6 +209,33 @@ function FreezersPage() {
     const handleGoBack = () => {
         navigate('/admin-dashboard');
     };
+
+    const handleDesasignarFreezer = async (freezerId, numero_serie) => {
+        if (!window.confirm(`Está seguro que desea desasignar el freezer Nº de Serie: ${numero_serie} del cliente actual y establecerlo como "Disponible"?`)){
+            return;
+        }
+        setLoading(true);
+        setError(null);
+
+        try {
+            await axiosInstance.patch(`/freezers/${freezerId}/desasignar`)
+
+            alert(`Freezer desasignado correctamente.`);
+            setTriggerSearch(prev => prev + 1);
+
+        } catch (err) {
+            console.error('Error al desasignar freezer:', err);
+            setError(`Error al desasignar el freezer: ${err.response?.data?.message || err.message}.`);
+        } finally {
+            setLoading(false);
+        }
+        
+    }
+
+    const handleViewClientDetail = (clienteId) => {
+        navigate(`/clientes/${clienteId}`)
+    };
+
 
 
     if (loading && freezers.length === 0) {
@@ -253,6 +279,7 @@ function FreezersPage() {
                             <Button
                                 variant="contained"
                                 onClick={handleViewEventsHistory}
+                                disabled={true}
                             >
                                 Ver actividad
                             </Button>
@@ -264,6 +291,7 @@ function FreezersPage() {
                             <Button
                                 variant="contained"
                                 onClick={handleViewStats}
+                                disabled={true}
                             >
                                 Ver estadísticas
                             </Button>
@@ -386,13 +414,14 @@ function FreezersPage() {
                                         <TableCell sx={{ fontWeight: 'bold' }}>Capacidad</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Marca</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Cliente</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }} align="right">Acción</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {freezers.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={9} align="center">
+                                            <TableCell colSpan={10} align="center">
                                                 No se encontraron freezers con los filtros aplicados.
                                             </TableCell>
                                         </TableRow>
@@ -451,22 +480,38 @@ function FreezersPage() {
                                                         label={freezer.estado}
                                                         sx={{
                                                             backgroundColor:
-                                                                freezer.estado === 'Disponible'
-                                                                    ? '#e8f5e9'
-                                                                    : freezer.estado === 'Asignado'
-                                                                        ? '#e3f2fd'
-                                                                        : '#ffebee',
+                                                            freezer.estado === 'Disponible'
+                                                            ? '#e8f5e9'
+                                                            : freezer.estado === 'Asignado'
+                                                            ? '#e3f2fd'
+                                                            : '#ffebee',
                                                             color:
-                                                                freezer.estado === 'Disponible'
-                                                                    ? '#388e3c'
-                                                                    : freezer.estado === 'Asignado'
-                                                                        ? '#1e88e5'
-                                                                        : '#d32f2f',
+                                                            freezer.estado === 'Disponible'
+                                                            ? '#388e3c'
+                                                            : freezer.estado === 'Asignado'
+                                                            ? '#1e88e5'
+                                                            : '#d32f2f',
                                                             fontWeight: 'bold',
                                                             fontSize: '0.75rem',
                                                         }}
-                                                    />
+                                                        />
                                                 </TableCell>
+                                                <TableCell>
+                                                    <Typography
+                                                        component='span'
+                                                        onClick={() => handleViewClientDetail(freezer.cliente_id)}
+                                                        sx={{
+                                                            cursor: 'pointer',
+                                                            color: 'primary.main',
+                                                            textDecoration: 'underline',
+                                                            '&:hover': {
+                                                                color: 'primary.dark'
+                                                            }
+                                                        }}>
+                                                        {freezer.nombre_responsable_cliente || ''}
+                                                    </Typography>
+                                                    
+                                                    </TableCell>
                                                 <TableCell align="right">
                                                     <IconButton aria-label="copiar" onClick={() => handleCopyData(freezer)}>
                                                         <ContentCopyIcon fontSize="small" />
@@ -474,12 +519,22 @@ function FreezersPage() {
                                                     <IconButton aria-label="editar" onClick={() => handleEditFreezer(freezer.id)}>
                                                         <EditIcon fontSize="small" />
                                                     </IconButton>
-                                                    <IconButton aria-label="eliminar" onClick={() => handleDeleteFreezer(freezer.id)}>
-                                                        <DeleteIcon sx={{ color: '#ff443b' }} fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton aria-label="asignar cliente" onClick={() => handleAssignClient(freezer.id)}>
-                                                        <PersonAddIcon fontSize="small" />
-                                                    </IconButton>
+
+                                                    {freezer.estado === 'Disponible' && (
+                                                        <Tooltip title='Asignar cliente'>
+                                                            <IconButton aria-label="asignar cliente" onClick={() => handleAssignClient(freezer.id)}>
+                                                                <PersonAddIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
+
+                                                    {freezer.estado === 'Asignado' && (
+                                                        <Tooltip title='Desasignar cliente'>
+                                                            <IconButton aria-label="desasignar cliente" onClick={() => handleDesasignarFreezer(freezer.id, freezer.numero_serie)}>
+                                                                <PersonRemoveIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         ))
@@ -508,15 +563,14 @@ function FreezersPage() {
                     <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Freezers activos</Typography>
-                            {/* Lógica para obtener este número */}
-                            <Typography variant="h3">4</Typography> {/* Valor hardcodeado por ahora */}
+                            <Typography variant="h3">{dashboardData.freezersPrestados}</Typography> 
+                            
                         </Paper>
                     </Grid>
                     <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Mantenimientos pendientes</Typography>
-                            {/* Lógica para obtener este número */}
-                            <Typography variant="h3">1</Typography> {/* Valor hardcodeado por ahora */}
+                            <Typography variant="h3">{dashboardData.mantenimientosPendientes}</Typography> 
                         </Paper>
                     </Grid>
                 </Grid>
