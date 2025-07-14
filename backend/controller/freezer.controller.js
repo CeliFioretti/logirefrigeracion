@@ -2,7 +2,6 @@ const db = require('../config/db.js')
 const notificacionController = require('./notificaciones.controller.js');
 
 
-// Obtener registro completo de freezers
 const listar = async (req, res, next) => {
     const { modelo, tipo, fechaCompra, capacidad, estado, nserie, page, pageSize } = req.query;
 
@@ -48,11 +47,11 @@ const listar = async (req, res, next) => {
         if (condiciones.length > 0) {
             const whereClause = ' WHERE ' + condiciones.join(' AND ');
             query += ' WHERE ' + condiciones.join(' AND ');
-            countQuery += whereClause; 
+            countQuery += whereClause;
         }
 
-        const pageNum = parseInt(page) || 0; 
-        const pageSizeNum = parseInt(pageSize) || 10; 
+        const pageNum = parseInt(page) || 0;
+        const pageSizeNum = parseInt(pageSize) || 10;
         const offset = pageNum * pageSizeNum;
 
         query += ` LIMIT ? OFFSET ?`;
@@ -60,7 +59,7 @@ const listar = async (req, res, next) => {
 
         const [freezers] = await db.promise().query(query, params);
         const [totalResult] = await db.promise().query(countQuery, countParams);
-        const totalRegistros = totalResult[0].total; // El total de registros que cumplen los filtros
+        const totalRegistros = totalResult[0].total;
 
 
         if (freezers.length === 0) {
@@ -82,7 +81,6 @@ const listar = async (req, res, next) => {
 
 }
 
-// Obtiene los detalles de un freezer
 const detalle = async (req, res, next) => {
     const idFreezer = req.params.id;
 
@@ -105,7 +103,6 @@ const detalle = async (req, res, next) => {
     }
 }
 
-// Crea un freezer - POST
 const crear = async (req, res, next) => {
     const {
         cliente_id,
@@ -114,7 +111,7 @@ const crear = async (req, res, next) => {
         tipo,
         marca,
         capacidad,
-        estado, // Baja o Mantenimiento
+        estado,
         imagen
     } = req.body;
 
@@ -133,14 +130,11 @@ const crear = async (req, res, next) => {
             return res.status(400).json({ error: 'El número de serie contiene caracteres no válidos' });
         }
 
-        // La idea del estado, es que si no va en el body pero tiene un cliente_id este se ajuste a un estado de: Asignado. Sinó tiene cliente_id este será disponible
-        // Aun así se permite ingresar manualmente 2 estados diferentes como el de Baja o Mantenimiento
         const clienteAsignado = cliente_id && !isNaN(cliente_id) ? Number(cliente_id) : null;
 
         const estadosValidos = ["Disponible", "Asignado", "Baja", "Mantenimiento"];
         let estadoFinal = estado?.trim() || "";
 
-        // Verificamos tambien que si hay un cliente_id pero el estado fue insertado manualmente como Baja o Mantenimiento esto no sea compatible.
         if (clienteAsignado && (estadoFinal === "Baja" || estadoFinal === "Mantenimiento")) {
             return res.status(400).json({ error: 'Un freezer asignado a un cliente no puede estar en Baja o Mantenimiento' });
         }
@@ -148,7 +142,7 @@ const crear = async (req, res, next) => {
         if (clienteAsignado) {
             estadoFinal = "Asignado";
         } else if ( estadoFinal === "Asignado"  && clienteAsignado === null ) {
-            return res.status(400).json({ error: 'Un freezer no puede estar asignado sin un cliente' }); 
+            return res.status(400).json({ error: 'Un freezer no puede estar asignado sin un cliente' });
         }
         else if (!estadoFinal) {
             estadoFinal = "Disponible";
@@ -165,29 +159,19 @@ const crear = async (req, res, next) => {
 
         await db.promise().query(query, [clienteAsignado, numero_serie, modelo, tipo, marcaAsignada, capacidad, estadoFinal, imagenAsignada]);
 
-        // Auditoría
         const mensaje = `Se creó un nuevo freezer: Número de serie ${numero_serie}`;
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
-        // Notificación si hay cliente asignado
         if (clienteAsignado) {
             const [[cliente]] = await db.promise().query('SELECT nombre_responsable FROM cliente WHERE id = ?', [clienteAsignado]);
-
-            const [[operador]] = await db.promise().query(`
-                SELECT usuario_id FROM asignacioncliente
-                WHERE cliente_id = ? ORDER BY fecha_asignacion DESC LIMIT 1
-            `, [clienteAsignado]);
-
-            if (operador) {
-                await notificacionController.crear({
-                    usuario_id: operador.usuario_id,
-                    titulo: `Nuevo freezer asignado`,
-                    mensaje: `Se te ha asignado el freezer ${numero_serie} para el cliente ${cliente?.nombre_responsable || 'N/A'}.`,
-                    tipo: 'freezer',
-                    referencia_tipo: 'freezer',
-                    referencia_id: null
-                });
-            }
+            await notificacionController.crear({
+                usuario_id: idUsuarioResponsable,
+                titulo: `Nuevo freezer asignado`,
+                mensaje: `El freezer ${numero_serie} ha sido asignado al cliente ${cliente?.nombre_responsable || 'N/A'}.`,
+                tipo: 'freezer',
+                referencia_tipo: 'freezer',
+                referencia_id: null
+            });
         }
 
         res.status(201).json({
@@ -198,7 +182,6 @@ const crear = async (req, res, next) => {
     }
 };
 
-// Editar freezer - PUT
 const editar = async (req, res, next) => {
     const id = req.params.id;
 
@@ -242,55 +225,36 @@ const editar = async (req, res, next) => {
             return res.status(400).json({ error: 'Un freezer con cliente no puede estar en estado Disponible' });
         }
 
-        // Obtener datos actuales del freezer
         const [[freezerAnterior]] = await db.promise().query('SELECT cliente_id, estado, numero_serie FROM freezer WHERE id = ?', [id]);
 
         const query = `UPDATE freezer SET ${setClause.join(', ')} WHERE id = ?`;
         params.push(id);
         await db.promise().query(query, params);
 
-        // Auditoría
         const mensaje = `Edición de freezer ID ${id}`;
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
-        // Notificación si se asignó un nuevo cliente
         if (cliente_id && cliente_id !== freezerAnterior.cliente_id) {
             const [[cliente]] = await db.promise().query('SELECT nombre_responsable FROM cliente WHERE id = ?', [cliente_id]);
-
-            const [[operador]] = await db.promise().query(`
-                SELECT usuario_id FROM asignacioncliente
-                WHERE cliente_id = ? ORDER BY fecha_asignacion DESC LIMIT 1
-            `, [cliente_id]);
-
-            if (operador) {
-                await notificacionController.crear({
-                    usuario_id: operador.usuario_id,
-                    titulo: `Nuevo freezer asignado`,
-                    mensaje: `Se te ha asignado el freezer ${freezerAnterior.numero_serie} para el cliente ${cliente?.nombre_responsable || 'N/A'}.`,
-                    tipo: 'freezer',
-                    referencia_tipo: 'freezer',
-                    referencia_id: Number(id)
-                });
-            }
+            await notificacionController.crear({
+                usuario_id: idUsuarioResponsable,
+                titulo: `Nuevo freezer asignado`,
+                mensaje: `El freezer ${freezerAnterior.numero_serie} ha sido asignado al cliente ${cliente?.nombre_responsable || 'N/A'}.`,
+                tipo: 'freezer',
+                referencia_tipo: 'freezer',
+                referencia_id: Number(id)
+            });
         }
 
-        // Notificación si se puso en Baja o Mantenimiento
         if (estado && (estado === "Baja" || estado === "Mantenimiento") && freezerAnterior.cliente_id) {
-            const [[operador]] = await db.promise().query(`
-                SELECT usuario_id FROM asignacioncliente
-                WHERE cliente_id = ? ORDER BY fecha_asignacion DESC LIMIT 1
-            `, [freezerAnterior.cliente_id]);
-
-            if (operador) {
-                await notificacionController.crear({
-                    usuario_id: operador.usuario_id,
-                    titulo: `Estado de freezer actualizado`,
-                    mensaje: `El freezer ${freezerAnterior.numero_serie} cambió su estado a ${estado}.`,
-                    tipo: 'freezer',
-                    referencia_tipo: 'freezer',
-                    referencia_id: Number(id)
-                });
-            }
+            await notificacionController.crear({
+                usuario_id: idUsuarioResponsable,
+                titulo: `Estado de freezer actualizado`,
+                mensaje: `El freezer ${freezerAnterior.numero_serie} cambió su estado a ${estado}.`,
+                tipo: 'freezer',
+                referencia_tipo: 'freezer',
+                referencia_id: Number(id)
+            });
         }
 
         res.status(201).json({
@@ -302,11 +266,9 @@ const editar = async (req, res, next) => {
 };
 
 
-// Eliminar freezer - DELETE
 const eliminar = async (req, res, next) => {
     const id = req.params.id;
 
-    // Auditoría
     const idUsuarioResponsable = req.usuario.id;
     const nombreUsuarioResponsable = req.usuario.nombre;
 
@@ -326,7 +288,6 @@ const eliminar = async (req, res, next) => {
 
         await db.promise().query(queryDelete, [id])
 
-        // Auditoría
         const mensaje = `Eliminación de freezer con nº: ${nserieFreezer.replace(/'/g, "")}`
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
@@ -339,12 +300,10 @@ const eliminar = async (req, res, next) => {
 
 }
 
-// Asignar freezer - PUT
 const asignarFreezer = async (req, res, next) => {
     const id = req.params.id;
     const { cliente_id } = req.body;
 
-    // Auditoría
     const idUsuarioResponsable = req.usuario.id;
     const nombreUsuarioResponsable = req.usuario.nombre;
 
@@ -361,10 +320,9 @@ const asignarFreezer = async (req, res, next) => {
 
         await db.promise().query('UPDATE freezer SET cliente_id = ?, estado = "Asignado" WHERE id = ?', [cliente_id, id]);
 
-        // Auditoría
         const mensaje = `Asignación de freezer ID ${id} al cliente ID ${cliente_id}`;
         await db.promise().query(`
-            INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) 
+            INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
             VALUES (?, ?, NOW(), ?)`,
             [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
         );
@@ -376,13 +334,12 @@ const asignarFreezer = async (req, res, next) => {
     }
 };
 
-// Obtener freezers de un cliente - GET
 const freezersPorCliente = async (req, res, next) => {
     const idCliente = req.params.id;
 
     try {
         let query = `
-        SELECT f.id, f.numero_serie, f.modelo, f.tipo, f.fecha_creacion, 
+        SELECT f.id, f.numero_serie, f.modelo, f.tipo, f.fecha_creacion,
         f.marca, f.capacidad, f.estado, f.imagen
         FROM freezer f
         WHERE f.cliente_id = ?
@@ -407,7 +364,6 @@ const freezersPorCliente = async (req, res, next) => {
     }
 }
 
-// Liberar un freezer - PUT
 const liberar = async (req, res, next) => {
 
     const id = req.params.id;
@@ -422,7 +378,6 @@ const liberar = async (req, res, next) => {
 
         await db.promise().query('UPDATE freezer SET cliente_id = NULL, estado = "Disponible" WHERE id = ?', [id]);
 
-        // Auditoría
         const mensaje = `Se desasignó el freezer con ID ${id}`;
         await db.promise().query(
             'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
@@ -476,7 +431,7 @@ const obtenerMantenimientosPropios = async (req, res, next) => {
 
         query += ' ORDER BY fecha DESC';
 
-        const pageNum = parseInt(page) || 0; 
+        const pageNum = parseInt(page) || 0;
         const pageSizeNum = parseInt(pageSize) || 10;
         const offset = pageNum * pageSizeNum;
 
@@ -489,11 +444,11 @@ const obtenerMantenimientosPropios = async (req, res, next) => {
 
 
         if (mantenimientos.length === 0 && condiciones.length > 0) {
-            
+
             return res.status(200).json({
                 message: 'No se encontraron mantenimientos para este freezer con los criterios especificados.',
                 data: [],
-                total: 0 
+                total: 0
             });
         } else if (mantenimientos.length === 0) {
             return res.status(200).json({
@@ -507,7 +462,7 @@ const obtenerMantenimientosPropios = async (req, res, next) => {
             data: mantenimientos,
             total: totalRegistros
         });
-    
+
     } catch (err) {
         console.error('Error al obtener mantenimientos del freezer:', err);
         next(err)

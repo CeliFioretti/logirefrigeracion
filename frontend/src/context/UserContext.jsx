@@ -14,7 +14,13 @@ export const UserProvider = ({ children }) => {
           const parsedUser = JSON.parse(storedUser);
           if (parsedUser && parsedUser.token) {
             setUsuario(parsedUser);
+            
+          } else {
+            
+            sessionStorage.removeItem('usuario'); 
           }
+        } else {
+          console.log('UserContext: No hay usuario en sessionStorage.'); 
         }
       } catch (e) {
         console.error('Error al cargar usuario de sessionStorage:', e);
@@ -23,7 +29,6 @@ export const UserProvider = ({ children }) => {
         setLoadingUser(false);
       }
     }
-
     loadUserFromStorage();
   }, []);
 
@@ -39,12 +44,12 @@ export const UserProvider = ({ children }) => {
 
 
   return (
-    <UserContext.Provider value={{ 
-      usuario, 
-      login, 
-      logout, 
+    <UserContext.Provider value={{
+      usuario,
+      login,
+      logout,
       loadingUser
-      }}>
+    }}>
       {children}
     </UserContext.Provider>
   );

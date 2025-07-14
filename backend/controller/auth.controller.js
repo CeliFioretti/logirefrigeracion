@@ -15,8 +15,6 @@ const login = async (req, res) => {
         }
 
         const usuario = filas[0]; 
-        const rol = usuario.rol;
-        const nombreUsuario = usuario.nombre;
 
         const passwordValida = await bcrypt.compare(password, usuario.password);
 
@@ -28,16 +26,21 @@ const login = async (req, res) => {
             return res.status(403).json({ error: 'El usuario esta inactivo' });
         }
 
+        const payload = {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            rol: usuario.rol
+        }
+
         const token = jwt.sign(
-            { id: usuario.id, nombre: usuario.nombre, rol: usuario.rol, correo: usuario.correo },
-            process.env.JWT_SECRET,
-            { expiresIn: '2h' }
+            payload, process.env.JWT_SECRET, { expiresIn: '2h' }
         );
 
         res.status(200).json({
-            token,
-            rol,
-            nombreUsuario,
+            message: 'Inicio de sesión exitoso',
+            token: token,
+            nombreUsuario: usuario.nombre,
+            rol: usuario.rol,
             requiereCambioPassword: usuario.requiere_cambio_password === 1
         });
 

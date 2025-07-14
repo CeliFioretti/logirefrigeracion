@@ -12,6 +12,10 @@ const cors = require('cors');
 // Middlewares
 const errorHandler = require('./middlewares/errorHandler.js');
 
+// Aumenta el límite de tamaño de la carga útil
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
 // Rutas
 const rutaAuth = require('./routes/auth.routes.js');
 const rutaUsuario = require('./routes/usuario.routes.js');
@@ -29,10 +33,8 @@ const rutaCodigosRegistro = require('./routes/codigos-registro.routes.js');
 app.use(cors({
     origin: `http://localhost:5173`,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-
-app.use(express.json());
 
 
 app.use('/api/auth', rutaAuth);

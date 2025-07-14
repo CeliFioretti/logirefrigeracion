@@ -37,6 +37,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useNavigate } from 'react-router-dom';
 import { es } from 'date-fns/locale';
+import axios from 'axios';
 
 function FreezersPage() {
     const { usuario } = useContext(UserContext);
@@ -69,9 +70,11 @@ function FreezersPage() {
 
     // Función para obtener los datos de los freezers
     const fetchFreezers = useCallback(async (searchParams) => {
+        
         if (!token) {
             setError('No autenticado. Por favor, inicie sesión.');
             setLoading(false);
+            
             return;
         }
 
@@ -95,6 +98,7 @@ function FreezersPage() {
             const url = `/freezers?${queryParams.toString()}`;
 
             const response = await axiosInstance.get(url)
+
 
             setFreezers(response.data.data);
             setTotalRegistros(response.data.total);
@@ -172,14 +176,11 @@ function FreezersPage() {
         }
         setLoading(true);
         try {
-            const url = `${process.env.REACT_APP_API_BASE_URL}/freezer/${id}`;
-            await axios.delete(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const url = `/freezers/${id}`;
+            await axiosInstance.delete(url)
             alert('Freezer eliminado correctamente.');
-            fetchFreezers(); // Refrescar la lista
+
+
         } catch (err) {
             console.error('Error al eliminar freezer:', err);
             setError('Error al eliminar el freezer.');
