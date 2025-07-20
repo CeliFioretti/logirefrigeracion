@@ -64,7 +64,7 @@ function FreezersPage() {
     const [page, setPage] = useState(0); // Página actual (0-indexed)
     const [rowsPerPage, setRowsPerPage] = useState(10); // Elementos por página
 
-    // Opciones para el filtro de estado (ejemplo, ajusta según tus valores reales)
+    // Opciones para el filtro de estado
     const estadosFreezer = ['Disponible', 'Asignado', 'Mantenimiento', 'Baja', 'Dañado/Baja'];
 
     // Estado para disparar la búsqueda de filtros y la carga inicial
