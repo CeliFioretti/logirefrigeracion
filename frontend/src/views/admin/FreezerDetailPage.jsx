@@ -230,7 +230,7 @@ function FreezerDetailPage() {
     };
 
     const handleGoBack = () => {
-        navigate('/freezers');
+        navigate('/freezers/listado');
     };
 
     const handleApplyFilters = () => {
@@ -505,7 +505,7 @@ function FreezerDetailPage() {
                                 <TableBody>
                                     {mantenimientos.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} align="center"> {/* Ajusta el colSpan */}
+                                            <TableCell colSpan={5} align="center"> 
                                                 No se encontraron mantenimientos para este freezer con los filtros aplicados.
                                             </TableCell>
                                         </TableRow>

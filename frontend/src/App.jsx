@@ -17,6 +17,7 @@ import AdminDashboard from './views/admin/AdminDashboard';
 import FreezersListadoPage from './views/admin/FreezerPage';
 import FreezerDetallePage from './views/admin/FreezerDetailPage';
 import FreezerForm from './components/FreezerForm';
+import AsignarForm from './components/AsignarFreezerForm';
 import ClientesListadoPage from './views/admin/ClientesPage';
 import ClienteDetallePage from './views/admin/ClienteDetailPage';
 import MantenimientosListadoPage from './views/admin/MantenimientoPage';
@@ -68,9 +69,11 @@ function App() {
                         <Route element={<DashboardLayout />}>
                             <Route path='/admin-dashboard' element={<AdminDashboard />} />
 
-                            <Route path='/freezers' element={<FreezersListadoPage />} />
+                            <Route path='/freezers/listado' element={<FreezersListadoPage />} />
                             <Route path='/freezers/:id' element={<FreezerDetallePage />} />
                             <Route path='/freezers/nuevo' element={<FreezerForm />} />
+                            <Route path='/freezers/editar/:id' element={<FreezerForm />} />
+                            <Route path='/freezers/:id/asignar' element={<AsignarForm />} />
 
                             <Route path='/clientes' element={<ClientesListadoPage />} />
                             <Route path='/clientes/:id' element={<ClienteDetallePage />} />

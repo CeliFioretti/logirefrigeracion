@@ -136,16 +136,16 @@ export default function SideNav({ open, toggleDrawer, drawerWidth }) {
         <Divider sx={{ my: 1, borderColor: darkGrey }} />
 
         {/* FREEZERS */}
-        <ListItemButton onClick={() => handleToggle('freezers')} selected={isParentActive(['/freezers', '/freezers/nuevo'])}>
-          <ListItemIcon><AcUnitIcon sx={{ color: isParentActive(['/freezers', '/freezers/nuevo', '/freezers/editar']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Freezers" sx={{ fontWeight: isParentActive(['/freezers', '/freezers/nuevo', '/freezers/editar']) ? 'bold' : 'normal', color: isParentActive(['/freezers', '/freezers/nuevo', '/freezers/editar']) ? activeTextColor : primaryColor }} />
+        <ListItemButton onClick={() => handleToggle('freezers')} selected={isParentActive(['/freezers/listado', '/freezers/nuevo'])}>
+          <ListItemIcon><AcUnitIcon sx={{ color: isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/editar']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Freezers" sx={{ fontWeight: isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/editar']) ? 'bold' : 'normal', color: isParentActive(['/freezers', '/freezers/nuevo', '/freezers/editar']) ? activeTextColor : primaryColor }} />
           {openMenus.freezers ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.freezers || isParentActive(['/freezers', '/freezers/nuevo', '/freezers/editar'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.freezers || isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/editar'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/freezers')} selected={isActive('/freezers')}>
-              <ListItemIcon><ListAltIcon sx={{ color: isActive('/freezers') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Listado" sx={{ fontWeight: isActive('/freezers') ? 'bold' : 'normal', color: isActive('/freezers') ? activeTextColor : primaryColor }} />
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/freezers/listado')} selected={isActive('/freezers/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/freezers/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Listado" sx={{ fontWeight: isActive('/freezers/listado') ? 'bold' : 'normal', color: isActive('/freezers/listado') ? activeTextColor : primaryColor }} />
             </ListItemButton>
             <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/freezers/nuevo')} selected={isActive('/freezers/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: isActive('/freezers/nuevo') ? activeIconColor : primaryColor }} /></ListItemIcon>
