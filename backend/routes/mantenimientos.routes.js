@@ -13,13 +13,16 @@ const soloOperador = [verificarToken, verificarRol('operador')];
 router.get('/', soloAdmin, mantenimientoController.listar);
 
 // Registrar un mantenimiento - POST
-router.post('/', verificarToken, verificarRol('administrador', 'operador'), mantenimientoController.registrar);
+router.post('/', soloAdmin, mantenimientoController.registrar);
 
 // Actualizar mantenimiento - PUT
 router.put('/:id', soloAdmin, mantenimientoController.actualizar);
 
 // Ver mis mantenimientos realizados (Operador) - GET
 router.get('/mis-mantenimientos', soloOperador, mantenimientoController.misMantenimientos);
+
+// Obtener un mantenimiento por ID - GET 
+router.get('/:id', soloAdmin, mantenimientoController.obtenerPorId);
 
 
 

@@ -1,8 +1,27 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../api/axios';
-import '../styles/FreezerForm.css';
-import { UserContext } from '../context/UserContext'
+import { UserContext } from '../context/UserContext';
+
+// Importaciones de Material-UI
+import {
+    Box,
+    TextField,
+    Button,
+    Typography,
+    Container,
+    Alert,
+    CircularProgress,
+    MenuItem, 
+    FormControl,
+    InputLabel,
+    Select,
+    Grid, 
+    FormHelperText, 
+    Paper, 
+    Stack, 
+} from '@mui/material';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 const FreezerForm = () => {
     const { id } = useParams();
@@ -28,74 +47,70 @@ const FreezerForm = () => {
         estado: 'Disponible'
     });
 
-    // Para la validación
     const [formErrors, setFormErrors] = useState({});
-
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
     const [clientes, setClientes] = useState([]);
-    const tiposFreezer = ["Horizontal", "Horizontal No-Frost", "Vertical", "Vertical No-Frost"];
-    const estadosManualesFreezer = ["Baja", "Mantenimiento"];
 
+    const tiposFreezer = ["Horizontal", "Horizontal No-Frost", "Vertical", "Vertical No-Frost"];
+    const estadosManualesFreezer = ["Baja", "Mantenimiento"]; // Estados que se pueden seleccionar manualmente
+
+    // Función de validación de campo individual
     const validateField = (name, value) => {
-        let error = '';
+        let errorMsg = '';
         switch (name) {
             case 'modelo':
-                // Ejemplo: Modelo debe ser alfanumérico con guiones, entre 3 y 15 caracteres
                 if (!value.trim()) {
-                    error = 'El modelo es requerido.';
+                    errorMsg = 'El modelo es requerido.';
                 } else if (!/^[a-zA-Z0-9-]{3,15}$/.test(value)) {
-                    error = 'El modelo debe contener letras, números o guiones y tener entre 3 y 15 caracteres. Ej: FZ-300';
+                    errorMsg = 'El modelo debe contener letras, números o guiones y tener entre 3 y 15 caracteres. Ej: FZ-300';
                 }
                 break;
             case 'numero_serie':
-                // Ejemplo: Número de serie debe ser alfanumérico con guiones/espacios, entre 5 y 20 caracteres
                 if (!value.trim()) {
-                    error = 'El número de serie es requerido.';
+                    errorMsg = 'El número de serie es requerido.';
                 } else if (!/^[a-zA-Z0-9- ]{5,20}$/.test(value)) {
-                    error = 'El número de serie debe contener letras, números, guiones o espacios y tener entre 5 y 20 caracteres. Ej: HZ-LG-2025-001';
+                    errorMsg = 'El número de serie debe contener letras, números, guiones o espacios y tener entre 5 y 20 caracteres. Ej: HZ-LG-2025-001';
                 }
                 break;
             case 'tipo':
                 if (!value) {
-                    error = 'El tipo es requerido.';
+                    errorMsg = 'El tipo es requerido.';
                 }
                 break;
             case 'fecha_creacion':
                 if (!value) {
-                    error = 'La fecha de adquisición es requerida.';
+                    errorMsg = 'La fecha de adquisición es requerida.';
                 } else {
-                    // Validar que la fecha no sea en el futuro
                     const selectedDate = new Date(value);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     if (selectedDate > today) {
-                        error = 'La fecha de adquisición no puede ser futura.';
+                        errorMsg = 'La fecha de adquisición no puede ser futura.';
                     }
                 }
                 break;
             case 'marca':
                 if (!value.trim()) {
-                    error = 'La marca es requerida.';
+                    errorMsg = 'La marca es requerida.';
                 } else if (value.trim().length < 2 || value.trim().length > 20) {
-                    error = 'La marca debe tener entre 2 y 20 caracteres.';
+                    errorMsg = 'La marca debe tener entre 2 y 20 caracteres.';
                 }
                 break;
             case 'capacidad':
-                // Capacidad debe ser un número positivo
                 const numValue = Number(value);
                 if (isNaN(numValue) || value === '') {
-                    error = 'La capacidad es requerida y debe ser un número.';
+                    errorMsg = 'La capacidad es requerida y debe ser un número.';
                 } else if (numValue <= 0) {
-                    error = 'La capacidad debe ser un número positivo.';
+                    errorMsg = 'La capacidad debe ser un número positivo.';
                 }
                 break;
             default:
                 break;
         }
-        return error;
+        return errorMsg;
     };
 
     // Función de validación de todo el formulario
@@ -103,7 +118,6 @@ const FreezerForm = () => {
         let errors = {};
         let isValid = true;
 
-        // Validar todos los campos requeridos y con patrones específicos
         const fieldsToValidate = ['modelo', 'numero_serie', 'tipo', 'fecha_creacion', 'marca', 'capacidad'];
         fieldsToValidate.forEach(field => {
             const error = validateField(field, formData[field]);
@@ -118,70 +132,65 @@ const FreezerForm = () => {
     };
 
     useEffect(() => {
-        if (id) {
-            setIsEditing(true);
-            const fetchFreezer = async () => {
+        const fetchData = async () => {
+            if (usuario?.token) {
                 try {
-                    const response = await axiosInstance.get(`/freezers/${id}`);
-                    const freezerData = response.data.data;
-                    setFormData({
-                        modelo: freezerData.modelo || '',
-                        numero_serie: freezerData.numero_serie || '',
-                        tipo: freezerData.tipo || '',
-                        fecha_creacion: freezerData.fecha_creacion ? new Date(freezerData.fecha_creacion).toISOString().split('T')[0] : '',
-                        marca: freezerData.marca || '',
-                        capacidad: freezerData.capacidad || '',
-                        imagen: freezerData.imagen || '',
-                        cliente_id: freezerData.cliente_id ? String(freezerData.cliente_id) : '',
-                        estado: freezerData.estado || ''
-                    });
+                    // Cargar clientes
+                    const clientesResponse = await axiosInstance.get('/clientes');
+                    setClientes(clientesResponse.data.data);
+
+                    if (id) {
+                        setIsEditing(true);
+                        
+                        const freezerResponse = await axiosInstance.get(`/freezers/${id}`);
+                        const freezerData = freezerResponse.data.data;
+
+                        setFormData({
+                            modelo: freezerData.modelo || '',
+                            numero_serie: freezerData.numero_serie || '',
+                            tipo: freezerData.tipo || '',
+                            fecha_creacion: freezerData.fecha_creacion ? new Date(freezerData.fecha_creacion).toISOString().split('T')[0] : '',
+                            marca: freezerData.marca || '',
+                            capacidad: freezerData.capacidad || '',
+                            imagen: freezerData.imagen || '',
+                            cliente_id: freezerData.cliente_id ? String(freezerData.cliente_id) : '',
+                            estado: freezerData.estado || 'Disponible'
+                        });
+                    } else {
+                        setIsEditing(false);
+                        setFormData(prevData => ({
+                            ...prevData,
+                            estado: 'Disponible',
+                            fecha_creacion: formatDate(new Date())
+                        }));
+                    }
                     setLoading(false);
                 } catch (err) {
-                    console.error("Error al cargar los datos del freezer:", err.response ? err.response.data : err.message);
-                    setError("Error al cargar los datos del freezer. Verifique si el ID es correcto o si tiene permisos.");
+                    console.error("Error al cargar datos:", err.response ? err.response.data : err.message);
+                    setError("Error al cargar los datos del freezer o clientes. Verifique permisos o la conexión.");
                     setLoading(false);
                 }
-            };
-            fetchFreezer();
-        } else {
-            setIsEditing(false);
-            setLoading(false);
-
-            // Establecemos un estado inicial para un nuevo freezer
-            setFormData(prevData => ({
-                ...prevData,
-                estado: 'Disponible', // Estado inicial para los freezers nuevos
-                fecha_creacion: formatDate(new Date()) // Fecha actual por defecto
-            }))
-        }
-    }, [id, usuario?.token]);
-
-    useEffect(() => {
-        const fetchClientes = async () => {
-            try {
-                const response = await axiosInstance.get('/clientes');
-                setClientes(response.data.data);
-            } catch (err) {
-                console.error("Error al cargar los clientes:", err);
-                setError("Error al cargar la lista de clientes.");
+            } else {
+                setError("No autorizado. Por favor, inicie sesión.");
+                setLoading(false);
             }
         };
-        fetchClientes();
-    }, [usuario?.token]);
+
+        fetchData();
+    }, [id, usuario?.token]);
+
 
     const handleChange = (e) => {
         const { name, value } = e.target;
 
         setFormData(prevData => {
-            const newData = {
-                ...prevData,
-                [name]: value
-            };
+            const newData = { ...prevData, [name]: value };
 
+            // Lógica para auto-establecer el estado del freezer
             if (name === "cliente_id") {
                 if (value !== "") {
                     newData.estado = "Asignado";
-                } else {
+                } else if (prevData.estado === "Asignado") { 
                     newData.estado = "Disponible";
                 }
             }
@@ -215,52 +224,68 @@ const FreezerForm = () => {
         setError(null);
         setSuccessMessage(null);
 
-        try {
-            const isValid = validateForm();
-            if (!isValid) {
+        const isValid = validateForm();
+        if (!isValid) {
+            setLoading(false);
+            setError('Por favor, corrige los errores en el formulario.');
+            return;
+        }
+
+        const dataToSend = {
+            ...formData,
+            capacidad: formData.capacidad ? Number(formData.capacidad) : null,
+            cliente_id: formData.cliente_id === '' ? null : Number(formData.cliente_id),
+            // Aseguramos que el estado se envíe correctamente basado en la lógica del formulario
+            estado: formData.cliente_id ? "Asignado" : (formData.estado === "Asignado" ? "Disponible" : formData.estado)
+        };
+
+        // Lógica de validación de estados para la edición
+        if (isEditing) {
+            // Si hay un cliente asignado y se intenta poner en Baja o Mantenimiento
+            if (dataToSend.cliente_id !== null && (dataToSend.estado === "Baja" || dataToSend.estado === "Mantenimiento")) {
                 setLoading(false);
-                setError('Por favor, corrige los errores en el formulario.');
+                setError('Para cambiar a "Baja" o "Mantenimiento", primero debe desasignar el cliente (establecer "Cliente Asignado" en "Ninguno").');
                 return;
             }
-
-
-            const dataToSend = {
-                ...formData,
-                capacidad: formData.capacidad ? Number(formData.capacidad) : null,
-                cliente_id: formData.cliente_id === '' ? null : Number(formData.cliente_id),
-                estado: formData.estado
-            };
-
-            if (isEditing) {
-                if (dataToSend.cliente_id !== null && (dataToSend.estado === "Baja" || dataToSend.estado === "Mantenimiento")) {
-                    setLoading(false);
-                    return setError('Para cambiar a "Baja" o "Mantenimiento", primero debe desasignar el cliente.');
-                }
+            // Si no hay cliente asignado y el estado es Asignado (esto no debería pasar por la lógica de handleChange, pero como safety net)
+            if (dataToSend.cliente_id === null && dataToSend.estado === "Asignado") {
+                setLoading(false);
+                setError('No se puede tener un freezer en estado "Asignado" sin un cliente asignado.');
+                return;
             }
+        } else { // Si es un nuevo freezer
+            if (dataToSend.estado !== "Disponible" && dataToSend.cliente_id === null) {
+                 setLoading(false);
+                 setError('Un freezer nuevo sin cliente asignado solo puede estar en estado "Disponible".');
+                 return;
+            }
+        }
 
+
+        try {
             if (isEditing) {
-                // PUT para actualizar
                 await axiosInstance.put(`/freezers/${id}`, dataToSend);
                 setSuccessMessage('Freezer actualizado correctamente.');
-
             } else {
-                // POST para crear
                 await axiosInstance.post('/freezers', dataToSend);
                 setSuccessMessage('Freezer creado correctamente.');
+                // Limpiar formulario para nueva entrada
                 setFormData({
                     modelo: '',
                     numero_serie: '',
                     tipo: '',
-                    fecha_creacion: new Date().toISOString().split('T')[0],
+                    fecha_creacion: formatDate(new Date()),
                     marca: '',
                     capacidad: '',
                     imagen: '',
                     cliente_id: '',
                     estado: 'Disponible'
                 });
-                setFormErrors({}) // Limpiar errores después del éxito
+                setFormErrors({});
             }
-
+            setTimeout(() => {
+                navigate('/freezers/listado');
+            }, 2000);
         } catch (err) {
             console.error("Error al enviar el formulario:", err.response ? err.response.data : err.message);
             setError(err.response?.data?.error || 'Error al guardar el freezer. Verifique los datos o el tamaño de la imagen.');
@@ -270,202 +295,274 @@ const FreezerForm = () => {
     };
 
     if (loading && isEditing) {
-        return <div className="loading-message">Cargando datos del freezer...</div>;
+        return (
+            <Container maxWidth="sm" sx={{ mt: 4 }}>
+                <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
+                <Typography variant="h6" align="center">Cargando datos del freezer...</Typography>
+            </Container>
+        );
+    }
+
+    if (!usuario?.token) {
+        return (
+            <Container maxWidth="sm" sx={{ mt: 4 }}>
+                <Alert severity="error">No autorizado. Por favor, inicie sesión para {isEditing ? 'editar' : 'crear'} freezers.</Alert>
+            </Container>
+        );
     }
 
     return (
-        <div className="freezer-form-container">
-            <h2>{isEditing ? 'EDITAR FREEZER' : 'REGISTRAR FREEZER'}</h2>
-            {error && <div className="error-message">{error}</div>}
-            {successMessage && <div className="success-message">{successMessage}</div>}
-            <form onSubmit={handleSubmit} className="freezer-form">
-                <div className="form-left">
-                    <div className="form-group">
-                        <label htmlFor="modelo">Modelo</label>
-                        <input
-                            type="text"
-                            id="modelo"
+        <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+            <Paper
+                elevation={3}
+                sx={{
+                    p: 4,
+                    borderRadius: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}
+            >
+                <Typography variant="h5" component="h2" align="center" gutterBottom sx={{ mb: 4 }}>
+                    {isEditing ? 'EDITAR FREEZER' : 'REGISTRAR FREEZER'}
+                </Typography>
+
+                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {successMessage && <Alert severity="success" sx={{ mb: 2 }}>{successMessage}</Alert>}
+
+                <Grid container spacing={3}>
+                    {/* Sección de la imagen  */}
+                    <Grid sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                        <Box sx={{ textAlign: 'center', width: '100%', maxWidth: 250 }}>
+                            <Box
+                                sx={{
+                                    width: 200,
+                                    height: 200,
+                                    bgcolor: 'grey.100',
+                                    border: '2px dashed',
+                                    borderColor: 'grey.400',
+                                    borderRadius: 2,
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    mx: 'auto',
+                                    mb: 2,
+                                    overflow: 'hidden',
+                                }}
+                            >
+                                {formData.imagen ? (
+                                    <Box
+                                        component="img"
+                                        src={formData.imagen}
+                                        alt="Previsualización del Freezer"
+                                        sx={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 2 }}
+                                    />
+                                ) : (
+                                    <PhotoCameraIcon sx={{ fontSize: '4rem', color: 'grey.500' }} />
+                                )}
+                            </Box>
+                            <Button
+                                variant="contained"
+                                component="label"
+                                sx={{ bgcolor: 'primary.main', '&:hover': { bgcolor: 'primary.dark' } }}
+                            >
+                                Escoge la imagen del Freezer
+                                <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                />
+                            </Button>
+                        </Box>
+                    </Grid>
+
+                    {/* Campos del formulario*/}
+                    <Grid >
+                        <TextField
+                            label="Modelo"
+                            variant="outlined"
                             name="modelo"
                             value={formData.modelo}
                             onChange={handleChange}
                             required
+                            fullWidth
+                            error={!!formErrors.modelo}
+                            helperText={formErrors.modelo}
+                            sx={{ mb: 2 }}
                         />
-                        {formErrors.modelo && <p className="error-message">{formErrors.modelo}</p>}
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="numero_serie">Número de serie</label>
-                        <input
-                            type="text"
-                            id="numero_serie"
+                        <TextField
+                            label="Número de serie"
+                            variant="outlined"
                             name="numero_serie"
                             value={formData.numero_serie}
                             onChange={handleChange}
                             required
+                            fullWidth
+                            error={!!formErrors.numero_serie}
+                            helperText={formErrors.numero_serie}
+                            sx={{ mb: 2 }}
                         />
-                        {formErrors.numero_serie && <p className="error-message">{formErrors.numero_serie}</p>}
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="tipo">Tipo</label>
-                        <select
-                            id="tipo"
-                            name="tipo"
-                            value={formData.tipo}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">Seleccione un tipo</option>
-                            {tiposFreezer.map(tipo => (
-                                <option key={tipo} value={tipo}>{tipo}</option>
-                            ))}
-                        </select>
-                        {formErrors.tipo && <p className="error-message">{formErrors.tipo}</p>}
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="fecha_creacion">Fecha de adquisición</label>
-                        <input
+                        <FormControl fullWidth required error={!!formErrors.tipo} sx={{ mb: 2 }}>
+                            <InputLabel id="tipo-label">Tipo</InputLabel>
+                            <Select
+                                labelId="tipo-label"
+                                id="tipo"
+                                name="tipo"
+                                value={formData.tipo}
+                                onChange={handleChange}
+                                label="Tipo"
+                            >
+                                <MenuItem value="">Seleccione un tipo</MenuItem>
+                                {tiposFreezer.map(tipo => (
+                                    <MenuItem key={tipo} value={tipo}>{tipo}</MenuItem>
+                                ))}
+                            </Select>
+                            {formErrors.tipo && <FormHelperText>{formErrors.tipo}</FormHelperText>}
+                        </FormControl>
+                        <TextField
+                            label="Fecha de adquisición"
                             type="date"
-                            id="fecha_creacion"
+                            variant="outlined"
                             name="fecha_creacion"
                             value={formData.fecha_creacion}
                             onChange={handleChange}
                             required
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                            error={!!formErrors.fecha_creacion}
+                            helperText={formErrors.fecha_creacion}
+                            sx={{ mb: 2 }}
                         />
-                        {formErrors.fecha_creacion && <p className="error-message">{formErrors.fecha_creacion}</p>}
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="marca">Marca</label>
-                        <input
-                            type="text"
-                            id="marca"
+                        <TextField
+                            label="Marca"
+                            variant="outlined"
                             name="marca"
                             value={formData.marca}
                             onChange={handleChange}
+                            required
+                            fullWidth
+                            error={!!formErrors.marca}
+                            helperText={formErrors.marca}
+                            sx={{ mb: 2 }}
                         />
-                        {formErrors.marca && <p className="error-message">{formErrors.marca}</p>}
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="capacidad">Capacidad</label>
-                        <input
+                        <TextField
+                            label="Capacidad"
                             type="number"
-                            id="capacidad"
+                            variant="outlined"
                             name="capacidad"
                             value={formData.capacidad}
                             onChange={handleChange}
                             required
+                            fullWidth
+                            error={!!formErrors.capacidad}
+                            helperText={formErrors.capacidad}
+                            sx={{ mb: 2 }}
                         />
-                        {formErrors.capacidad && <p className="error-message">{formErrors.capacidad}</p>}
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="cliente_id">Cliente Asignado</label>
-                        <select
-                            id="cliente_id"
-                            name="cliente_id"
-                            value={formData.cliente_id}
-                            onChange={handleChange}
-                        >
-                            <option value="">Ninguno</option>
-                            {clientes.map(cliente => (
-                                <option key={cliente.id} value={cliente.id}>{cliente.nombre_negocio} ({cliente.nombre_responsable})</option>
-                            ))}
-                        </select>
 
-                        {!!formData.cliente_id && (
-                            <p className="info-message">El estado se forzará a "Asignado" si se selecciona un cliente</p>
-                        )}
-                        {!formData.cliente_id && formData.estado === "Asignado" && isEditing && (
-                            <p className="info-message error-message">No se puede asignar un freezer sin un cliente</p>
-                        )}
-
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="estado">Estado</label>
-                        <select
-                            id="estado"
-                            name="estado"
-                            value={formData.estado}
-                            onChange={handleChange}
-                            disabled={
-                                // Deshabilitado si hay un cliente asignado y el estado no es Baja/Mantenimient
-                                (!!formData.cliente_id && formData.estado !== 'Baja' && formData.estado !== 'Mantenimiento') ||
-                                // Deshabilitado si estamos creando un freezer y el estado es Disponible o Asignado
-                                (!isEditing && (formData.estado === "Disponible" || formData.estado === "Asignado")) ||
-                                // Deshabilitado si es un freezer en edición y su estado es Disponible o Asignado,
-                                (isEditing && (formData.estado === "Disponible" || formData.estado === "Asignado") && formData.cliente_id !== '')
-                            }
-                        >
-                            <option value="">Seleccione un estado</option>
-                            {estadosManualesFreezer.map(estado => (
-                                <option key={estado} value={estado}>{estado}</option>
-                            ))}
-                            {formData.estado === "Disponible" && !formData.cliente_id && (
-                                <option key="Disponible" value="Disponible">Disponible</option>
+                        <FormControl fullWidth sx={{ mb: 2 }}>
+                            <InputLabel id="cliente_id-label">Cliente Asignado</InputLabel>
+                            <Select
+                                labelId="cliente_id-label"
+                                id="cliente_id"
+                                name="cliente_id"
+                                value={formData.cliente_id}
+                                onChange={handleChange}
+                                label="Cliente Asignado"
+                            >
+                                <MenuItem value="">Ninguno</MenuItem>
+                                {clientes.map(cliente => (
+                                    <MenuItem key={cliente.id} value={cliente.id}>
+                                        {cliente.nombre_negocio} ({cliente.nombre_responsable})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            {!!formData.cliente_id && (
+                                <FormHelperText sx={{ color: 'info.main' }}>
+                                    El estado se forzará a "Asignado" si se selecciona un cliente.
+                                </FormHelperText>
                             )}
-                            {formData.estado === "Asignado" && !!formData.cliente_id && (
-                                <option key="Asignado" value="Asignado">Asignado</option>
+                            {!formData.cliente_id && formData.estado === "Asignado" && isEditing && (
+                                <FormHelperText error>
+                                    No se puede asignar un freezer sin un cliente.
+                                </FormHelperText>
                             )}
+                        </FormControl>
 
-                            {
-                                !formData.cliente_id ? (
-                                    estadosManualesFreezer.map(estado => (
-                                        <option key={estado} value={estado}>{estado}</option>
-                                    ))
-                                ) : (
-                                    (formData.estado === 'Baja' || formData.estado === 'Mantenimiento') &&
-                                    <option key={formData.estado} value={formData.estado}>{formData.estado}</option>
-                                )
-                            }
+                        <FormControl fullWidth sx={{ mb: 2 }}>
+                            <InputLabel id="estado-label">Estado</InputLabel>
+                            <Select
+                                labelId="estado-label"
+                                id="estado"
+                                name="estado"
+                                value={formData.estado}
+                                onChange={handleChange}
+                                label="Estado"
+                                disabled={
+                                    (!!formData.cliente_id && formData.estado !== 'Baja' && formData.estado !== 'Mantenimiento') ||
+                                    (!isEditing && !!formData.cliente_id) ||
+                                    (!isEditing && !formData.cliente_id)
+                                }
+                            >
 
-                        </select>
-
-                        {!!formData.cliente_id && (
-                            <p className="info-message error-message">
-                                Para cambiar a "Baja" o "Mantenimiento", primero debe desasignar el cliente.
-                            </p>
-                        )}
-
-                        {!formData.cliente_id && formData.estado === "Disponible" && (
-                            <p className="info-message">El estado es "Disponible" al no tener un cliente asignado.</p>
-                        )}
-
-                        {!!formData.cliente_id && <p className="info-message">El estado se forzará a "Asignado" si se selecciona un cliente.</p>}
-
-                        {!formData.cliente_id && formData.estado === "Asignado" && <p className="info-message error-message">No se puede asignar un freezer sin un cliente.</p>}
-
-                    </div>
-                </div>
-                <div className="form-right">
-                    <div className="image-upload-section">
-                        <div className="image-placeholder">
-                            {formData.imagen ? (
-                                <img src={formData.imagen} alt="Previsualización del Freezer" />
-                            ) : (
-                                <i className="fas fa-camera"></i>
+                                <MenuItem value="Disponible" disabled={!!formData.cliente_id}>Disponible</MenuItem>
+                                {estadosManualesFreezer.map(estado => (
+                                    <MenuItem
+                                        key={estado}
+                                        value={estado}
+                                        disabled={!!formData.cliente_id}
+                                    >
+                                        {estado}
+                                    </MenuItem>
+                                ))}
+                                {!!formData.cliente_id && (
+                                    <MenuItem value="Asignado">Asignado</MenuItem>
+                                )}
+                            </Select>
+                            {!!formData.cliente_id && formData.estado !== "Baja" && formData.estado !== "Mantenimiento" && (
+                                <FormHelperText sx={{ color: 'warning.dark' }}>
+                                    Para cambiar a "Baja" o "Mantenimiento", primero debe desasignar el cliente.
+                                </FormHelperText>
                             )}
-                        </div>
-                        <input
-                            type="file"
-                            id="imagen"
-                            name="imagen"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            style={{ display: 'none' }}
-                        />
-                        <label htmlFor="imagen" className="custom-file-upload">
-                            Escoge la imagen del Freezer
-                        </label>
-                    </div>
-                </div>
-                <div className="form-actions">
-                    <button type="button" className="btn btn-cancel" onClick={() => navigate('/freezers/listado')}>
+                             {!formData.cliente_id && formData.estado === "Disponible" && (
+                                <FormHelperText sx={{ color: 'info.main' }}>
+                                    El estado es "Disponible" al no tener un cliente asignado.
+                                </FormHelperText>
+                            )}
+                             {!!formData.cliente_id && (
+                                <FormHelperText sx={{ color: 'info.main' }}>
+                                    El estado se forzará a "Asignado" si se selecciona un cliente.
+                                </FormHelperText>
+                            )}
+                             {!formData.cliente_id && formData.estado === "Asignado" && (
+                                <FormHelperText error>
+                                    No se puede tener un freezer en estado "Asignado" sin un cliente asignado.
+                                </FormHelperText>
+                            )}
+                        </FormControl>
+                    </Grid>
+                </Grid>
+
+                <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 4 }}>
+                    <Button
+                        type="button"
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => navigate('/freezers/listado')}
+                    >
                         Cancelar
-                    </button>
-                    <button type="submit" className="btn btn-confirm" disabled={loading}>
+                    </Button>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        disabled={loading}
+                        startIcon={loading && <CircularProgress size={20} color="inherit" />}
+                    >
                         {loading ? (isEditing ? 'Actualizando...' : 'Guardando...') : (isEditing ? 'Confirmar Edición' : 'Confirmar')}
-                    </button>
-                </div>
-            </form>
-            {successMessage && <div id='success-message-final' className="success-message">{successMessage}</div>}
-        </div>
+                    </Button>
+                </Stack>
+            </Paper>
+        </Container>
     );
 };
 

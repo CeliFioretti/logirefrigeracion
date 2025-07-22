@@ -62,6 +62,20 @@ function ClientesPage() {
     // Estado para disparar la búsqueda de filtros y la carga inicial
     const [triggerSearch, setTriggerSearch] = useState(0);
 
+    // Función para obtener el nombre de un cliente
+    const fetchClienteById = useCallback(async (id) => {
+        try {
+            const url = `/clientes/${id}`;
+            const response = await axiosInstance.get(url)
+            return response.data.data.cliente;
+            
+        } catch (err) {
+            console.error('Error al obtener cliente:', err);
+            setError('Error al cargar cliente. Inténtelo de nuevo.');
+            return null;
+        } 
+    }, [])
+
     // Función para obtener los datos de los clientes
     const fetchClientes = useCallback(async (searchParams) => {
         if (!token) {
@@ -160,23 +174,33 @@ function ClientesPage() {
     };
 
     const handleEditCliente = (id) => {
-        navigate(`/admin/clientes/editar/${id}`);
+        navigate(`/clientes/editar/${id}`);
     };
 
     const handleDeleteCliente = async (id) => {
-        if (!window.confirm(`¿Está seguro que desea eliminar el cliente con ID: ${id}?`)) {
+        const clienteToDelete = await fetchClienteById(id);
+
+       if (!clienteToDelete) {
+            alert('No se pudo obtener la información del cliente para eliminar.');
+            return;
+        }
+
+        if (!window.confirm(`¿Está seguro que desea eliminar el cliente ${clienteToDelete.nombre_responsable} (ID: ${id})?`)) {
             return;
         }
         setLoading(true);
         try {
-            const url = `${process.env.REACT_APP_API_BASE_URL}/cliente/${id}`;
-            await axios.delete(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            const url = `/clientes/${id}`;
+            await axiosInstance.delete(url);
             alert('Cliente eliminado correctamente.');
-            fetchClientes(); // Refrescar la lista
+            fetchClientes({
+                nombreCliente: filtroNombreCliente,
+                tipoNegocio: filtroTipoNegocio,
+                nombreNegocio: filtroNombreNegocio,
+                cuit: filtroCuit,
+                page: page,
+                pageSize: rowsPerPage,
+            });
         } catch (err) {
             console.error('Error al eliminar cliente:', err);
             setError('Error al eliminar el cliente.');
@@ -187,7 +211,7 @@ function ClientesPage() {
 
     // Funciones para los botones grandes
     const handleRegisterNewCliente = () => {
-        navigate('/admin/clientes/nuevo');
+        navigate('/clientes/nuevo');
     };
 
     const handleViewClienteDetail = (id) => {
@@ -195,7 +219,7 @@ function ClientesPage() {
     }
 
     const handleViewEventsHistory = () => {
-        navigate('/admin/eventos');
+        navigate('/eventos');
     };
 
     const handleGoBack = () => {

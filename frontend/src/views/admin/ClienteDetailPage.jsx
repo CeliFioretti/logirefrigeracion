@@ -71,7 +71,7 @@ function ClienteDetailPage() {
     const [loadingClient, setLoadingClient] = useState(true);
     const [errorClient, setErrorClient] = useState(null);
 
-    // Estados de Freezers Asignados (para la tabla, si la mantienes, o para todos los freezers para el carrusel)
+    // Estados de Freezers Asignados
     const [freezersAsignados, setFreezersAsignados] = useState([]);
     const [loadingFreezers, setLoadingFreezers] = useState(false);
     const [errorFreezers, setErrorFreezers] = useState(null);

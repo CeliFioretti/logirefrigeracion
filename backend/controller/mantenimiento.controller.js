@@ -5,41 +5,41 @@ const listar = async (req, res, next) => {
     const { usuario_nombre, fechaDesde, fechaHasta, descripcion, tipo, observaciones, page, pageSize } = req.query;
 
     try {
-        let query = 'SELECT * FROM mantenimiento';
-        let countQuery = 'SELECT COUNT(*) as total FROM mantenimiento';
+        let query = 'SELECT m.*, f.numero_serie FROM mantenimiento m JOIN freezer f ON m.freezer_id = f.id';
+        let countQuery = 'SELECT COUNT(m.id) as total FROM mantenimiento m JOIN freezer f ON m.freezer_id = f.id';
 
         let condiciones = [];
         let params = [];
         let countParams = [];
 
         if (usuario_nombre) {
-            condiciones.push('usuario_nombre LIKE ?');
+            condiciones.push('m.usuario_nombre LIKE ?');
             params.push(`%${usuario_nombre}%`);
             countParams.push(`%${usuario_nombre}%`);
         }
         if (fechaDesde) {
-            condiciones.push('fecha >= ?');
+            condiciones.push('m.fecha >= ?');
             params.push(`${fechaDesde} 00:00:00`);
             countParams.push(`${fechaDesde} 00:00:00`);
         }
 
         if (fechaHasta) {
-            condiciones.push('fecha <= ?');
+            condiciones.push('m.fecha <= ?');
             params.push(`${fechaHasta} 23:59:59`); 
             countParams.push(`${fechaHasta} 23:59:59`);
         }
         if (descripcion) {
-            condiciones.push('descripcion LIKE ?');
+            condiciones.push('m.descripcion LIKE ?');
             params.push(`%${descripcion}%`);
             countParams.push(`%${descripcion}%`);
         }
         if (tipo) {
-            condiciones.push('tipo LIKE ?');
+            condiciones.push('m.tipo LIKE ?');
             params.push(`%${tipo}%`);
             countParams.push(`%${tipo}%`);
         }
         if (observaciones) {
-            condiciones.push('observaciones LIKE ?');
+            condiciones.push('m.observaciones LIKE ?');
             params.push(`%${observaciones}%`);
             countParams.push(`%${observaciones}%`);
         }
@@ -50,7 +50,7 @@ const listar = async (req, res, next) => {
             countQuery += whereClause;
         }
 
-        query += ' ORDER BY fecha DESC'; 
+        query += ' ORDER BY m.fecha DESC'; 
 
         const pageNum = parseInt(page) || 0;
         const pageSizeNum = parseInt(pageSize) || 10;
@@ -66,7 +66,8 @@ const listar = async (req, res, next) => {
         if (mantenimientos.length === 0) {
             res.status(200).json({
                 message: 'No se encontraron mantenimientos con los criterios especificados.',
-                data: []
+                data: [],
+                total: 0
             });
         } else {
             res.status(200).json({
@@ -76,6 +77,7 @@ const listar = async (req, res, next) => {
         }
 
     } catch (error) {
+        console.error('Error en listar mantenimientos', error)
         next(error);
     }
 
@@ -111,7 +113,7 @@ const registrar = async (req, res, next) => {
 
         const query = `
       INSERT INTO mantenimiento 
-      (idUsuarioResponsable, nombreUsuarioResponsable, freezer_id, fecha, descripcion, tipo, observaciones)
+      (usuario_id, usuario_nombre, freezer_id, fecha, descripcion, tipo, observaciones)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -128,7 +130,7 @@ const registrar = async (req, res, next) => {
         // Auditoría
         const mensaje = `Se registró mantenimiento (${tipo}) para el freezer ID ${freezer_id}`;
         await db.promise().query(
-            'INSERT INTO auditoriadeactividades (idUsuarioResponsable, nombreUsuarioResponsable, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
             [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
         );
 
@@ -185,7 +187,7 @@ const actualizar = async (req, res, next) => {
         // Auditoría
         const mensaje = `Se actualizó el mantenimiento ID ${id}`;
         await db.promise().query(
-            'INSERT INTO auditoriadeactividades (idUsuarioResponsable, nombreUsuarioResponsable, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
             [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
         );
 
@@ -217,6 +219,19 @@ const misMantenimientos = async (req, res, next) => {
         next(error)
     }
 }
+// Obtener un mantenimiento por ID - GET 
+const obtenerPorId = async (req, res, next) => {
+    const { id } = req.params;
+    try {
+        const [mantenimiento] = await db.promise().query('SELECT * FROM mantenimiento WHERE id = ?', [id]);
+        if (mantenimiento.length === 0) {
+            return res.status(404).json({ error: 'Mantenimiento no encontrado' });
+        }
+        res.status(200).json({ data: mantenimiento[0] });
+    } catch (error) {
+        next(error);
+    }
+};
 
 
 
@@ -225,5 +240,6 @@ module.exports = {
     listar,
     registrar,
     actualizar,
-    misMantenimientos
+    misMantenimientos,
+    obtenerPorId
 }

@@ -20,7 +20,9 @@ import FreezerForm from './components/FreezerForm';
 import AsignarForm from './components/AsignarFreezerForm';
 import ClientesListadoPage from './views/admin/ClientesPage';
 import ClienteDetallePage from './views/admin/ClienteDetailPage';
+import CrearClienteForm from './components/CrearClienteForm';
 import MantenimientosListadoPage from './views/admin/MantenimientoPage';
+import MantenimientosCrearForm from './components/MantenimientoForm';
 import UsuariosAdministradorPage from './views/admin/usuarios/AdministradorPage';
 import UsuariosOperadorPage from './views/admin/usuarios/OperadorPage';
 import EventosListadoPage from './views/admin/EventosPage';
@@ -33,6 +35,7 @@ import ForbiddenPage from './views/error/ForbiddenPage';
 import SessionExpiredPage from './views/error/SessionExpiredPage';
 
 import './styles/App.css';
+
 
 const theme = createTheme({
     palette: {
@@ -75,20 +78,24 @@ function App() {
                             <Route path='/freezers/editar/:id' element={<FreezerForm />} />
                             <Route path='/freezers/:id/asignar' element={<AsignarForm />} />
 
-                            <Route path='/clientes' element={<ClientesListadoPage />} />
+                            <Route path='/clientes/listado' element={<ClientesListadoPage />} />
                             <Route path='/clientes/:id' element={<ClienteDetallePage />} />
+                            <Route path='/clientes/nuevo' element={<CrearClienteForm />} />
+                            <Route path='/clientes/editar/:id' element={<CrearClienteForm />} />
 
-                            <Route path='/mantenimientos' element={<MantenimientosListadoPage />} />
+                            <Route path='/mantenimientos/listado' element={<MantenimientosListadoPage />} />
+                            <Route path='/mantenimientos/nuevo' element={<MantenimientosCrearForm />} />
+                            <Route path='/mantenimientos/editar/:id' element={<MantenimientosCrearForm />} />
 
-                            <Route path='/usuarios/administradores' element={<UsuariosAdministradorPage />} />
+                            <Route path='/usuarios/administradores/listado' element={<UsuariosAdministradorPage />} />
                             <Route path='/usuarios/operadores' element={<UsuariosOperadorPage />} />
 
-                            <Route path='/eventos' element={<EventosListadoPage />} />
+                            <Route path='/eventos/listado' element={<EventosListadoPage />} />
 
-                            <Route path='/ubicaciones' element={<DepartamentoListadoPage />} />
+                            <Route path='/ubicaciones/listado' element={<DepartamentoListadoPage />} />
                             <Route path='/ubicaciones/:departamentoId/zonas' element={<ZonasListadoPage />} />
 
-                            <Route path='/auditoria' element={<AuditoriaPage />} />
+                            <Route path='/auditoria/listado' element={<AuditoriaPage />} />
 
                             <Route path='/acceso-denegado' element={<ForbiddenPage />} />
                             <Route path='/sesion-expirada' element={<SessionExpiredPage />} />

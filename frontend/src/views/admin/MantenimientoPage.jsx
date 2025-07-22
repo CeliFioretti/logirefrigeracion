@@ -10,6 +10,7 @@ import {
     TableHead,
     TableBody,
     TableRow,
+    Link,
     TableCell,
     TablePagination,
     Paper,
@@ -30,7 +31,6 @@ import { UserContext } from '../../context/UserContext';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import {
     Edit as EditIcon,
-    Delete as DeleteIcon,
     ContentCopy as ContentCopyIcon,
     Add as AddIcon,
     Search as SearchIcon,
@@ -122,6 +122,11 @@ function MantenimientoPage() {
         setPage(newPage);
     };
 
+    const handleViewFreezerDetail = (freezerId) => {
+        navigate(`/freezers/${freezerId}`)
+    };
+
+
     const handleChangeRowsPerPage = (event) => {
         const newSize = parseInt(event.target.value, 10);
         setRowsPerPage(newSize);
@@ -150,39 +155,21 @@ function MantenimientoPage() {
     };
 
     const handleCopyData = (mantenimiento) => {
-        const dataToCopy = `Usuario: ${mantenimiento.usuario_nombre}, Fecha: ${format(new Date(mantenimiento.fecha), 'dd-MM-yyyy')}, Descripción: ${mantenimiento.descripcion}, Tipo: ${mantenimiento.tipo}, Observaciones: ${mantenimiento.observaciones}`;
+        const dataToCopy = `Usuario: ${mantenimiento.usuario_nombre}, Fecha: ${format(new Date(mantenimiento.fecha), 'dd-MM-yyyy')}, Descripción: ${mantenimiento.descripcion}, Tipo: ${mantenimiento.tipo}, Observaciones: ${mantenimiento.observaciones}, Número de Serie Freezer: ${mantenimiento.numero_serie || 'N/A'}`;
         navigator.clipboard.writeText(dataToCopy)
             .then(() => alert('Datos del mantenimiento copiados al portapapeles'))
             .catch(err => console.error('Error al copiar:', err));
     };
 
     const handleEditMantenimiento = (id) => {
-        navigate(`/admin/mantenimientos/editar/${id}`);
-    };
-
-    const handleDeleteMantenimiento = async (id) => {
-        if (!window.confirm(`¿Está seguro que desea eliminar el mantenimiento con ID: ${id}?`)) {
-            return;
-        }
-        setLoading(true);
-        try {
-            const url = `/mantenimiento/${id}`;
-            await axiosInstance.delete(url)
-            alert('Mantenimiento eliminado correctamente.');
-            setTriggerSearch(prev => prev + 1);
-        } catch (err) {
-            console.error('Error al eliminar mantenimiento:', err);
-            setError('Error al eliminar el mantenimiento.');
-        } finally {
-            setLoading(false);
-        }
+        navigate(`/mantenimientos/editar/${id}`);
     };
 
     const handleRegisterNewMantenimiento = () => {
-        navigate('/admin/mantenimientos/nuevo');
+        navigate('/mantenimientos/nuevo');
     };
 
-    if (loading && mantenimientos.length === 0) {
+    if (loading && mantenimientos.length === 0 && !error) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
                 <CircularProgress />
@@ -204,7 +191,7 @@ function MantenimientoPage() {
                 </Typography>
 
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid>
+                    <Grid >
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Registrar Mantenimiento</Typography>
                             <Button
@@ -232,6 +219,25 @@ function MantenimientoPage() {
                             />
                         </Grid>
                         <Grid >
+                            <DatePicker
+                                label="Fecha Desde"
+                                value={filtroFechaDesde}
+                                onChange={(newValue) => setFiltroFechaDesde(newValue)}
+                                format='dd/MM/yyyy'
+                                slotProps={{ textField: { fullWidth: true, size: "small" } }}
+                            />
+                        </Grid>
+                        <Grid >
+                            <DatePicker
+                                label="Fecha Hasta"
+                                value={filtroFechaHasta}
+                                onChange={(newValue) => setFiltroFechaHasta(newValue)}
+                                format='dd/MM/yyyy'
+                                minDate={filtroFechaDesde}
+                                slotProps={{ textField: { fullWidth: true, size: "small" } }}
+                            />
+                        </Grid>
+                        <Grid >
                             <TextField
                                 label="Descripción"
                                 variant="outlined"
@@ -251,25 +257,6 @@ function MantenimientoPage() {
                                 onChange={(e) => setFiltroTipo(e.target.value)}
                                 size="small"
                             >
-                                <Grid >
-                                    <DatePicker
-                                        label="Fecha Desde"
-                                        value={filtroFechaDesde}
-                                        onChange={(newValue) => setFiltroFechaDesde(newValue)}
-                                        format='dd/MM/yyyy'
-                                        renderInput={(params) => <TextField {...params} fullWidth size="small" />}
-                                    />
-                                </Grid>
-                                <Grid >
-                                    <DatePicker
-                                        label="Fecha Hasta"
-                                        value={filtroFechaHasta}
-                                        onChange={(newValue) => setFiltroFechaHasta(newValue)}
-                                        format='dd/MM/yyyy'
-                                        minDate={filtroFechaDesde}
-                                        renderInput={(params) => <TextField {...params} fullWidth size="small" />}
-                                    />
-                                </Grid>
                                 <MenuItem value="">Todos</MenuItem>
                                 {tiposMantenimiento.map((tipo) => (
                                     <MenuItem key={tipo} value={tipo}>
@@ -288,7 +275,7 @@ function MantenimientoPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid >
+                        <Grid>
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}
@@ -322,6 +309,7 @@ function MantenimientoPage() {
                                     <TableRow>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Usuario</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>Número de Serie Freezer</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Descripción</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Observaciones</TableCell>
@@ -331,7 +319,7 @@ function MantenimientoPage() {
                                 <TableBody>
                                     {mantenimientos.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} align="center">
+                                            <TableCell colSpan={7} align="center">
                                                 No se encontraron mantenimientos con los filtros aplicados.
                                             </TableCell>
                                         </TableRow>
@@ -340,6 +328,16 @@ function MantenimientoPage() {
                                             <TableRow hover key={mantenimiento.id}>
                                                 <TableCell>{mantenimiento.fecha ? format(new Date(mantenimiento.fecha), 'dd-MM-yyyy') : 'N/A'}</TableCell>
                                                 <TableCell>{mantenimiento.usuario_nombre}</TableCell>
+                                                <TableCell>
+                                                    <Link
+                                                        component="button"
+                                                        variant="body1"
+                                                        onClick={() => handleViewFreezerDetail(mantenimiento.freezer_id)}
+                                                        sx={{ fontWeight: 'bold' }}
+                                                    >
+                                                        {mantenimiento.numero_serie || 'N/A'}
+                                                    </Link>
+                                                </TableCell>
                                                 <TableCell>{mantenimiento.descripcion}</TableCell>
                                                 <TableCell>
                                                     <Chip
@@ -369,9 +367,6 @@ function MantenimientoPage() {
                                                     </IconButton>
                                                     <IconButton aria-label="editar" onClick={() => handleEditMantenimiento(mantenimiento.id)}>
                                                         <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                    <IconButton aria-label="eliminar" onClick={() => handleDeleteMantenimiento(mantenimiento.id)}>
-                                                        <DeleteIcon sx={{ color: '#ff443b' }} fontSize="small" />
                                                     </IconButton>
                                                 </TableCell>
                                             </TableRow>
