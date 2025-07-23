@@ -1,6 +1,5 @@
 const db = require('../config/db.js')
 const bcrypt = require('bcrypt');
-const { param } = require('../routes/usuario.routes.js');
 
 
 // Obtener registro completo de usuarios
@@ -86,42 +85,6 @@ const detalle = async (req, res, next) => {
     }
 }
 
-// Crea un usuario - POST
-const crear = async (req, res, next) => {
-    const { nombre, correo, password, rol } = req.body;
-
-    // Auditoría
-    const idUsuarioResponsable = req.usuario.id;
-    const nombreUsuarioResponsable = req.usuario.nombre;
-
-    try {
-        if (!nombre || nombre.trim() === '' || !correo || correo.trim() === '' || !password || password.trim() === '' || !rol || rol.trim() === '') {
-            return res.status(400).json({ error: 'Faltan campos por rellenar' });
-        }
-
-        const passwordHash = await bcrypt.hash(password, 10);
-
-        let query = `
-            INSERT INTO usuario (nombre, correo, password, rol, activo, requiere_cambio_password) 
-            VALUES (?, ?, ?, ?, 0, 1)
-        `;
-
-        await db.promise().query(query, [nombre, correo, passwordHash, rol]);
-
-        // Auditoría
-        const mensaje = `Se creó un nuevo usuario: ${nombre.replace(/'/g, "")}`;
-        await db.promise().query(
-            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
-            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
-        );
-
-        res.status(201).json({
-            message: 'Usuario creado correctamente'
-        });
-    } catch (err) {
-        next(err);
-    }
-};
 
 
 // Editar usuario - PUT
@@ -170,42 +133,6 @@ const editar = async (req, res, next) => {
     }
 }
 
-// Eliminar usuario - DELETE
-const eliminar = async (req, res, next) => {
-    const id = req.params.id;
-
-    // Auditoría
-    const idUsuarioResponsable = req.usuario.id;
-    const nombreUsuarioResponsable = req.usuario.nombre;
-
-    try {
-        let querySelect = 'SELECT * FROM usuario WHERE id = ?';
-        let queryDelete = 'DELETE FROM usuario WHERE id =?';
-
-        const [usuario] = await db.promise().query(querySelect, [id]);
-
-        if (usuario.length === 0) {
-            return res.status(404).json({
-                message: 'Usuario no encontrado'
-            })
-        }
-
-        const nombreUsuario = usuario[0].nombre;
-
-        await db.promise().query(queryDelete, [id])
-
-        // Auditoría
-        const mensaje = `Eliminación de usuario: ${nombreUsuario.replace(/'/g, "")}`
-        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable,mensaje]);
-
-        res.status(200).json({
-            message: 'Usuario eliminado correctamente'
-        })
-    } catch (err) {
-        next(err);
-    }
-
-}
 
 // Actializa la contraseña del usuario - POST
 const cambiarContraseña = async (req, res) => {
@@ -230,12 +157,94 @@ const cambiarContraseña = async (req, res) => {
     }
 };
 
+// Funcion para dar de baja o alta un usuario
+const toggleEstadoUsuario = async (req, res, next) => {
+    const idUsuario = req.params.id; // El ID del usuario a modificar
+
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    try {
+        const [userResults] = await db.promise().query('SELECT activo FROM usuario WHERE id = ?', [idUsuario]);
+
+        if (userResults.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado.' });
+        }
+
+        const currentStatus = userResults[0].activo;
+        const newStatus = currentStatus === 1 ? 0 : 1; 
+
+        await db.promise().query('UPDATE usuario SET activo = ? WHERE id = ?', [newStatus, idUsuario]);
+
+        const accion = newStatus === 1 ? 'activado' : 'inhabilitado';
+        const mensajeAuditoria = `Usuario ID ${idUsuario} ha sido ${accion} por ${nombreUsuarioResponsable} (ID ${idUsuarioResponsable}).`;
+        await db.promise().query(
+            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensajeAuditoria]
+        );
+
+        res.status(200).json({ message: `Usuario ${idUsuario} ha sido ${accion} exitosamente.`, newStatus: newStatus });
+
+    } catch (error) {
+        console.error('Error al cambiar el estado del usuario:', error);
+        next(error); 
+    }
+};
+
+// Para que el administrador pueda resetear la contraseña de los operadores
+const resetearContraseñaAdmin = async (req, res, next) => {
+    const idUsuarioAResetear = req.params.id; 
+    const { nuevaContraseña } = req.body;
+
+    // Auditoría
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    if (!nuevaContraseña || nuevaContraseña.trim() === '') {
+        return res.status(400).json({ error: 'La nueva contraseña no puede estar vacía.' });
+    }
+
+    if (nuevaContraseña.length < 8) {
+        return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres.' });
+    }
+
+    try {
+        // Verificar si el usuario existe
+        const [userExists] = await db.promise().query('SELECT id, nombre FROM usuario WHERE id = ?', [idUsuarioAResetear]);
+        if (userExists.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado.' });
+        }
+        const nombreUsuarioAfectado = userExists[0].nombre;
+
+        // Hashear la nueva contraseña
+        const passwordHash = await bcrypt.hash(nuevaContraseña, 10);
+
+        // Actualizar la contraseña en la base de datos
+        await db.promise().query(
+            'UPDATE usuario SET password = ?, requiere_cambio_password = 0 WHERE id = ?',
+            [passwordHash, idUsuarioAResetear]
+        );
+
+        // Registrar en la auditoría
+        const mensajeAuditoria = `Contraseña del usuario ${nombreUsuarioAfectado} (ID ${idUsuarioAResetear}) restablecida por el administrador ${nombreUsuarioResponsable} (ID ${idUsuarioResponsable}).`;
+        await db.promise().query(
+            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensajeAuditoria]
+        );
+
+        res.status(200).json({ message: `Contraseña del usuario "${nombreUsuarioAfectado}" restablecida correctamente.` });
+
+    } catch (error) {
+        console.error('Error al restablecer la contraseña del usuario:', error);
+        next(error); 
+    }
+};
 
 module.exports = {
     listar,
     detalle,
-    crear,
     editar,
-    eliminar,
-    cambiarContraseña
+    cambiarContraseña,
+    toggleEstadoUsuario,
+    resetearContraseñaAdmin
 }

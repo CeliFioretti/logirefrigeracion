@@ -8,13 +8,14 @@ const listar = async (req, res, next) => {
         let query = `
             SELECT 
                 f.*, 
-                c.nombre_responsable AS nombre_responsable_cliente 
+                c.nombre_responsable AS nombre_responsable_cliente,
+                c.id AS cliente_id_asociado
             FROM 
                 freezer f
             LEFT JOIN 
                 cliente c ON f.cliente_id = c.id
         `;
-        let countQuery = 'SELECT COUNT(*) as total FROM freezer';
+        let countQuery = 'SELECT COUNT(*) as total FROM freezer f';
 
         let condiciones = [];
         let params = [];
@@ -57,6 +58,8 @@ const listar = async (req, res, next) => {
             countQuery += whereClause;
         }
 
+        query += ' ORDER BY f.id ASC'
+
         const pageNum = parseInt(page) || 0;
         const pageSizeNum = parseInt(pageSize) || 10;
         const offset = pageNum * pageSizeNum;
@@ -75,6 +78,7 @@ const listar = async (req, res, next) => {
         });
 
     } catch (error) {
+        console.error("Error en listar freezers:", error);
         next(error);
     }
 };

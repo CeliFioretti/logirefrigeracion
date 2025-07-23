@@ -12,8 +12,14 @@ const soloOperador = [verificarToken, verificarRol('operador')];
 // Ver todos los eventos de freezers - GET
 router.get('/', soloAdmin, eventosController.listar);
 
+// Ver detalles de un evento por ID - GET
+router.get('/:id', soloAdmin, eventosController.detalle);
+
 // Crear nuevo evento - POST
 router.post('/', verificarToken, verificarRol('administrador', 'operador'), eventosController.crear);
+
+// Editar evento por ID - PUT
+router.put('/:id', soloAdmin, eventosController.editar); 
 
 // Ver mis eventos (Operador) - GET
 router.get('/mis-eventos', soloOperador, eventosController.misEventos);

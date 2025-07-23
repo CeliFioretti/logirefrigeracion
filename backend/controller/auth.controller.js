@@ -14,7 +14,7 @@ const login = async (req, res) => {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        const usuario = filas[0]; 
+        const usuario = filas[0];
 
         const passwordValida = await bcrypt.compare(password, usuario.password);
 
@@ -54,9 +54,9 @@ const login = async (req, res) => {
 
 // Registra un usuario operador nuevo - POST
 const registrarUsuario = async (req, res, next) => {
-    const { nombre, correo, password, rol, codigoRegistro } = req.body;
+    const { nombre, correo, password, codigoRegistro } = req.body;
 
-    if (!nombre || !correo || !password || !rol || !codigoRegistro) {
+    if (!nombre || !correo || !password || !codigoRegistro) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
@@ -71,9 +71,28 @@ const registrarUsuario = async (req, res, next) => {
             return res.status(400).json({ error: 'Código inválido o expirado' });
         }
 
-        const rolesValidos = ['administrador', 'operador']
-        if (!rolesValidos.includes(rol)) {
-            return res.status(400).json({ error: 'Rol no válido. Debe ser "administrador" u "operador".' });
+        // Verificar que el codigo sea para operador 
+        // A futuro se agregaran los codigos para administradores
+        const codigoEncontrado = codigoRows[0];
+
+        if (codigoEncontrado.rol !== 'operador') {
+            return res.status(403).json({ error: 'Este código de registro no es para operadores.' });
+        }
+
+        // Verificar si el usuario o correo existe
+        const [existingUser] = await db.promise().query(`SELECT id FROM usuario WHERE nombre = ? OR correo = ?`, [nombre, correo])
+
+        if (existingUser.length > 0) {
+            const isNameTaken = existingUser.some(user => user.nombre === nombre);
+            const isEmailTaken = existingUser.some(user => user.correo === correo);
+
+            if (isNameTaken && isEmailTaken) {
+                return res.status(409).json({ error: 'El nombre de usuario y el correo electrónico ya están en uso.' });
+            } else if (isNameTaken) {
+                return res.status(409).json({ error: 'El nombre de usuario ya está en uso.' });
+            } else { 
+                return res.status(409).json({ error: 'El correo electrónico ya está en uso.' });
+            }
         }
 
         // Encripto la contraseña antes de usarla
@@ -81,7 +100,7 @@ const registrarUsuario = async (req, res, next) => {
 
         await db.promise().query(
             `INSERT INTO usuario (nombre, correo, password, rol, activo, requiere_cambio_password) VALUES (?, ?, ?, ?, 1, 0)`,
-            [nombre, correo, passwordHash, rol, codigo[0].rol]
+            [nombre, correo, passwordHash, 'operador']
         );
 
         // Marcar el código como usado
@@ -92,6 +111,7 @@ const registrarUsuario = async (req, res, next) => {
 
         res.status(201).json({ message: 'Usuario registrado exitosamente' });
     } catch (err) {
+        console.error('Error en registrarUsuario:', err);
         next(err);
     }
 };
@@ -118,7 +138,7 @@ const solicitarRecuperacion = async (req, res) => {
 
         res.status(200).json({
             message: 'Solicitud de recuperación creada',
-            tokenRecuperacion: token 
+            tokenRecuperacion: token
         });
 
     } catch (error) {

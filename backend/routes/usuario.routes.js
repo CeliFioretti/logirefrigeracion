@@ -14,16 +14,16 @@ router.get('/',soloAdmin, usuarioController.listar);
 // Ver detalles de un usuario - GET
 router.get('/:id',soloAdmin, usuarioController.detalle);
 
-// Crea un usuario - POST
-router.post('/',soloAdmin, usuarioController.crear);
-
 // Actualizar usuario - PUT
 router.put('/configuracion', verificarToken, verificarRol('administrador, operador'), usuarioController.editar);
 
-// Eliminar usuario - DELETE
-router.delete('/:id',soloAdmin, usuarioController.eliminar);
-
-// Ruta para cambio de contraseña del usuario autenticado
+// Ruta para cambio de contraseña del usuario autenticado - PUT
 router.post('/cambiar-password', verificarToken, usuarioController.cambiarContraseña);
+
+// Actualizar estado de usuario (activo/inactivo) - PUT
+router.put('/:id/estado', soloAdmin, usuarioController.toggleEstadoUsuario);
+
+// Restablecer contraseña de un usuario por ID (solo admin) - PUT
+router.put('/:id/resetear-password', soloAdmin, usuarioController.resetearContraseñaAdmin);
 
 module.exports = router;

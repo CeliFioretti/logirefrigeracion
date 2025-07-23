@@ -30,6 +30,7 @@ import { format } from 'date-fns';
 import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
 import {
+    Add as AddIcon,
     Search as SearchIcon,
     Clear as ClearIcon
 } from '@mui/icons-material';
@@ -123,6 +124,10 @@ function EventosPage() {
         setPage(0);
     };
 
+    const handleFreezerClick = (freezerId) => {
+        navigate(`/freezers/${freezerId}`);
+    };
+
     const handleGoBack = () => {
         navigate('/admin-dashboard');
     };
@@ -141,6 +146,10 @@ function EventosPage() {
         setFiltroObservaciones('');
         setPage(0);
         setTriggerSearch(prev => prev + 1);
+    };
+
+    const handleRegisterNewEvento = () => {
+        navigate('/eventos/nuevo');
     };
 
     if (loading && eventos.length === 0) {
@@ -164,6 +173,21 @@ function EventosPage() {
                 <Typography variant="h4" component="h1" gutterBottom>
                     HISTORIAL DE EVENTOS
                 </Typography>
+
+                <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <Grid >
+                        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" gutterBottom>Registrar Evento</Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={handleRegisterNewEvento}
+                            >
+                                Nuevo
+                            </Button>
+                        </Paper>
+                    </Grid>
+                </Grid>
 
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>

@@ -19,6 +19,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import PersonIcon from '@mui/icons-material/Person';
 import { Typography, Divider } from '@mui/material';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 const AdminIcon = SupervisorAccountIcon;
 const OperadorIcon = PersonIcon;
@@ -207,46 +208,46 @@ export default function SideNav({ open, toggleDrawer, drawerWidth }) {
         {/* USUARIOS */}
         <ListItemButton
           onClick={() => handleToggle('usuarios')}
-          selected={isParentActive(['/usuarios/listado', '/usuarios/administradores', '/usuarios/operadores', '/usuarios/crear'])}
+          selected={isParentActive(['/usuarios', '/usuarios/administradores/listado', '/usuarios/operadores/listado', '/usuarios/crear'])}
         >
-          <ListItemIcon><AccountCircleIcon sx={{ color: isParentActive(['/usuarios/listado', '/usuarios/administradores', '/usuarios/operadores', '/usuarios/crear']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Usuarios" sx={{ fontWeight: isParentActive(['/usuarios/listado', '/usuarios/administradores', '/usuarios/operadores', '/usuarios/crear']) ? 'bold' : 'normal', color: isParentActive(['/usuarios/listado', '/usuarios/administradores', '/usuarios/operadores', '/usuarios/crear']) ? activeTextColor : primaryColor }} />
+          <ListItemIcon><AccountCircleIcon sx={{ color: isParentActive(['/usuarios', '/usuarios/administradores/listado', '/usuarios/operadores/listado', '/usuarios/crear']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Usuarios" sx={{ fontWeight: isParentActive(['/usuarios', '/usuarios/administradores/listado', '/usuarios/operadores/listado', '/usuarios/crear']) ? 'bold' : 'normal', color: isParentActive(['/usuarios/listado', '/usuarios/administradores/listado', '/usuarios/operadores', '/usuarios/crear']) ? activeTextColor : primaryColor }} />
           {openMenus.usuarios ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.usuarios || isParentActive(['/usuarios/listado', '/usuarios/administradores', '/usuarios/operadores', '/usuarios/crear'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.usuarios || isParentActive(['/usuarios', '/usuarios/administradores/listado', '/usuarios/operadores/listado', '/usuarios/crear'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
 
             {/* GESTIÓN DE USUARIOS */}
             <ListItemButton
               sx={{ pl: 4 }}
               onClick={() => handleToggle('gestionUsuarios')}
-              selected={isParentActive(['/usuarios/administradores', '/usuarios/operadores'])}
+              selected={isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado'])}
             >
-              <ListItemIcon><ListAltIcon sx={{ color: isParentActive(['/usuarios/administradores', '/usuarios/operadores']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Gestión de usuarios" sx={{ fontWeight: isParentActive(['/usuarios/administradores', '/usuarios/operadores']) ? 'bold' : 'normal', color: isParentActive(['/usuarios/administradores', '/usuarios/operadores']) ? activeTextColor : primaryColor }} />
+              <ListItemIcon><ListAltIcon sx={{ color: isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Gestión de usuarios" sx={{ fontWeight: isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado']) ? 'bold' : 'normal', color: isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado']) ? activeTextColor : primaryColor }} />
               {openMenus.gestionUsuarios ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
             </ListItemButton>
 
-            <Collapse in={openMenus.gestionUsuarios || isParentActive(['/usuarios/administradores', '/usuarios/operadores'])} timeout="auto" unmountOnExit>
+            <Collapse in={openMenus.gestionUsuarios || isParentActive(['/usuarios/administradores', '/usuarios/operadores/listado'])} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
                 {/* ADMINISTRADORES */}
-                <ListItemButton sx={{ pl: 6 }} onClick={() => handleNavigation('/usuarios/administradores')} selected={isActive('/usuarios/administradores')}>
-                  <ListItemIcon><AdminIcon sx={{ color: isActive('/usuarios/administradores') ? activeIconColor : primaryColor }} /></ListItemIcon>
-                  <ListItemText primary="Administradores" sx={{ fontWeight: isActive('/usuarios/administradores') ? 'bold' : 'normal', color: isActive('/usuarios/administradores') ? activeTextColor : primaryColor }} />
+                <ListItemButton sx={{ pl: 6 }} onClick={() => handleNavigation('/usuarios/administradores/listado')} selected={isActive('/usuarios/administradores/listado')}>
+                  <ListItemIcon><AdminIcon sx={{ color: isActive('/usuarios/administradores/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+                  <ListItemText primary="Administradores" sx={{ fontWeight: isActive('/usuarios/administradores/listado') ? 'bold' : 'normal', color: isActive('/usuarios/administradores/listado') ? activeTextColor : primaryColor }} />
                 </ListItemButton>
 
                 {/* OPERADORES */}
-                <ListItemButton sx={{ pl: 6 }} onClick={() => handleNavigation('/usuarios/operadores')} selected={isActive('/usuarios/operadores')}>
-                  <ListItemIcon><OperadorIcon sx={{ color: isActive('/usuarios/operadores') ? activeIconColor : primaryColor }} /></ListItemIcon>
-                  <ListItemText primary="Operadores" sx={{ fontWeight: isActive('/usuarios/operadores') ? 'bold' : 'normal', color: isActive('/usuarios/operadores') ? activeTextColor : primaryColor }} />
+                <ListItemButton sx={{ pl: 6 }} onClick={() => handleNavigation('/usuarios/operadores/listado')} selected={isActive('/usuarios/operadores/listado')}>
+                  <ListItemIcon><OperadorIcon sx={{ color: isActive('/usuarios/operadores/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+                  <ListItemText primary="Operadores" sx={{ fontWeight: isActive('/usuarios/operadores/listado') ? 'bold' : 'normal', color: isActive('/usuarios/operadores/listado') ? activeTextColor : primaryColor }} />
                 </ListItemButton>
               </List>
             </Collapse>
 
-            {/* CREAR USUARIO */}
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/usuarios/crear')} selected={isActive('/usuarios/crear')}>
-              <ListItemIcon><PersonAddIcon sx={{ color: isActive('/usuarios/crear') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Crear usuario" sx={{ fontWeight: isActive('/usuarios/crear') ? 'bold' : 'normal', color: isActive('/usuarios/crear') ? activeTextColor : primaryColor }} />
+            {/* CODIGOS DE REGISTRO */}
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/usuarios/codigos-registro')} selected={isActive('/usuarios/codigos-registro')}>
+              <ListItemIcon><VpnKeyIcon sx={{ color: isActive('/usuarios/codigos-registro') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Códigos de Registro" sx={{ fontWeight: isActive('/usuarios/codigos-registro') ? 'bold' : 'normal', color: isActive('/usuarios/codigos-registro') ? activeTextColor : primaryColor }} />
             </ListItemButton>
 
           </List>

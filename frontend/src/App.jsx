@@ -25,7 +25,9 @@ import MantenimientosListadoPage from './views/admin/MantenimientoPage';
 import MantenimientosCrearForm from './components/MantenimientoForm';
 import UsuariosAdministradorPage from './views/admin/usuarios/AdministradorPage';
 import UsuariosOperadorPage from './views/admin/usuarios/OperadorPage';
+import CodigosPage from './views/admin/usuarios/CodigosPage';
 import EventosListadoPage from './views/admin/EventosPage';
+import EventoForm from './components/EventoForm';
 import DepartamentoListadoPage from './views/admin/DepartamentosPage';
 import ZonasListadoPage from './views/admin/ZonasPage';
 import AuditoriaPage from './views/admin/AuditoriaPage';
@@ -70,33 +72,45 @@ function App() {
 
                     <Route element={<PrivateRoute roles={['administrador', 'operador']} />}>
                         <Route element={<DashboardLayout />}>
+                            {/** DASHBOARD */}
                             <Route path='/admin-dashboard' element={<AdminDashboard />} />
 
+                            {/** FREEZERS */}
                             <Route path='/freezers/listado' element={<FreezersListadoPage />} />
                             <Route path='/freezers/:id' element={<FreezerDetallePage />} />
                             <Route path='/freezers/nuevo' element={<FreezerForm />} />
                             <Route path='/freezers/editar/:id' element={<FreezerForm />} />
                             <Route path='/freezers/:id/asignar' element={<AsignarForm />} />
 
+                            {/** CLIENTES */}
                             <Route path='/clientes/listado' element={<ClientesListadoPage />} />
                             <Route path='/clientes/:id' element={<ClienteDetallePage />} />
                             <Route path='/clientes/nuevo' element={<CrearClienteForm />} />
                             <Route path='/clientes/editar/:id' element={<CrearClienteForm />} />
 
+                            {/** MANTENIMIENTOS */}
                             <Route path='/mantenimientos/listado' element={<MantenimientosListadoPage />} />
                             <Route path='/mantenimientos/nuevo' element={<MantenimientosCrearForm />} />
                             <Route path='/mantenimientos/editar/:id' element={<MantenimientosCrearForm />} />
 
+                            {/** USUARIOS */}
                             <Route path='/usuarios/administradores/listado' element={<UsuariosAdministradorPage />} />
-                            <Route path='/usuarios/operadores' element={<UsuariosOperadorPage />} />
+                            <Route path='/usuarios/operadores/listado' element={<UsuariosOperadorPage />} />
+                            <Route path='/usuarios/codigos-registro' element={<CodigosPage />} />
 
+                            {/** EVENTOS */}
                             <Route path='/eventos/listado' element={<EventosListadoPage />} />
+                            <Route path="/eventos/nuevo" element={<EventoForm />} />
+                            <Route path="/eventos/editar/:id" element={<EventoForm />} />
 
+                            {/** UBICACIONES */}
                             <Route path='/ubicaciones/listado' element={<DepartamentoListadoPage />} />
                             <Route path='/ubicaciones/:departamentoId/zonas' element={<ZonasListadoPage />} />
-
+                            
+                            {/** AUDITORÍA DE ACTIVIDADES */}
                             <Route path='/auditoria/listado' element={<AuditoriaPage />} />
 
+                            {/** PÁGINAS DE ERROR */}
                             <Route path='/acceso-denegado' element={<ForbiddenPage />} />
                             <Route path='/sesion-expirada' element={<SessionExpiredPage />} />
                         </Route>

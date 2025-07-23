@@ -22,8 +22,9 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    Tooltip
 } from '@mui/material';
-import axios from 'axios';
+import instanceAxios from '../../../api/axios';
 import { UserContext } from '../../../context/UserContext';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -33,8 +34,9 @@ import {
     Search as SearchIcon,
     Clear as ClearIcon,
     Edit as EditIcon,
-    Delete as DeleteIcon,
-    LockReset as LockResetIcon
+    LockReset as LockResetIcon,
+    CheckCircle as CheckCircleIcon, // Nuevo icono para activar
+    Block as BlockIcon,             // Nuevo icono para bloquear/inhabilitar
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -53,9 +55,12 @@ function AdministradoresPage() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-    const [userIdToDelete, setUserIdToDelete] = useState(null);
-    const [userNameToDelete, setUserNameToDelete] = useState('');
+    // Estados para el diálogo de confirmación de cambio de estado
+    const [openStatusDialog, setOpenStatusDialog] = useState(false);
+    const [userToToggleId, setUserToToggleId] = useState(null);
+    const [userToToggleName, setUserToToggleName] = useState('');
+    const [userToToggleCurrentStatus, setUserToToggleCurrentStatus] = useState(null); // true for activo, false for inactivo
+
 
     const fetchAdministradores = useCallback(async (searchParams) => {
         if (!token) {
@@ -74,15 +79,11 @@ function AdministradoresPage() {
             queryParams.append('page', searchParams.page);
             queryParams.append('pageSize', searchParams.pageSize);
 
-            const url = `http://localhost:3200/api/usuarios?${queryParams.toString()}`;
+            const url = `/usuarios?${queryParams.toString()}`;
+            
+            const response = await instanceAxios.get(url)
 
-            const response = await axios.get(url, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            setUsuarios(response.data.data)
+            setUsuarios(response.data.data);
             setTotalRegistros(response.data.total);
 
         } catch (err) {
@@ -103,7 +104,7 @@ function AdministradoresPage() {
         };
 
         fetchAdministradores(currentSearchParams);
-    }, [fetchAdministradores, page, rowsPerPage]); // Eliminar triggerSearch, ya que no hay un botón explícito de aplicar filtros para esto
+    }, [fetchAdministradores, page, rowsPerPage]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -130,38 +131,51 @@ function AdministradoresPage() {
         fetchAdministradores({ nombre: '', page: 0, pageSize: rowsPerPage });
     };
 
-    const handleDeleteClick = (id, nombre) => {
-        setUserIdToDelete(id);
-        setUserNameToDelete(nombre);
-        setOpenDeleteDialog(true);
+    // Función para manejar el clic en el botón de activar/inhabilitar
+    const handleToggleUserStatusClick = (id, nombre, currentStatus) => {
+        setUserToToggleId(id);
+        setUserToToggleName(nombre);
+        setUserToToggleCurrentStatus(currentStatus);
+        setOpenStatusDialog(true);
     };
 
-    const handleConfirmDelete = async () => {
-        setOpenDeleteDialog(false);
-        if (!token || !userIdToDelete) return;
+    // Función para confirmar el cambio de estado
+    const handleConfirmToggleStatus = async () => {
+        setOpenStatusDialog(false);
+        if (!token || !userToToggleId) return;
+
+        setLoading(true);
+        setError(null);
+        const newStatus = !userToToggleCurrentStatus; // Invertir el estado actual
 
         try {
-            setLoading(true);
-            await axios.delete(`http://localhost:3200/api/usuarios/${userIdToDelete}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            setUserIdToDelete(null);
-            setUserNameToDelete('');
-            // Refrescar la lista después de eliminar
+            await axios.put(`http://localhost:3200/api/usuarios/${userToToggleId}/estado`,
+                { activo: newStatus },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+            // Refrescar la lista después de actualizar el estado
             fetchAdministradores({ nombre: filtroNombre, page: page, pageSize: rowsPerPage });
+            // Limpiar estados del diálogo
+            setUserToToggleId(null);
+            setUserToToggleName('');
+            setUserToToggleCurrentStatus(null);
         } catch (err) {
-            console.error('Error al eliminar usuario:', err);
-            setError('Error al eliminar el usuario. Inténtelo de nuevo.');
+            console.error('Error al cambiar el estado del usuario:', err);
+            setError('Error al cambiar el estado del usuario. Inténtelo de nuevo.');
             setLoading(false);
         }
     };
 
-    const handleCancelDelete = () => {
-        setOpenDeleteDialog(false);
-        setUserIdToDelete(null);
-        setUserNameToDelete('');
+    const handleCancelToggleStatus = () => {
+        setOpenStatusDialog(false);
+        setUserToToggleId(null);
+        setUserToToggleName('');
+        setUserToToggleCurrentStatus(null);
     };
 
     const handleEditClick = (userId) => {
@@ -173,7 +187,7 @@ function AdministradoresPage() {
     };
 
 
-    if (loading && usuarios.length === 0) {
+    if (loading && usuarios.length === 0 && !error) { 
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
                 <CircularProgress />
@@ -196,7 +210,7 @@ function AdministradoresPage() {
 
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid >
+                        <Grid item xs={12} sm={6} md={4}>
                             <TextField
                                 label="Buscar por Nombre"
                                 variant="outlined"
@@ -206,7 +220,7 @@ function AdministradoresPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid >
+                        <Grid item xs={12} sm={6} md={8}>
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}
@@ -228,9 +242,9 @@ function AdministradoresPage() {
 
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-                {loading && usuarios.length === 0 ? (
+                {usuarios.length === 0 && !loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
-                        <CircularProgress />
+                        <Typography>No se encontraron administradores con los filtros aplicados.</Typography>
                     </Box>
                 ) : (
                     <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -245,25 +259,19 @@ function AdministradoresPage() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {usuarios.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={4} align="center">
-                                                No se encontraron administradores con los filtros aplicados.
+                                    {usuarios.map((usuarioItem) => (
+                                        <TableRow hover key={usuarioItem.id}>
+                                            <TableCell>{usuarioItem.nombre}</TableCell>
+                                            <TableCell>{usuarioItem.correo}</TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={usuarioItem.activo ? 'Activo' : 'Inactivo'}
+                                                    color={usuarioItem.activo ? 'success' : 'error'}
+                                                    size="small"
+                                                />
                                             </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        usuarios.map((usuarioItem) => (
-                                            <TableRow hover key={usuarioItem.id}>
-                                                <TableCell>{usuarioItem.nombre}</TableCell>
-                                                <TableCell>{usuarioItem.correo}</TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        label={usuarioItem.activo ? 'Activo' : 'Inactivo'}
-                                                        color={usuarioItem.activo ? 'success' : 'error'}
-                                                        size="small"
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
+                                            <TableCell>
+                                                <Tooltip title="Editar Usuario"> 
                                                     <IconButton
                                                         aria-label="editar"
                                                         onClick={() => handleEditClick(usuarioItem.id)}
@@ -271,6 +279,8 @@ function AdministradoresPage() {
                                                     >
                                                         <EditIcon />
                                                     </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Restablecer Contraseña"> 
                                                     <IconButton
                                                         aria-label="resetear contraseña"
                                                         onClick={() => handleResetPasswordClick(usuarioItem.id)}
@@ -278,18 +288,20 @@ function AdministradoresPage() {
                                                     >
                                                         <LockResetIcon />
                                                     </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title={usuarioItem.activo ? 'Inhabilitar Usuario' : 'Activar Usuario'}> 
                                                     <IconButton
-                                                        aria-label="eliminar"
-                                                        onClick={() => handleDeleteClick(usuarioItem.id, usuarioItem.nombre)}
+                                                        aria-label={usuarioItem.activo ? 'inhabilitar' : 'activar'}
+                                                        onClick={() => handleToggleUserStatusClick(usuarioItem.id, usuarioItem.nombre, usuarioItem.activo)}
                                                         size="small"
-                                                        color="error"
+                                                        color={usuarioItem.activo ? 'error' : 'success'}
                                                     >
-                                                        <DeleteIcon />
+                                                        {usuarioItem.activo ? <BlockIcon /> : <CheckCircleIcon />}
                                                     </IconButton>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
+                                                </Tooltip>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
@@ -309,26 +321,28 @@ function AdministradoresPage() {
                     </Paper>
                 )}
 
-                {/* Diálogo de Confirmación de Eliminación */}
+                {/* Diálogo de Confirmación de Cambio de Estado */}
                 <Dialog
-                    open={openDeleteDialog}
-                    onClose={handleCancelDelete}
-                    aria-labelledby="alert-dialog-title"
-                    aria-describedby="alert-dialog-description"
+                    open={openStatusDialog}
+                    onClose={handleCancelToggleStatus}
+                    aria-labelledby="status-dialog-title"
+                    aria-describedby="status-dialog-description"
                 >
-                    <DialogTitle id="alert-dialog-title">{"Confirmar Eliminación"}</DialogTitle>
+                    <DialogTitle id="status-dialog-title">
+                        {userToToggleCurrentStatus ? "¿Inhabilitar Usuario?" : "¿Activar Usuario?"}
+                    </DialogTitle>
                     <DialogContent>
                         <Typography>
-                            ¿Está seguro de que desea eliminar al administrador " **{userNameToDelete}** "?
-                            Esta acción no se puede deshacer.
+                            ¿Está seguro de que desea {userToToggleCurrentStatus ? 'inhabilitar' : 'activar'} al usuario " **{userToToggleName}** "?
+                            Esta acción cambiará su estado de acceso al sistema.
                         </Typography>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={handleCancelDelete} color="primary">
+                        <Button onClick={handleCancelToggleStatus} color="primary">
                             Cancelar
                         </Button>
-                        <Button onClick={handleConfirmDelete} color="error" autoFocus>
-                            Eliminar
+                        <Button onClick={handleConfirmToggleStatus} color={userToToggleCurrentStatus ? "error" : "success"} autoFocus>
+                            {userToToggleCurrentStatus ? "Inhabilitar" : "Activar"}
                         </Button>
                     </DialogActions>
                 </Dialog>

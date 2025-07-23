@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controladorCodigos = require('../controller/codigos-registro.controller');
+const emailController = require('../controller/email-codigo.controller.js');
 const verificarRol = require('../middlewares/verificarRol.js')
 const verificarToken = require('../middlewares/verificarToken.js');
 
@@ -18,5 +19,8 @@ router.get('/disponibles', soloAdmin, controladorCodigos.listarDisponibles);
 
 // Eliminar un código - DELETE
 router.delete('/:id', soloAdmin, controladorCodigos.eliminar);
+
+// Enviar un código por email - POST
+router.post('/enviar-email', soloAdmin, emailController.sendCodeByEmail);
 
 module.exports = router;
