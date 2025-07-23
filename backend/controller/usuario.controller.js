@@ -4,10 +4,10 @@ const bcrypt = require('bcrypt');
 
 // Obtener registro completo de usuarios
 const listar = async (req, res, next) => {
-    const { nombre, rol , page, pageSize} = req.query;
+    const { nombre, rol } = req.query; 
 
     try {
-        let query = 'SELECT * FROM usuario';
+        let query = 'SELECT id, nombre, correo, rol FROM usuario';
         let countQuery = 'SELECT COUNT(*) as total FROM usuario';
 
         let condiciones = [];
@@ -20,7 +20,7 @@ const listar = async (req, res, next) => {
             countParams.push(`%${nombre}%`);
         }
         if (rol) {
-            condiciones.push('rol LIKE ?');
+            condiciones.push('rol = ?');
             params.push(`${rol}`);
             countParams.push(`${rol}`);
         }
@@ -30,15 +30,9 @@ const listar = async (req, res, next) => {
             countQuery += ' WHERE ' + condiciones.join(' AND ');
         }
 
-        query += ' ORDER BY nombre ASC'
+        query += ' ORDER BY nombre ASC'; 
 
-        const limit = parseInt(pageSize);
-        offset = parseInt(page) * limit;
-
-        query += ' LIMIT ?, ?'
-        params.push(offset, limit)
-
-        const [totalResult] = await db.promise().query(countQuery, countParams)
+        const [totalResult] = await db.promise().query(countQuery, countParams);
         const totalRegistros = totalResult[0].total;
 
         const [resultado] = await db.promise().query(query, params);
@@ -48,19 +42,19 @@ const listar = async (req, res, next) => {
                 message: 'No hay registros de usuario actualmente',
                 data: [],
                 total: 0
-            })
+            });
         } else {
             res.status(200).json({
                 data: resultado,
                 total: totalRegistros
-            })
+            });
         }
 
     } catch (error) {
-        next(error)
+        console.error('Error en el controlador listar de usuarios (sin paginación):', error); 
+        next(error); 
     }
-
-}
+};
 
 // Obtiene los detalles de un usuario
 const detalle = async (req, res, next) => {

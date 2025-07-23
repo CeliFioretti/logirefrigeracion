@@ -23,7 +23,8 @@ import {
     Search as SearchIcon,
     Clear as ClearIcon,
     Visibility as VisibilityIcon, // Icono para ver zonas
-    Add as AddIcon
+    Add as AddIcon,
+    Edit as EditIcon
 } from '@mui/icons-material';
 import axiosInstance from '../../api/axios'
 import { UserContext } from '../../context/UserContext';
@@ -32,6 +33,8 @@ import { useNavigate } from 'react-router-dom';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { es } from 'date-fns/locale';
+import CreateDepartamentoForm from '../../components/CrearDepartamentoForm';
+import EditDepartamentoForm from '../../components/EditarDepartamento';
 
 function DepartamentosPage() {
     const { usuario } = useContext(UserContext);
@@ -43,11 +46,16 @@ function DepartamentosPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Filtros y paginación
     const [filtroNombre, setFiltroNombre] = useState('');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const [triggerSearch, setTriggerSearch] = useState(0);
+    const [openCreateModal, setOpenCreateModal] = useState(false);
+    const [openEditModal, setOpenEditModal] = useState(false); 
+    const [departamentoToEdit, setDepartamentoToEdit] = useState(null); 
+
 
     const fetchDepartamentos = useCallback(async (searchParams) => {
         if (!token) {
@@ -120,7 +128,29 @@ function DepartamentosPage() {
     };
 
     const handleCreateDepartamento = () => {
-        alert('Funcionalidad para crear departamento (a implementar).');
+        setOpenCreateModal(true);
+    };
+
+    const handleCloseCreateModal = () => {
+        setOpenCreateModal(false); 
+    };
+
+    const handleDepartamentoCreated = () => {
+        setTriggerSearch(prev => prev + 1); 
+    };
+
+    const handleEditDepartamento = (departamento) => {
+        setDepartamentoToEdit(departamento); 
+        setOpenEditModal(true); 
+    };
+
+    const handleCloseEditModal = () => {
+        setOpenEditModal(false); 
+        setDepartamentoToEdit(null);
+    };
+
+    const handleDepartamentoUpdated = () => {
+        setTriggerSearch(prev => prev + 1); 
     };
 
     if (loading && departamentos.length === 0) {
@@ -194,7 +224,7 @@ function DepartamentosPage() {
 
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-                {loading && departamentos.length === 0 ? (
+                {loading && departamentos.length === 0 && !error ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
                         <CircularProgress />
                     </Box>
@@ -222,6 +252,14 @@ function DepartamentosPage() {
                                                 <TableCell>{departamento.id}</TableCell>
                                                 <TableCell>{departamento.nombre}</TableCell>
                                                 <TableCell align="right">
+                                                    <IconButton
+                                                        aria-label="editar departamento"
+                                                        onClick={() => handleEditDepartamento(departamento)}
+                                                        color="info"
+                                                        sx={{ mr: 1 }}
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
                                                     <IconButton
                                                         aria-label="ver zonas"
                                                         onClick={() => handleViewZonas(departamento.id)}
@@ -252,6 +290,23 @@ function DepartamentosPage() {
                     </Paper>
                 )}
             </Container>
+
+            {/* Modal para crear departamento */}
+            <CreateDepartamentoForm
+                open={openCreateModal}
+                handleClose={handleCloseCreateModal}
+                onDepartamentoCreated={handleDepartamentoCreated}
+            />
+
+            {/* Modal para editar departamento */}
+            {departamentoToEdit && (
+                <EditDepartamentoForm
+                    open={openEditModal}
+                    handleClose={handleCloseEditModal}
+                    onDepartamentoUpdated={handleDepartamentoUpdated}
+                    departamento={departamentoToEdit}
+                />
+            )}
         </LocalizationProvider>
     );
 }

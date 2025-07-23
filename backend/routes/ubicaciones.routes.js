@@ -14,6 +14,9 @@ router.get('/', soloAdmin, ubicacionController.listarDepartamentos);
 // Crear departamento - POST
 router.post('/', soloAdmin, ubicacionController.crearDepartamento);
 
+// Editar departamento - PUT
+router.put('/:id', soloAdmin, ubicacionController.editarDepartamento);
+
 // Obtener departamento por ID - GET
 router.get('/:id', soloAdmin, ubicacionController.verDepartamentoPorId);
 

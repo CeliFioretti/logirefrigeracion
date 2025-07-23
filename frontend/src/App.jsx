@@ -104,7 +104,7 @@ function App() {
                             <Route path="/eventos/editar/:id" element={<EventoForm />} />
 
                             {/** UBICACIONES */}
-                            <Route path='/ubicaciones/listado' element={<DepartamentoListadoPage />} />
+                            <Route path='/ubicaciones/departamentos/listado' element={<DepartamentoListadoPage />} />
                             <Route path='/ubicaciones/:departamentoId/zonas' element={<ZonasListadoPage />} />
                             
                             {/** AUDITORÍA DE ACTIVIDADES */}

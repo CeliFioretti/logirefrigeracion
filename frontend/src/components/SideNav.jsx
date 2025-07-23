@@ -282,17 +282,17 @@ export default function SideNav({ open, toggleDrawer, drawerWidth }) {
         {/* ZONAS */}
         <ListItemButton
           onClick={() => handleToggle('zonas')}
-          selected={isParentActive(['/ubicaciones/listado'])}
+          selected={isParentActive(['/ubicaciones/departamentos/listado'])}
         >
-          <ListItemIcon><LocationOnIcon sx={{ color: isParentActive(['/ubicaciones/listado']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Zonas" sx={{ fontWeight: isParentActive(['/ubicaciones/listado']) ? 'bold' : 'normal', color: isParentActive(['/ubicaciones/listado']) ? activeTextColor : primaryColor }} />
+          <ListItemIcon><LocationOnIcon sx={{ color: isParentActive(['/ubicaciones/departamentos/listado']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Zonas" sx={{ fontWeight: isParentActive(['/ubicaciones/departamentos/listado']) ? 'bold' : 'normal', color: isParentActive(['/ubicaciones/departamentos/listado']) ? activeTextColor : primaryColor }} />
           {openMenus.zonas ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.zonas || isParentActive(['/ubicaciones/listado'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.zonas || isParentActive(['/ubicaciones/departamentos/listado'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/ubicaciones/listado')} selected={isActive('/ubicaciones/listado')}>
-              <ListItemIcon><ListAltIcon sx={{ color: isActive('/ubicaciones/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Departamentos" sx={{ fontWeight: isActive('/ubicaciones/listado') ? 'bold' : 'normal', color: isActive('/ubicaciones/listado') ? activeTextColor : primaryColor }} />
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/ubicaciones/departamentos/listado')} selected={isActive('/ubicaciones/departamentos/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/ubicaciones/departamentos/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Departamentos" sx={{ fontWeight: isActive('/ubicaciones/departamentos/listado') ? 'bold' : 'normal', color: isActive('/ubicaciones/departamentos/listado') ? activeTextColor : primaryColor }} />
             </ListItemButton>
           </List>
         </Collapse>

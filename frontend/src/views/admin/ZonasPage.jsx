@@ -11,7 +11,6 @@ import {
     TableBody,
     TableRow,
     TableCell,
-    TablePagination,
     Paper,
     TextField,
     Button,
@@ -32,6 +31,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { es } from 'date-fns/locale';
+import CreateZonaForm from '../../components/CrearZonaForm';
+import EditZonaForm from '../../components/EditarZonaForm';
 
 function ZonasPage() {
     const { usuario } = useContext(UserContext);
@@ -41,7 +42,6 @@ function ZonasPage() {
 
     const [zonas, setZonas] = useState([]);
     const [departamentoNombre, setDepartamentoNombre] = useState('');
-    const [totalRegistros, setTotalRegistros] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -49,10 +49,11 @@ function ZonasPage() {
     const [filtroNombreZona, setFiltroNombreZona] = useState('');
     const [filtroNombreOperador, setFiltroNombreOperador] = useState('');
 
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-
     const [triggerSearch, setTriggerSearch] = useState(0); // Para re-ejecutar búsquedas/filtros
+
+    const [openCreateZonaModal, setOpenCreateZonaModal] = useState(false);
+    const [openEditZonaModal, setOpenEditZonaModal] = useState(false);
+    const [zonaToEdit, setZonaToEdit] = useState(null); 
 
     // Función para obtener el nombre del departamento
     const fetchDepartamentoNombre = useCallback(async () => {
@@ -89,13 +90,11 @@ function ZonasPage() {
             const response = await axiosInstance.get(url)
 
             setZonas(response.data.data);
-            setTotalRegistros(response.data.data.length);
 
         } catch (err) {
             console.error('Error al obtener zonas:', err);
             setError('Error al cargar las zonas. Inténtelo de nuevo.');
             setZonas([]); // Limpiar zonas en caso de error
-            setTotalRegistros(0);
         } finally {
             setLoading(false);
         }
@@ -109,43 +108,38 @@ function ZonasPage() {
 
         const currentSearchParams = {
             nombreZona: filtroNombreZona,
-            nombreOperador: filtroNombreOperador,
-            page: page,
-            pageSize: rowsPerPage,
+            nombreOperador: filtroNombreOperador
         };
         fetchZonas(currentSearchParams);
-    }, [fetchZonas, fetchDepartamentoNombre, triggerSearch, departamentoNombre, page, rowsPerPage]);
+    }, [fetchZonas, fetchDepartamentoNombre, triggerSearch, departamentoNombre]);
 
-
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
 
     const handleGoBack = () => {
-        navigate('/ubicaciones');
-    };
-
-    const handleChangeRowsPerPage = (event) => {
-        const newSize = parseInt(event.target.value, 10);
-        setRowsPerPage(newSize);
-        setPage(0);
+        navigate('/ubicaciones/departamentos/listado');
     };
 
     const handleApplyFilters = () => {
-        setPage(0); // Reiniciar paginación al aplicar filtros
         setTriggerSearch(prev => prev + 1); // Disparar useEffect para re-fetch
     };
 
     const handleClearFilters = () => {
         setFiltroNombreZona('');
         setFiltroNombreOperador('');
-        setPage(0);
-        setRowsPerPage(10);
         setTriggerSearch(prev => prev + 1);
     };
 
     const handleEditZona = (zona) => {
-        alert(`Funcionalidad para EDITAR zona ID: ${zona.id}, Nombre: ${zona.zona}, Operador: ${zona.operador} (a implementar).`);
+        setZonaToEdit(zona);
+        setOpenEditZonaModal(true);
+    };
+
+    const handleCloseEditZonaModal = () => {
+        setOpenEditZonaModal(false);
+        setZonaToEdit(null); // Limpiar la zona a editar al cerrar
+    };
+
+    const handleZonaUpdated = () => {
+        setTriggerSearch(prev => prev + 1); // Refrescar la lista
     };
 
     const handleDeleteZona = async (zonaId) => {
@@ -155,25 +149,31 @@ function ZonasPage() {
         setLoading(true);
         try {
             const url = `/ubicaciones/zonas/${zonaId}`;
-            await axiosInstance.delete(url)
+            await axiosInstance.delete(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
             alert('Zona eliminada correctamente.');
             setTriggerSearch(prev => prev + 1); // Refrescar la lista de zonas después de eliminar
         } catch (err) {
             console.error('Error al eliminar zona:', err);
-            setError('Error al eliminar la zona. Inténtelo de nuevo.');
+            setError(err.response?.data?.error || 'Error al eliminar la zona. Inténtelo de nuevo.');
         } finally {
             setLoading(false);
         }
     };
 
     const handleCreateZona = () => {
-        alert(`Funcionalidad para crear nueva ZONA en el Departamento "${departamentoNombre}" (ID: ${departamentoId}) (a implementar).`);
-
+        setOpenCreateZonaModal(true);
     };
 
-    // Regresar a la lista de departamentos
-    const handleBackToDepartamentos = () => {
-        navigate('/ubicaciones');
+    const handleCloseCreateZonaModal = () => {
+        setOpenCreateZonaModal(false);
+    };
+
+    const handleZonaCreated = () => {
+        setTriggerSearch(prev => prev + 1); // Refrescar la lista
     };
 
 
@@ -201,13 +201,13 @@ function ZonasPage() {
                 </Box>
 
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid>
+                    <Grid> 
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Registrar Zona</Typography>
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
-                                onClick={handleCreateZona}
+                                onClick={handleCreateZona} 
                             >
                                 Nueva
                             </Button>
@@ -218,7 +218,7 @@ function ZonasPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid >
+                        <Grid>
                             <TextField
                                 label="Nombre de la Zona"
                                 variant="outlined"
@@ -228,7 +228,7 @@ function ZonasPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid >
+                        <Grid>
                             <TextField
                                 label="Nombre del Operador"
                                 variant="outlined"
@@ -238,7 +238,7 @@ function ZonasPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid >
+                        <Grid> 
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}
@@ -260,7 +260,7 @@ function ZonasPage() {
 
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-                {loading ? (
+                {loading && zonas.length === 0 && !error ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
                         <CircularProgress />
                     </Box>
@@ -284,16 +284,18 @@ function ZonasPage() {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        zonas.map((zona) => (
+                                        
+                                        zonas.map((zona) => ( 
                                             <TableRow hover key={zona.id}>
                                                 <TableCell>{zona.id}</TableCell>
                                                 <TableCell>{zona.zona}</TableCell>
-                                                <TableCell>{zona.operador || 'N/A'}</TableCell>
+                                                <TableCell>{zona.operador || ''}</TableCell>
                                                 <TableCell align="right">
                                                     <IconButton
                                                         aria-label="editar"
                                                         onClick={() => handleEditZona(zona)}
                                                         color="info"
+                                                        sx={{ mr: 1 }}
                                                     >
                                                         <EditIcon fontSize="small" />
                                                     </IconButton>
@@ -311,22 +313,27 @@ function ZonasPage() {
                                 </TableBody>
                             </Table>
                         </TableContainer>
-                        <TablePagination
-                            rowsPerPageOptions={[5, 10, 25]}
-                            component="div"
-                            count={totalRegistros}
-                            rowsPerPage={rowsPerPage}
-                            page={page}
-                            onPageChange={handleChangePage}
-                            onRowsPerPageChange={handleChangeRowsPerPage}
-                            labelRowsPerPage="Filas por página:"
-                            labelDisplayedRows={({ from, to, count }) =>
-                                `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-                            }
-                        />
                     </Paper>
                 )}
             </Container>
+
+            <CreateZonaForm
+                open={openCreateZonaModal}
+                handleClose={handleCloseCreateZonaModal}
+                onZonaCreated={handleZonaCreated}
+                departamentoId={departamentoId}
+                departamentoNombre={departamentoNombre}
+            />
+
+            {zonaToEdit && (
+                <EditZonaForm
+                    open={openEditZonaModal}
+                    handleClose={handleCloseEditZonaModal}
+                    onZonaUpdated={handleZonaUpdated}
+                    zona={zonaToEdit}
+                    departamentoId={departamentoId} 
+                />
+            )}
         </LocalizationProvider>
     );
 }

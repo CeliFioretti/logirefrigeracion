@@ -87,13 +87,13 @@ const crearDepartamento = async (req, res, next) => {
 
 const verDepartamentoPorId = async (req, res, next) => {
     const { id } = req.params;
-    
+
     try {
         const [departamento] = await db.promise().query('SELECT id, nombre FROM departamento WHERE id = ?', [id]);
 
         if (departamento.length === 0) {
-            return res.status(404).json({ message: 'Departamento no encontrado'})
-        } else{
+            return res.status(404).json({ message: 'Departamento no encontrado' })
+        } else {
             res.status(200).json(departamento[0])
         }
 
@@ -101,6 +101,48 @@ const verDepartamentoPorId = async (req, res, next) => {
         next(err);
     }
 
+}
+
+// Edita departamento - PUT
+const editarDepartamento = async (req, res, next) => {
+    const { id } = req.params;
+    const { nombre } = req.body;
+
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
+
+    try {
+        if (!nombre || nombre.trim() === '') {
+            return res.status(400).json({ error: 'El nombre del departamento es obligatorio.' });
+        }
+
+        const [existingDept] = await db.promise().query('SELECT nombre FROM departamento WHERE id = ?', [id]);
+
+        if (existingDept.length === 0) {
+            return res.status(404).json({ message: 'Departamento no encontrado.' });
+        }
+
+        const oldNombre = existingDept[0].nombre;
+
+        // Actualizar el nombre del departamento
+        const [result] = await db.promise().query('UPDATE departamento SET nombre = ? WHERE id = ?', [nombre, id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(500).json({ error: 'No se pudo actualizar el departamento.' });
+        }
+
+        // Auditoría
+        const mensaje = `Edición de departamento: ID ${id}. Nombre anterior: '${oldNombre.replace(/'/g, "")}', Nuevo nombre: '${nombre.replace(/'/g, "")}'`;
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
+
+        res.status(200).json({
+            message: 'Departamento actualizado correctamente',
+            data: { id, nombre }
+        });
+
+    } catch (err) {
+        next(err);
+    }
 }
 
 
@@ -113,7 +155,7 @@ const verZonasPorDepartamento = async (req, res, next) => {
         let query = `
         SELECT z.id, z.nombre AS zona, u.nombre AS operador
         FROM zona z
-        INNER JOIN usuario u ON z.usuario_id = u.id
+        LEFT JOIN usuario u ON z.usuario_id = u.id
         WHERE z.departamento_id = ?
         `;
         let params = [idDepartamento];
@@ -202,14 +244,24 @@ const crearZona = async (req, res, next) => {
 
         // Si existe un usuario asignado para la zona (operador), le envia un correo para informarlo.
         if (usuarioAsignado) {
-            const [[operador]] = await db.promise().query('SELECT email, nombre FROM usuario WHERE id = ?', [usuarioAsignado]);
+            const [[operador]] = await db.promise().query('SELECT correo, nombre FROM usuario WHERE id = ?', [usuarioAsignado]);
 
             if (operador) {
-                await enviarCorreo({
-                    para: operador.email,
-                    asunto: 'Zona asignada',
-                    mensaje: `Hola ${operador.nombre}, se te ha asignado una nueva zona: "${nombre}".`
-                });
+                const asunto = '¡Nueva Zona Asignada!';
+                const mensajeTexto = `Hola ${operador.nombre},\n\nSe te ha asignado una nueva zona: "${nombre}".\n\nPor favor, revisa tus tareas en la aplicación.`;
+                const mensajeHtml = `
+                                    <p>Hola <strong>${operador.nombre}</strong>,</p>
+                                    <p>Se te ha asignado una nueva zona: <strong>"${nombre}"</strong>.</p>
+                                    <p>Por favor, revisa tus tareas en la aplicación.</p>
+                                    <p>Saludos cordiales,<br>El equipo de LogiRefrigeración</p>
+                                `;
+
+                enviarCorreo({
+                    para: operador.correo,
+                    asunto: asunto,
+                    mensaje: mensajeTexto,
+                    html: mensajeHtml
+                }).catch(emailErr => console.error('Error enviando correo de nueva asignación:', emailErr));
             }
         }
 
@@ -221,43 +273,66 @@ const crearZona = async (req, res, next) => {
 // Editar zona - PUT
 const editarZona = async (req, res, next) => {
     const idZona = req.params.id;
-    const { nombre } = req.body;
+    const { nombre, idOperador } = req.body;
 
     // Auditoría
     const idUsuarioResponsable = req.usuario.id;
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-        let query = 'UPDATE zona SET usuario_id = ?, nombre = ?  WHERE id = ?';
 
-        let usuarioAsignado = idUsuarioResponsable;
+        let usuarioAAsignar = idOperador === '' ? null : idOperador;
+
+        if (!nombre || nombre.trim() === '') {
+            return res.status(400).json({ error: 'El nombre es obligatorio' })
+        }
+
+        const [existingZona] = await db.promise().query('SELECT nombre FROM zona WHERE id = ?', [idZona]);
+        if (existingZona.length === 0) {
+            return res.status(404).json({ message: "Zona no encontrada." });
+        }
+        const oldNombreZona = existingZona[0].nombre;
+
+        let query = 'UPDATE zona SET usuario_id = ?, nombre = ?  WHERE id = ?';
 
         if (!nombre || nombre.trim() === '') {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
 
-        const [result] = await db.promise().query(query, [usuarioAsignado, nombre, idZona]);
+        const [result] = await db.promise().query(query, [usuarioAAsignar, nombre, idZona]);
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Zona no encontrada." });
+            return res.status(404).json({ message: "Zona no encontrada o sin cambios." });
         }
 
         // Auditoría
-        const mensaje = `Edición de zona: ${nombre.replace(/'/g, "")}`
+        const mensaje = `Edición de zona: ID ${idZona}. Nombre de '${oldNombreZona.replace(/'/g, "")}' a '${nombre.replace(/'/g, "")}'. Operador asignado: ${usuarioAAsignar ? `ID ${usuarioAAsignar}` : 'Ninguno'}`;
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(200).json({
             message: 'Zona actualizada correctamente'
         })
 
-        const [[operador]] = await db.promise().query('SELECT email, nombre FROM usuario WHERE id = ?', [usuarioAsignado]);
+        if (usuarioAAsignar) { // Solo envía correo si hay un operador asignado
+            const [[operadorInfo]] = await db.promise().query('SELECT correo, nombre FROM usuario WHERE id = ?', [usuarioAAsignar]);
 
-        if (operador) {
-            await enviarCorreo({
-                para: operador.email,
-                asunto: 'Zona actualizada',
-                mensaje: `Hola ${operador.nombre}, tu zona fue modificada. Nueva Zona: "${nombre}".`
-            });
+            if (operadorInfo) {
+                const asunto = 'Tu Zona Ha Sido Actualizada'; 
+                const mensajeTexto = `Hola ${operadorInfo.nombre},\n\nTu zona "${nombre}" ha sido modificada.\n\nPor favor, revisa los detalles en la aplicación.`;
+                const mensajeHtml = `
+                                    <p>Hola <strong>${operadorInfo.nombre}</strong>,</p>
+                                    <p>Tu zona <strong>"${nombre}"</strong> ha sido modificada.</p>
+                                    <p>Por favor, revisa los detalles en la aplicación.</p>
+                                    <p>Saludos cordiales,<br>El equipo de LogiRefrigeración</p>
+                                `;
+
+                enviarCorreo({
+                    para: operadorInfo.correo,
+                    asunto: asunto,
+                    mensaje: mensajeTexto,
+                    html: mensajeHtml 
+                }).catch(emailErr => console.error('Error enviando correo de actualización:', emailErr));
+            }
         }
 
     } catch (err) {
@@ -274,7 +349,7 @@ const eliminarZona = async (req, res, next) => {
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-        let querySelect = 'SELECT * FROM zona WHERE id = ?';
+        let querySelect = 'SELECT nombre, usuario_id FROM zona WHERE id = ?';
         let queryDelete = 'DELETE FROM zona WHERE id =?';
 
         const [zona] = await db.promise().query(querySelect, [idZona]);
@@ -282,26 +357,31 @@ const eliminarZona = async (req, res, next) => {
         if (zona.length === 0) {
             return res.status(404).json({
                 message: 'Zona no encontrada'
-            })
+            });
         }
 
         const nombreZona = zona[0].nombre;
+        const usuarioAsignadoId = zona[0].usuario_id;
 
-        await db.promise().query(queryDelete, [idZona])
+        if (usuarioAsignadoId !== null) {
+            return res.status(400).json({
+                error: 'No se puede eliminar la zona porque tiene un operador asignado. Primero, desasigne el operador.'
+            });
+        }
+
+        await db.promise().query(queryDelete, [idZona]);
 
         // Auditoría
-        const mensaje = `Eliminación de zona: ${nombreZona.replace(/'/g, "")}`
+        const mensaje = `Eliminación de zona: ${nombreZona.replace(/'/g, "")}`;
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(200).json({
             message: 'Zona eliminada correctamente'
-        })
+        });
     } catch (err) {
         next(err);
     }
-
-}
-
+};
 
 
 
@@ -310,6 +390,7 @@ module.exports = {
     // Departamentos
     listarDepartamentos,
     crearDepartamento,
+    editarDepartamento,
     verDepartamentoPorId,
 
     // Zonas
