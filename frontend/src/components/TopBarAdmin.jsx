@@ -26,6 +26,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import { blue } from '@mui/material/colors';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 
 // Iconos para el menú (se usan en el drawer móvil)
 import ExpandLess from '@mui/icons-material/ExpandLess';
@@ -80,6 +81,7 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
   };
 
   const goToConfig = () => navigate('/configuracion');
+  
   const goToAyuda = () => navigate('/ayuda');
 
   // Función para manejar la navegación en el menú móvil
@@ -157,17 +159,17 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
         {/* FREEZERS */}
         <ListItemButton
           onClick={() => handleToggle('freezers')}
-          selected={isParentActive(['/freezers', '/freezers/nuevo', '/freezers/buscar'])}
+          selected={isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/buscar'])}
         >
-          <ListItemIcon><AcUnitIcon sx={{ color: isParentActive(['/freezers', '/freezers/nuevo', '/freezers/buscar']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Freezers" sx={{ fontWeight: isParentActive(['/freezers', '/freezers/nuevo', '/freezers/buscar']) ? 'bold' : 'normal', color: isParentActive(['/freezers', '/freezers/nuevo', '/freezers/buscar']) ? activeTextColor : primaryColor }} />
+          <ListItemIcon><AcUnitIcon sx={{ color: isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/buscar']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Freezers" sx={{ fontWeight: isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/buscar']) ? 'bold' : 'normal', color: isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/buscar']) ? activeTextColor : primaryColor }} />
           {openMenus.freezers ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.freezers || isParentActive(['/freezers', '/freezers/nuevo', '/freezers/buscar'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.freezers || isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/buscar'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/freezers')} selected={isActive('/freezers')}>
-              <ListItemIcon><ListAltIcon sx={{ color: isActive('/freezers') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Listado" sx={{ fontWeight: isActive('/freezers') ? 'bold' : 'normal', color: isActive('/freezers') ? activeTextColor : primaryColor }} />
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/freezers/listado')} selected={isActive('/freezers/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/freezers/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Listado" sx={{ fontWeight: isActive('/freezers/listado') ? 'bold' : 'normal', color: isActive('/freezers/listado') ? activeTextColor : primaryColor }} />
             </ListItemButton>
             <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/freezers/nuevo')} selected={isActive('/freezers/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: isActive('/freezers/nuevo') ? activeIconColor : primaryColor }} /></ListItemIcon>
@@ -185,17 +187,17 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
         {/* CLIENTES */}
         <ListItemButton
           onClick={() => handleToggle('clientes')}
-          selected={isParentActive(['/clientes', '/clientes/nuevo', '/clientes/buscar'])}
+          selected={isParentActive(['/clientes/listado', '/clientes/nuevo', '/clientes/buscar'])}
         >
-          <ListItemIcon><PeopleAltIcon sx={{ color: isParentActive(['/clientes', '/clientes/nuevo', '/clientes/buscar']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Clientes" sx={{ fontWeight: isParentActive(['/clientes', '/clientes/nuevo', '/clientes/buscar']) ? 'bold' : 'normal', color: isParentActive(['/clientes', '/clientes/nuevo', '/clientes/buscar']) ? activeTextColor : primaryColor }} />
+          <ListItemIcon><PeopleAltIcon sx={{ color: isParentActive(['/clientes/listado', '/clientes/nuevo', '/clientes/buscar']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Clientes" sx={{ fontWeight: isParentActive(['/clientes/listado', '/clientes/nuevo', '/clientes/buscar']) ? 'bold' : 'normal', color: isParentActive(['/clientes/listado', '/clientes/nuevo', '/clientes/buscar']) ? activeTextColor : primaryColor }} />
           {openMenus.clientes ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.clientes || isParentActive(['/clientes', '/clientes/nuevo', '/clientes/buscar'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.clientes || isParentActive(['/clientes/listado', '/clientes/nuevo', '/clientes/buscar'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/clientes')} selected={isActive('/clientes')}>
-              <ListItemIcon><ListAltIcon sx={{ color: isActive('/clientes') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Listar clientes" sx={{ fontWeight: isActive('/clientes') ? 'bold' : 'normal', color: isActive('/clientes') ? activeTextColor : primaryColor }} />
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/clientes/listado')} selected={isActive('/clientes/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/clientes/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Listar clientes" sx={{ fontWeight: isActive('/clientes/listado') ? 'bold' : 'normal', color: isActive('/clientes/listado') ? activeTextColor : primaryColor }} />
             </ListItemButton>
             <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/clientes/nuevo')} selected={isActive('/clientes/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: isActive('/clientes/nuevo') ? activeIconColor : primaryColor }} /></ListItemIcon>
@@ -213,17 +215,17 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
         {/* MANTENIMIENTOS */}
         <ListItemButton
           onClick={() => handleToggle('mantenimientos')}
-          selected={isParentActive(['/mantenimientos', '/mantenimientos/nuevo'])}
+          selected={isParentActive(['/mantenimientos/listado', '/mantenimientos/nuevo'])}
         >
-          <ListItemIcon><AccessAlarmsIcon sx={{ color: isParentActive(['/mantenimientos', '/mantenimientos/nuevo']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Mantenimientos" sx={{ fontWeight: isParentActive(['/mantenimientos', '/mantenimientos/nuevo']) ? 'bold' : 'normal', color: isParentActive(['/mantenimientos', '/mantenimientos/nuevo']) ? activeTextColor : primaryColor }} />
+          <ListItemIcon><AccessAlarmsIcon sx={{ color: isParentActive(['/mantenimientos/listado', '/mantenimientos/nuevo']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Mantenimientos" sx={{ fontWeight: isParentActive(['/mantenimientos/listado', '/mantenimientos/nuevo']) ? 'bold' : 'normal', color: isParentActive(['/mantenimientos/listado', '/mantenimientos/nuevo']) ? activeTextColor : primaryColor }} />
           {openMenus.mantenimientos ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.mantenimientos || isParentActive(['/mantenimientos', '/mantenimientos/nuevo'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.mantenimientos || isParentActive(['/mantenimientos/listado', '/mantenimientos/nuevo'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/mantenimientos')} selected={isActive('/mantenimientos')}>
-              <ListItemIcon><ListAltIcon sx={{ color: isActive('/mantenimientos') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Historial" sx={{ fontWeight: isActive('/mantenimientos') ? 'bold' : 'normal', color: isActive('/mantenimientos') ? activeTextColor : primaryColor }} />
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/mantenimientos/listado')} selected={isActive('/mantenimientos/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/mantenimientos/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Historial" sx={{ fontWeight: isActive('/mantenimientos/listado') ? 'bold' : 'normal', color: isActive('/mantenimientos/listado') ? activeTextColor : primaryColor }} />
             </ListItemButton>
             <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/mantenimientos/nuevo')} selected={isActive('/mantenimientos/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: isActive('/mantenimientos/nuevo') ? activeIconColor : primaryColor }} /></ListItemIcon>
@@ -237,43 +239,46 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
         {/* USUARIOS */}
         <ListItemButton
           onClick={() => handleToggle('usuarios')}
-          selected={isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores', '/usuarios/operadores'])}
+          selected={isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores/listado', '/usuarios/operadores'])}
         >
-          <ListItemIcon><AccountCircleIcon sx={{ color: isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores', '/usuarios/operadores']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Usuarios" sx={{ fontWeight: isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores', '/usuarios/operadores']) ? 'bold' : 'normal', color: isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores', '/usuarios/operadores']) ? activeTextColor : primaryColor }} />
+          <ListItemIcon><AccountCircleIcon sx={{ color: isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores/listado', '/usuarios/operadores']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Usuarios" sx={{ fontWeight: isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores/listado', '/usuarios/operadores']) ? 'bold' : 'normal', color: isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores/listado', '/usuarios/operadores']) ? activeTextColor : primaryColor }} />
           {openMenus.usuarios ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.usuarios || isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores', '/usuarios/operadores'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.usuarios || isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores/listado', '/usuarios/operadores'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {/* GESTIÓN DE USUARIOS (sub-menú) */}
             <ListItemButton
               sx={{ pl: 4 }}
               onClick={() => handleToggle('gestionUsuarios')}
-              selected={isParentActive(['/usuarios/administradores', '/usuarios/operadores'])}
+              selected={isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado'])}
             >
-              <ListItemIcon><ListAltIcon sx={{ color: isParentActive(['/usuarios/administradores', '/usuarios/operadores']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Gestión de usuarios" sx={{ fontWeight: isParentActive(['/usuarios/administradores', '/usuarios/operadores']) ? 'bold' : 'normal', color: isParentActive(['/usuarios/administradores', '/usuarios/operadores']) ? activeTextColor : primaryColor }} />
+              <ListItemIcon><ListAltIcon sx={{ color: isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Gestión de usuarios" sx={{ fontWeight: isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado']) ? 'bold' : 'normal', color: isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado']) ? activeTextColor : primaryColor }} />
               {openMenus.gestionUsuarios ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
             </ListItemButton>
-            <Collapse in={openMenus.gestionUsuarios || isParentActive(['/usuarios/administradores', '/usuarios/operadores'])} timeout="auto" unmountOnExit>
+            <Collapse in={openMenus.gestionUsuarios || isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado'])} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
                 {/* ADMINISTRADORES */}
-                <ListItemButton sx={{ pl: 6 }} onClick={() => handleMobileNavigation('/usuarios/administradores')} selected={isActive('/usuarios/administradores')}>
-                  <ListItemIcon><AdminIcon sx={{ color: isActive('/usuarios/administradores') ? activeIconColor : primaryColor }} /></ListItemIcon>
-                  <ListItemText primary="Administradores" sx={{ fontWeight: isActive('/usuarios/administradores') ? 'bold' : 'normal', color: isActive('/usuarios/administradores') ? activeTextColor : primaryColor }} />
+                <ListItemButton sx={{ pl: 6 }} onClick={() => handleMobileNavigation('/usuarios/administradores/listado')} selected={isActive('/usuarios/administradores/listado')}>
+                  <ListItemIcon><AdminIcon sx={{ color: isActive('/usuarios/administradores/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+                  <ListItemText primary="Administradores" sx={{ fontWeight: isActive('/usuarios/administradores/listado') ? 'bold' : 'normal', color: isActive('/usuarios/administradores/listado') ? activeTextColor : primaryColor }} />
                 </ListItemButton>
                 {/* OPERADORES */}
-                <ListItemButton sx={{ pl: 6 }} onClick={() => handleMobileNavigation('/usuarios/operadores')} selected={isActive('/usuarios/operadores')}>
-                  <ListItemIcon><OperadorIcon sx={{ color: isActive('/usuarios/operadores') ? activeIconColor : primaryColor }} /></ListItemIcon>
-                  <ListItemText primary="Operadores" sx={{ fontWeight: isActive('/usuarios/operadores') ? 'bold' : 'normal', color: isActive('/usuarios/operadores') ? activeTextColor : primaryColor }} />
+                <ListItemButton sx={{ pl: 6 }} onClick={() => handleMobileNavigation('/usuarios/operadores/listado')} selected={isActive('/usuarios/operadores/listado')}>
+                  <ListItemIcon><OperadorIcon sx={{ color: isActive('/usuarios/operadores/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+                  <ListItemText primary="Operadores" sx={{ fontWeight: isActive('/usuarios/operadores/listado') ? 'bold' : 'normal', color: isActive('/usuarios/operadores/listado') ? activeTextColor : primaryColor }} />
                 </ListItemButton>
               </List>
             </Collapse>
-            {/* CREAR USUARIO */}
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/usuarios/crear')} selected={isActive('/usuarios/crear')}>
-              <ListItemIcon><PersonAddIcon sx={{ color: isActive('/usuarios/crear') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Crear usuario" sx={{ fontWeight: isActive('/usuarios/crear') ? 'bold' : 'normal', color: isActive('/usuarios/crear') ? activeTextColor : primaryColor }} />
+            
+            {/* CODIGOS DE REGISTRO */}
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/usuarios/codigos-registro')} selected={isActive('/usuarios/codigos-registro')}>
+              <ListItemIcon><VpnKeyIcon sx={{ color: isActive('/usuarios/codigos-registro') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Códigos de Registro" sx={{ fontWeight: isActive('/usuarios/codigos-registro') ? 'bold' : 'normal', color: isActive('/usuarios/codigos-registro') ? activeTextColor : primaryColor }} />
             </ListItemButton>
+
+
           </List>
         </Collapse>
 
@@ -282,17 +287,17 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
         {/* EVENTOS */}
         <ListItemButton
           onClick={() => handleToggle('eventos')}
-          selected={isParentActive(['/eventos', '/eventos/nuevo'])}
+          selected={isParentActive(['/eventos/listado', '/eventos/nuevo'])}
         >
-          <ListItemIcon><AssignmentTurnedInIcon sx={{ color: isParentActive(['/eventos', '/eventos/nuevo']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Eventos" sx={{ fontWeight: isParentActive(['/eventos', '/eventos/nuevo']) ? 'bold' : 'normal', color: isParentActive(['/eventos', '/eventos/nuevo']) ? activeTextColor : primaryColor }} />
+          <ListItemIcon><AssignmentTurnedInIcon sx={{ color: isParentActive(['/eventos/listado', '/eventos/nuevo']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Eventos" sx={{ fontWeight: isParentActive(['/eventos/listado', '/eventos/nuevo']) ? 'bold' : 'normal', color: isParentActive(['/eventos/listado', '/eventos/nuevo']) ? activeTextColor : primaryColor }} />
           {openMenus.eventos ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.eventos || isParentActive(['/eventos', '/eventos/nuevo'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.eventos || isParentActive(['/eventos/listado', '/eventos/nuevo'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/eventos')} selected={isActive('/eventos')}>
-              <ListItemIcon><ListAltIcon sx={{ color: isActive('/eventos') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Todos los eventos" sx={{ fontWeight: isActive('/eventos') ? 'bold' : 'normal', color: isActive('/eventos') ? activeTextColor : primaryColor }} />
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/eventos/listado')} selected={isActive('/eventos/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/eventos/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Todos los eventos" sx={{ fontWeight: isActive('/eventos/listado') ? 'bold' : 'normal', color: isActive('/eventos/listado') ? activeTextColor : primaryColor }} />
             </ListItemButton>
             <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/eventos/nuevo')} selected={isActive('/eventos/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: isActive('/eventos/nuevo') ? activeIconColor : primaryColor }} /></ListItemIcon>
@@ -306,17 +311,17 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
         {/* ZONAS */}
         <ListItemButton
           onClick={() => handleToggle('zonas')}
-          selected={isParentActive(['/ubicaciones', '/ubicaciones/crear'])}
+          selected={isParentActive(['/ubicaciones/departamentos/listado', '/ubicaciones/crear'])}
         >
-          <ListItemIcon><LocationOnIcon sx={{ color: isParentActive(['/ubicaciones', '/ubicaciones/crear']) ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Zonas" sx={{ fontWeight: isParentActive(['/ubicaciones', '/ubicaciones/crear']) ? 'bold' : 'normal', color: isParentActive(['/ubicaciones', '/ubicaciones/crear']) ? activeTextColor : primaryColor }} />
+          <ListItemIcon><LocationOnIcon sx={{ color: isParentActive(['/ubicaciones/departamentos/listado', '/ubicaciones/crear']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Zonas" sx={{ fontWeight: isParentActive(['/ubicaciones/departamentos/listado', '/ubicaciones/crear']) ? 'bold' : 'normal', color: isParentActive(['/ubicaciones/departamentos/listado', '/ubicaciones/crear']) ? activeTextColor : primaryColor }} />
           {openMenus.zonas ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.zonas || isParentActive(['/ubicaciones', '/ubicaciones/crear'])} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.zonas || isParentActive(['/ubicaciones/departamentos/listado', '/ubicaciones/crear'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/ubicaciones')} selected={isActive('/ubicaciones')}>
-              <ListItemIcon><ListAltIcon sx={{ color: isActive('/ubicaciones') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Departamentos" sx={{ fontWeight: isActive('/ubicaciones') ? 'bold' : 'normal', color: isActive('/ubicaciones') ? activeTextColor : primaryColor }} />
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/ubicaciones/departamentos/listado')} selected={isActive('/ubicaciones/departamentos/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/ubicaciones/departamentos/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Departamentos" sx={{ fontWeight: isActive('/ubicaciones/departamentos/listado') ? 'bold' : 'normal', color: isActive('/ubicaciones/departamentos/listado') ? activeTextColor : primaryColor }} />
             </ListItemButton>
             <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/ubicaciones/crear')} selected={isActive('/ubicaciones/crear')}>
               <ListItemIcon><AddIcon sx={{ color: isActive('/ubicaciones/crear') ? activeIconColor : primaryColor }} /></ListItemIcon>
@@ -330,17 +335,17 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
         {/* AUDITORÍA */}
         <ListItemButton
           onClick={() => handleToggle('auditoria')}
-          selected={isActive('/auditoria')}
+          selected={isActive('/auditoria/listado')}
         >
-          <ListItemIcon><FactCheckIcon sx={{ color: isActive('/auditoria') ? activeIconColor : primaryColor }} /></ListItemIcon>
-          <ListItemText primary="Auditoría" sx={{ fontWeight: isActive('/auditoria') ? 'bold' : 'normal', color: isActive('/auditoria') ? activeTextColor : primaryColor }} />
+          <ListItemIcon><FactCheckIcon sx={{ color: isActive('/auditoria/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Auditoría" sx={{ fontWeight: isActive('/auditoria/listado') ? 'bold' : 'normal', color: isActive('/auditoria/listado') ? activeTextColor : primaryColor }} />
           {openMenus.auditoria ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
         </ListItemButton>
-        <Collapse in={openMenus.auditoria || isActive('/auditoria')} timeout="auto" unmountOnExit>
+        <Collapse in={openMenus.auditoria || isActive('/auditoria/listado')} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/auditoria')} selected={isActive('/auditoria')}>
-              <ListItemIcon><ListAltIcon sx={{ color: isActive('/auditoria') ? activeIconColor : primaryColor }} /></ListItemIcon>
-              <ListItemText primary="Ver registros" sx={{ fontWeight: isActive('/auditoria') ? 'bold' : 'normal', color: isActive('/auditoria') ? activeTextColor : primaryColor }} />
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/auditoria/listado')} selected={isActive('/auditoria/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/auditoria/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Ver registros" sx={{ fontWeight: isActive('/auditoria/listado') ? 'bold' : 'normal', color: isActive('/auditoria/listado') ? activeTextColor : primaryColor }} />
             </ListItemButton>
           </List>
         </Collapse>

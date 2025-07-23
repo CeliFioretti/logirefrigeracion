@@ -31,6 +31,7 @@ import EventoForm from './components/EventoForm';
 import DepartamentoListadoPage from './views/admin/DepartamentosPage';
 import ZonasListadoPage from './views/admin/ZonasPage';
 import AuditoriaPage from './views/admin/AuditoriaPage';
+import UserConfiguration from './components/UserConfiguration';
 
 import NotFoundPage from './views/error/NotFoundPage';
 import ForbiddenPage from './views/error/ForbiddenPage';
@@ -109,6 +110,9 @@ function App() {
                             
                             {/** AUDITORÍA DE ACTIVIDADES */}
                             <Route path='/auditoria/listado' element={<AuditoriaPage />} />
+
+                            {/** CONFIGURACIÓN DE USUARIO */}
+                            <Route path='/configuracion' element={<UserConfiguration />} />
 
                             {/** PÁGINAS DE ERROR */}
                             <Route path='/acceso-denegado' element={<ForbiddenPage />} />

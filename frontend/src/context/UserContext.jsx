@@ -44,6 +44,7 @@ export const UserProvider = ({ children }) => {
   return (
     <UserContext.Provider value={{
       usuario,
+      setUsuario,
       login,
       logout,
       loadingUser

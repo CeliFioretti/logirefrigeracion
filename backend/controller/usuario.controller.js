@@ -82,72 +82,133 @@ const detalle = async (req, res, next) => {
 
 
 // Editar usuario - PUT
-const editar = async (req, res, next) => {
+const editarPerfil = async (req, res, next) => {
+    const idUsuarioAfectado = req.usuario.id;
+    const { nombre, correo } = req.body; 
 
-    const campos = [
-        "nombre",
-        "correo",
-        "password"
-    ]
-    
-    // Auditoría
     const idUsuarioResponsable = req.usuario.id;
     const nombreUsuarioResponsable = req.usuario.nombre;
-    
-    try {
 
+    try {
         let setClause = [];
         let params = [];
+        let mensajeAuditoriaPartes = [];
 
-        campos.forEach(campo => {
-            if (req.body[campo] !== undefined && req.body[campo].trim() !== "") {
-                setClause.push(`${campo} = ?`);
-                params.push(req.body[campo]);
+        // Obtener datos actuales del usuario para comparar y auditoría
+        const [existingUserRows] = await db.promise().query('SELECT nombre, correo FROM usuario WHERE id = ?', [idUsuarioAfectado]);
+        if (existingUserRows.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado.' });
+        }
+        const oldNombre = existingUserRows[0].nombre;
+        const oldCorreo = existingUserRows[0].correo;
+
+        if (nombre !== undefined && nombre.trim() !== '' && nombre.trim() !== oldNombre) {
+            setClause.push('nombre = ?');
+            params.push(nombre.trim());
+            mensajeAuditoriaPartes.push(`Nombre de '${oldNombre}' a '${nombre.trim()}'`);
+        }
+
+        if (correo !== undefined && correo.trim() !== '' && correo.trim() !== oldCorreo) {
+            // Verificar si el nuevo correo ya está en uso por otro usuario (excluyendo al usuario actual)
+            const [emailExists] = await db.promise().query(
+                'SELECT id FROM usuario WHERE correo = ? AND id != ?',
+                [correo.trim(), idUsuarioAfectado]
+            );
+            if (emailExists.length > 0) {
+                return res.status(409).json({ error: 'El correo electrónico ya está en uso por otro usuario.' });
             }
-        })
+            setClause.push('correo = ?');
+            params.push(correo.trim());
+            mensajeAuditoriaPartes.push(`Correo de '${oldCorreo}' a '${correo.trim()}'`);
+        }
 
         if (setClause.length === 0) {
-            return res.status(400).json({ error: 'No se proporcionó ningún campo para actualizar' });
-        } 
+            return res.status(200).json({ message: 'No se proporcionaron cambios o los datos son idénticos.' });
+        }
 
         const query = `UPDATE usuario SET ${setClause.join(', ')} WHERE id = ?`;
-        params.push(idUsuarioResponsable);
+        params.push(idUsuarioAfectado);
 
-        await db.promise().query(query, params);
+        const [result] = await db.promise().query(query, params);
+
+        if (result.affectedRows === 0) {
+            return res.status(500).json({ error: 'No se pudo actualizar el perfil.' });
+        }
 
         // Auditoría
-        const mensaje = `Edición de usuario ID ${idUsuarioResponsable}`;
+        const mensaje = `Edición de perfil de usuario ID ${idUsuarioAfectado}: ${mensajeAuditoriaPartes.join(', ')}.`;
         await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
-        res.status(201).json({
-            message: 'Actualizado con éxito'
-        })
+        const [updatedUser] = await db.promise().query('SELECT id, nombre, correo, rol FROM usuario WHERE id = ?', [idUsuarioAfectado]);
+        res.status(200).json({
+            message: 'Perfil actualizado con éxito',
+            data: updatedUser[0]
+        });
+
     } catch (err) {
+        console.error('Error en editarPerfil:', err);
         next(err);
     }
-}
+};
+
 
 
 // Actializa la contraseña del usuario - POST
-const cambiarContraseña = async (req, res) => {
-    const { nuevaContraseña } = req.body;
-    const idUsuarioResponsable = req.usuario.id;
+const cambiarContraseña = async (req, res, next) => { 
+    const { currentPassword, newPassword, confirmNewPassword } = req.body; 
 
-    if (!nuevaContraseña || nuevaContraseña.trim() === '') {
-        return res.status(400).json({ error: 'La nueva contraseña no puede estar vacía' });
+    const idUsuarioResponsable = req.usuario.id; 
+    const nombreUsuarioResponsable = req.usuario.nombre; 
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+        return res.status(400).json({ error: 'Todos los campos de contraseña son obligatorios.' });
+    }
+
+    if (newPassword !== confirmNewPassword) {
+        return res.status(400).json({ error: 'La nueva contraseña y su confirmación no coinciden.' });
+    }
+
+    if (newPassword.length < 8) {
+        return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres.' });
     }
 
     try {
-        const passwordHash = await bcrypt.hash(nuevaContraseña, 10);
+        // Obtener la contraseña hasheada actual del usuario de la DB
+        const [userRows] = await db.promise().query('SELECT password FROM usuario WHERE id = ?', [idUsuarioResponsable]);
 
+        if (userRows.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado (quizás el token es inválido).' });
+        }
+
+        const hashedPassword = userRows[0].password;
+
+        // Comparar la contraseña actual proporcionada con la hasheada en la DB
+        const passwordMatch = await bcrypt.compare(currentPassword, hashedPassword);
+
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
+        }
+
+        // Hashear la nueva contraseña
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+        // Actualizar la contraseña en la base de datos
         await db.promise().query(
             'UPDATE usuario SET password = ?, requiere_cambio_password = 0 WHERE id = ?',
-            [passwordHash, idUsuarioResponsable]
+            [newPasswordHash, idUsuarioResponsable]
         );
 
-        res.status(200).json({ message: 'Contraseña actualizada correctamente' });
+        // Auditoría
+        const mensajeAuditoria = `Contraseña del usuario ${nombreUsuarioResponsable} (ID ${idUsuarioResponsable}) cambiada.`;
+        await db.promise().query(
+            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensajeAuditoria]
+        );
+
+        res.status(200).json({ message: 'Contraseña actualizada correctamente.' });
     } catch (error) {
-        res.status(500).json({ error: 'Error al actualizar la contraseña' });
+        console.error('Error al cambiar la contraseña:', error);
+        next(error); 
     }
 };
 
@@ -220,7 +281,7 @@ const resetearContraseñaAdmin = async (req, res, next) => {
         );
 
         // Registrar en la auditoría
-        const mensajeAuditoria = `Contraseña del usuario ${nombreUsuarioAfectado} (ID ${idUsuarioAResetear}) restablecida por el administrador ${nombreUsuarioResponsable} (ID ${idUsuarioResponsable}).`;
+        const mensajeAuditoria = `Contraseña del usuario ${nombreUsuarioAfectado} (ID ${idUsuarioAResetear}) restablecida.`;
         await db.promise().query(
             'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
             [idUsuarioResponsable, nombreUsuarioResponsable, mensajeAuditoria]
@@ -237,7 +298,7 @@ const resetearContraseñaAdmin = async (req, res, next) => {
 module.exports = {
     listar,
     detalle,
-    editar,
+    editarPerfil,
     cambiarContraseña,
     toggleEstadoUsuario,
     resetearContraseñaAdmin

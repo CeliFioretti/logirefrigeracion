@@ -14,11 +14,11 @@ router.get('/',soloAdmin, usuarioController.listar);
 // Ver detalles de un usuario - GET
 router.get('/:id',soloAdmin, usuarioController.detalle);
 
-// Actualizar usuario - PUT
-router.put('/configuracion', verificarToken, verificarRol('administrador, operador'), usuarioController.editar);
+// Actualizar perfil del usuario autenticado (nombre y correo) - PUT
+router.put('/configuracion', verificarToken, soloAdmin, usuarioController.editarPerfil);
 
 // Ruta para cambio de contraseña del usuario autenticado - PUT
-router.post('/cambiar-password', verificarToken, usuarioController.cambiarContraseña);
+router.put('/cambiar-password', verificarToken, usuarioController.cambiarContraseña);
 
 // Actualizar estado de usuario (activo/inactivo) - PUT
 router.put('/:id/estado', soloAdmin, usuarioController.toggleEstadoUsuario);

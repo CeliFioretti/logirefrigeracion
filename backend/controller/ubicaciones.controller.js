@@ -321,7 +321,7 @@ const editarZona = async (req, res, next) => {
                 const mensajeTexto = `Hola ${operadorInfo.nombre},\n\nTu zona "${nombre}" ha sido modificada.\n\nPor favor, revisa los detalles en la aplicación.`;
                 const mensajeHtml = `
                                     <p>Hola <strong>${operadorInfo.nombre}</strong>,</p>
-                                    <p>Tu zona <strong>"${nombre}"</strong> ha sido modificada.</p>
+                                    <p>Se te asignó una nueva zona:  <strong>"${nombre}"</strong> .</p>
                                     <p>Por favor, revisa los detalles en la aplicación.</p>
                                     <p>Saludos cordiales,<br>El equipo de LogiRefrigeración</p>
                                 `;
