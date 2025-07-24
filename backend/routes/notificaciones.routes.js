@@ -9,10 +9,10 @@ const soloAdmin = [verificarToken, verificarRol('administrador')];
 
 // NOTIFICACIONES
 // Listar notificaciones propias - GET
-router.get('/', verificarToken, verificarRol('administrador', 'operador'), notificacionesController.listar);
+router.get('/', verificarToken, notificacionesController.listar);
 
 // Marcar como leida la notificación - PUT
-router.put('/', soloAdmin, notificacionesController.leida);
+router.put('/:id/leida', verificarToken, notificacionesController.leida);
 
 
 module.exports = router;
