@@ -40,7 +40,7 @@ function Login() {
       if (usuario.rol === 'administrador') {
         navigate('/admin-dashboard', { replace: true });
       } else if (usuario.rol === 'operador') {
-        navigate('/operador-dashboard', { replace: true });
+        navigate('/operador-menu', { replace: true });
       } else {
         navigate('/', { replace: true });
       }
@@ -67,7 +67,7 @@ function Login() {
       if (data.rol === 'administrador') {
         navigate('/admin-dashboard', { replace: true });
       } else if (data.rol === 'operador') {
-        navigate('/operador-dashboard', { replace: true });
+        navigate('/operador-menu', { replace: true });
       } else {
         // Rol no reconocido después del login, redirigir a un default
         navigate('/admin-dashboard', { replace: true });
@@ -208,6 +208,9 @@ function Login() {
             >
               ENTRAR
             </Button>
+            <Link href="/registro-operador" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db' }}>
+              ¿Eres operador? Regístrate aquí
+            </Link>
           </form>
         </Paper>
 

@@ -27,5 +27,9 @@ router.get('/mis-asignaciones', soloOperador, asignacionMantenimientoController.
 // Confirmar asignación propia (Operador) - GET
 router.post('/:id/confirmar', soloOperador, asignacionMantenimientoController.confirmarAsignacion);
 
+// Ver mantenimientos pendientes (Operador) - GET
+router.get('/pendientes-operador', soloOperador, asignacionMantenimientoController.listarPendientesOperador); 
+
+
 
 module.exports = router;

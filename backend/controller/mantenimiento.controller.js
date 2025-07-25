@@ -236,6 +236,7 @@ const obtenerPorId = async (req, res, next) => {
 
 
 
+
 module.exports = {
     listar,
     registrar,

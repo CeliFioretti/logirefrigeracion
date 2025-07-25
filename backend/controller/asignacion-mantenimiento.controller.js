@@ -172,49 +172,128 @@ const confirmarAsignacion = async (req, res, next) => {
 
 // Actualiza el estado de una asignacion de mantenimiento.
 const cambiarEstadoAsignacion = async (req, res, next) => {
-    const idAsignacion = req.params.id;
-    const { estado } = req.body;
+  const idAsignacion = req.params.id;
+  const { estado } = req.body;
 
-    const idUsuarioResponsable = req.usuario.id;
-    const nombreUsuarioResponsable = req.usuario.nombre;
+  const idUsuarioResponsable = req.usuario.id;
+  const nombreUsuarioResponsable = req.usuario.nombre;
 
-    try {
-        if (!estado) {
-            return res.status(400).json({ error: 'Debe proporcionar el nuevo estado' });
-        }
-
-        const ESTADOS_VALIDOS = ['pendiente', 'en curso', 'completado', 'cancelado'];
-
-        if (!ESTADOS_VALIDOS.includes(estado)) {
-            return res.status(400).json({ error: `Estado inválido. Estados permitidos: ${ESTADOS_VALIDOS.join(', ')}` });
-        }
-
-        const [asignacion] = await db.promise().query('SELECT id FROM asignacionmantenimiento WHERE id = ?', [idAsignacion]);
-
-        if (asignacion.length === 0) {
-            return res.status(404).json({ error: 'La asignación no existe' });
-        }
-
-        await db.promise().query(
-            'UPDATE asignacionmantenimiento SET estado = ? WHERE id = ?',
-            [estado, idAsignacion]
-        );
-
-        // Auditoría
-        const mensaje = `Se actualizó el estado de la asignación de mantenimiento ID ${idAsignacion} a "${estado}"`;
-        await db.promise().query(
-            'INSERT INTO auditoriadeactividades (idUsuarioResponsable, nombreUsuarioResponsable, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
-            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
-        );
-
-        res.status(200).json({ message: 'Estado de la asignación actualizado correctamente' });
-
-    } catch (error) {
-        next(error);
+  try {
+    if (!estado) {
+      return res.status(400).json({ error: 'Debe proporcionar el nuevo estado' });
     }
+
+    const ESTADOS_VALIDOS = ['pendiente', 'en curso', 'completado', 'cancelado'];
+
+    if (!ESTADOS_VALIDOS.includes(estado)) {
+      return res.status(400).json({ error: `Estado inválido. Estados permitidos: ${ESTADOS_VALIDOS.join(', ')}` });
+    }
+
+    const [asignacion] = await db.promise().query('SELECT id FROM asignacionmantenimiento WHERE id = ?', [idAsignacion]);
+
+    if (asignacion.length === 0) {
+      return res.status(404).json({ error: 'La asignación no existe' });
+    }
+
+    await db.promise().query(
+      'UPDATE asignacionmantenimiento SET estado = ? WHERE id = ?',
+      [estado, idAsignacion]
+    );
+
+    // Auditoría
+    const mensaje = `Se actualizó el estado de la asignación de mantenimiento ID ${idAsignacion} a "${estado}"`;
+    await db.promise().query(
+      'INSERT INTO auditoriadeactividades (idUsuarioResponsable, nombreUsuarioResponsable, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
+      [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
+    );
+
+    res.status(200).json({ message: 'Estado de la asignación actualizado correctamente' });
+
+  } catch (error) {
+    next(error);
+  }
 };
 
+// Mantenimientos pendientes de operador - GET
+const listarPendientesOperador = async (req, res, next) => {
+  const idUsuarioOperador = req.usuario.id;
+  const { page, pageSize, search } = req.query;
 
+  try {
+    let query = `
+            SELECT
+                  am.id AS asignacion_id,
+                  am.fecha_asignacion,
+                  am.estado,
+                  am.tipo AS tipo_mantenimiento,
+                  am.observaciones AS asignacion_observaciones,
+                  f.id AS freezer_id,
+                  f.numero_serie,
+                  f.modelo,
+                  f.tipo AS tipo_freezer,
+                  f.capacidad,
+                  c.nombre_responsable AS nombre_cliente,
+                  c.direccion AS cliente_direccion,
+                  c.cuit AS cliente_cuit
+            FROM asignacionmantenimiento am
+            JOIN freezer f ON am.freezer_id = f.id
+            JOIN cliente c ON f.cliente_id = c.id
+            WHERE am.usuario_id = ? AND am.estado = 'pendiente' AND am.fecha_asignacion >= CURDATE()
+        `;
+
+    let countQuery = `
+            SELECT COUNT(am.id) as total 
+            FROM asignacionmantenimiento am
+            JOIN freezer f ON am.freezer_id = f.id
+            JOIN cliente c ON f.cliente_id = c.id
+            WHERE am.usuario_id = ? AND am.estado = 'pendiente' AND am.fecha_asignacion >= CURDATE()
+        `;
+
+    let params = [idUsuarioOperador];
+    let countParams = [idUsuarioOperador];
+
+    if (search) {
+      const searchQueryParam = `
+                AND (f.numero_serie LIKE ? OR f.modelo LIKE ? OR f.tipo LIKE ? OR c.nombre_responsable LIKE ? OR c.direccion LIKE ? OR c.cuit LIKE ?)
+            `;
+      const searchParam = `%${search}%`;
+      query += searchQuery;
+      countQuery += searchQuery;
+      params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+      countParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+    }
+
+    query += ` ORDER BY am.fecha_asignacion ASC`; // Ordenar por la fecha de asignación más próxima
+
+    const pageNum = parseInt(page) || 0;
+    const pageSizeNum = parseInt(pageSize) || 10;
+    const offset = pageNum * pageSizeNum;
+
+    query += ` LIMIT ? OFFSET ?`;
+    params.push(pageSizeNum, offset);
+
+    const [mantenimientosPendientes] = await db.promise().query(query, params);
+    const [totalResult] = await db.promise().query(countQuery, countParams);
+    const totalRegistros = totalResult[0].total;
+
+    if (mantenimientosPendientes.length === 0) {
+      return res.status(200).json({
+        message: 'No tienes mantenimientos pendientes asignados o que coincidan con la búsqueda.',
+        data: [],
+        total: 0
+      });
+    }
+
+    res.status(200).json({
+      data: mantenimientosPendientes,
+      total: totalRegistros
+    });
+
+  } catch (error) {
+    console.error('Error al listar mantenimientos pendientes del operador:', error);
+    next(error);
+  }
+};
 
 
 
@@ -224,5 +303,6 @@ module.exports = {
   eliminar,
   verAsignacionesPropias,
   confirmarAsignacion,
-  cambiarEstadoAsignacion
+  cambiarEstadoAsignacion,
+  listarPendientesOperador
 };

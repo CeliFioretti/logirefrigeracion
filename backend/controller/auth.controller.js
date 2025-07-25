@@ -73,7 +73,7 @@ const registrarUsuario = async (req, res, next) => {
 
         // Verificar que el codigo sea para operador 
         // A futuro se agregaran los codigos para administradores
-        const codigoEncontrado = codigoRows[0];
+        const codigoEncontrado = codigo[0];
 
         if (codigoEncontrado.rol !== 'operador') {
             return res.status(403).json({ error: 'Este código de registro no es para operadores.' });

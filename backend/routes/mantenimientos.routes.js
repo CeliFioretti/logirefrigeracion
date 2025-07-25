@@ -26,4 +26,5 @@ router.get('/:id', soloAdmin, mantenimientoController.obtenerPorId);
 
 
 
+
 module.exports = router;

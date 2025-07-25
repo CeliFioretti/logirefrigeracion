@@ -10,9 +10,11 @@ import { UserContext } from './context/UserContext';
 import { setupAxiosInterceptors } from './api/axios';
 
 import Login from './pages/Login/Login';
+import RegistroOperador from './pages/Login/RegistroOperador'
 import DashboardLayout from './layout/DashboardLayout';
 import PrivateRoute from './components/PrivateRoute';
 
+// Administrador
 import AdminDashboard from './views/admin/AdminDashboard';
 import FreezersListadoPage from './views/admin/FreezerPage';
 import FreezerDetallePage from './views/admin/FreezerDetailPage';
@@ -33,6 +35,11 @@ import ZonasListadoPage from './views/admin/ZonasPage';
 import AuditoriaPage from './views/admin/AuditoriaPage';
 import UserConfiguration from './components/UserConfiguration';
 
+// Operador
+import MenuOperador from './views/operador/MenuOperador'
+import MantenimientosPendientesOperador from './views/operador/MantenimientosPendientes'
+
+// Páginas de Error
 import NotFoundPage from './views/error/NotFoundPage';
 import ForbiddenPage from './views/error/ForbiddenPage';
 import SessionExpiredPage from './views/error/SessionExpiredPage';
@@ -69,9 +76,15 @@ function App() {
             <AxiosSetup />
             <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <Routes>
+                    {/* Rutas públicas y de autenticación */}
                     <Route path="/" element={<Login />} />
+                    <Route path="/registro-operador" element={<RegistroOperador />} />
+                    <Route path="/acceso-denegado" element={<ForbiddenPage />} />
+                    <Route path="/sesion-expirada" element={<SessionExpiredPage />} />
 
-                    <Route element={<PrivateRoute roles={['administrador', 'operador']} />}>
+                    {/* ----------------------- RUTAS DEL ADMINISTRADOR ----------------------- */}
+                    {/* Protegido por PrivateRoute para administradores y envuelto en DashboardLayout */}
+                    <Route element={<PrivateRoute roles={['administrador']} />}>
                         <Route element={<DashboardLayout />}>
                             {/** DASHBOARD */}
                             <Route path='/admin-dashboard' element={<AdminDashboard />} />
@@ -107,19 +120,31 @@ function App() {
                             {/** UBICACIONES */}
                             <Route path='/ubicaciones/departamentos/listado' element={<DepartamentoListadoPage />} />
                             <Route path='/ubicaciones/:departamentoId/zonas' element={<ZonasListadoPage />} />
-                            
+
                             {/** AUDITORÍA DE ACTIVIDADES */}
                             <Route path='/auditoria/listado' element={<AuditoriaPage />} />
 
-                            {/** CONFIGURACIÓN DE USUARIO */}
+                            {/** CONFIGURACIÓN DE USUARIO (para admin) */}
                             <Route path='/configuracion' element={<UserConfiguration />} />
-
-                            {/** PÁGINAS DE ERROR */}
-                            <Route path='/acceso-denegado' element={<ForbiddenPage />} />
-                            <Route path='/sesion-expirada' element={<SessionExpiredPage />} />
                         </Route>
                     </Route>
 
+                    {/* ----------------------- RUTAS DEL OPERADOR ----------------------- */}
+                    {/* Protegido por PrivateRoute para operadores, SIN DashboardLayout */}
+                    <Route element={<PrivateRoute roles={['operador']} />}>
+                        {/** MENÚ DE OPERADOR */}
+                        <Route path='/operador-menu' element={<MenuOperador />} />
+
+                        {/* Rutas específicas del operador (sin DashboardLayout) */}
+                        <Route path='/operador/mantenimientos-pendientes' element={<MantenimientosPendientesOperador/>} />
+                        <Route path='/operador/zonas-asignadas' element={<div>Zonas Asignadas Operador</div>} />
+                        <Route path='/operador/historial-eventos' element={<div>Historial de Eventos Operador</div>} />
+                        <Route path='/operador/registrar-evento' element={<div>Registrar Evento Operador</div>} />
+                        <Route path='/operador/configuracion' element={<div>Configuración Operador</div>} /> {/* El UserConfiguration si es el mismo, o un nuevo componente */}
+
+                    </Route>
+
+                    {/* ----------------------- PÁGINA DE ERROR POR DEFECTO ----------------------- */}
                     <Route path="*" element={<NotFoundPage />} />
                 </Routes>
             </LocalizationProvider>
