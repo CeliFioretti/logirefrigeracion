@@ -1,8 +1,10 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'http://localhost:3200/api',
-  withCredentials: false,
+  baseURL: 'https://logirefrigeracion.onrender.com',
+  headers: {
+        'Content-Type': 'application/json',
+    },
 });
 
 // Variables para almacenar las funciones de contexto y router
