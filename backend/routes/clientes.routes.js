@@ -6,10 +6,11 @@ const clientesController = require('../controller/clientes.controller.js')
 
 // Uso de Middlewares para verificar
 const soloAdmin = [verificarToken, verificarRol('administrador')];
+const adminYOperador = [verificarToken, verificarRol('administrador', 'operador')]; 
 
 // CLIENTES
 // Ver todos los clientes - GET
-router.get('/', soloAdmin, clientesController.listar);
+router.get('/', adminYOperador, clientesController.listar);
 
 // Ver detalles de un cliente - GET
 router.get('/:id', soloAdmin, clientesController.detalle);

@@ -6,6 +6,7 @@ const ubicacionController = require('../controller/ubicaciones.controller.js')
 
 // Uso de Middlewares para verificar
 const soloAdmin = [verificarToken, verificarRol('administrador')];
+const soloOperador = [verificarToken, verificarRol('operador')];
 
 // DEPARTAMENTOS
 // Ver todos los departamentos - GET
@@ -35,7 +36,6 @@ router.put('/zonas/:id', soloAdmin, ubicacionController.editarZona);
 
 // Eliminar zona - DELETE
 router.delete('/zonas/:id', soloAdmin, ubicacionController.eliminarZona);
-
 
 
 module.exports = router;

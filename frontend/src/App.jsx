@@ -34,10 +34,16 @@ import DepartamentoListadoPage from './views/admin/DepartamentosPage';
 import ZonasListadoPage from './views/admin/ZonasPage';
 import AuditoriaPage from './views/admin/AuditoriaPage';
 import UserConfiguration from './components/UserConfiguration';
+import ListadoAsignaciones from './views/admin/ListadoAsignaciones';
+import AsignacionForm from './components/AsignacionForm';
 
 // Operador
 import MenuOperador from './views/operador/MenuOperador'
 import MantenimientosPendientesOperador from './views/operador/MantenimientosPendientes'
+import ZonasAsignadas from './views/operador/ZonasAsignadas';
+import HistorialEventos from './views/operador/HistorialEventos';
+import RegistrarEvento from './views/operador/RegistrarEvento';
+import OperadorConfiguration from './views/operador/OperadorConfiguration';
 
 // Páginas de Error
 import NotFoundPage from './views/error/NotFoundPage';
@@ -107,6 +113,10 @@ function App() {
                             <Route path='/mantenimientos/nuevo' element={<MantenimientosCrearForm />} />
                             <Route path='/mantenimientos/editar/:id' element={<MantenimientosCrearForm />} />
 
+                            {/** ASIGNACIONES DE MANTENIMIENTO */}
+                            <Route path='/asignaciones-mantenimiento/listado' element={<ListadoAsignaciones />} />
+                            <Route path='/asignaciones-mantenimiento/nuevo' element={<AsignacionForm />} />
+
                             {/** USUARIOS */}
                             <Route path='/usuarios/administradores/listado' element={<UsuariosAdministradorPage />} />
                             <Route path='/usuarios/operadores/listado' element={<UsuariosOperadorPage />} />
@@ -137,10 +147,11 @@ function App() {
 
                         {/* Rutas específicas del operador (sin DashboardLayout) */}
                         <Route path='/operador/mantenimientos-pendientes' element={<MantenimientosPendientesOperador/>} />
-                        <Route path='/operador/zonas-asignadas' element={<div>Zonas Asignadas Operador</div>} />
-                        <Route path='/operador/historial-eventos' element={<div>Historial de Eventos Operador</div>} />
-                        <Route path='/operador/registrar-evento' element={<div>Registrar Evento Operador</div>} />
-                        <Route path='/operador/configuracion' element={<div>Configuración Operador</div>} /> {/* El UserConfiguration si es el mismo, o un nuevo componente */}
+                        <Route path='/operador/zonas-asignadas' element={<ZonasAsignadas/>} />
+                        <Route path='/operador/historial-eventos' element={<HistorialEventos/>} />
+                        <Route path='/operador/registrar-evento' element={<RegistrarEvento/>} />
+                        <Route path="/operador/configuracion" element={<OperadorConfiguration/>} />
+
 
                     </Route>
 

@@ -6,10 +6,11 @@ const freezerController = require('../controller/freezer.controller.js')
 
 // Uso de Middlewares para verificar
 const soloAdmin = [verificarToken, verificarRol('administrador')];
+const adminYOperador = [verificarToken, verificarRol('administrador', 'operador')]; 
 
 // FREEZERS
 // Ver todos los freezers - GET
-router.get('/', soloAdmin, freezerController.listar);
+router.get('/', adminYOperador, freezerController.listar);
 
 // Ver detalles de un freezer - GET
 router.get('/:id', soloAdmin, freezerController.detalle);

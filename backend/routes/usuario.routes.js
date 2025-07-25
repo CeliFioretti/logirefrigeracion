@@ -6,6 +6,7 @@ const usuarioController = require('../controller/usuario.controller.js')
 
 // Uso de Middlewares para verificar
 const soloAdmin = [verificarToken, verificarRol('administrador')];
+const adminYOperador = [verificarToken, verificarRol('administrador', 'operador')];
 
 // USUARIOS
 // Ver todos los usuarios - GET
@@ -15,10 +16,10 @@ router.get('/',soloAdmin, usuarioController.listar);
 router.get('/:id',soloAdmin, usuarioController.detalle);
 
 // Actualizar perfil del usuario autenticado (nombre y correo) - PUT
-router.put('/configuracion', verificarToken, soloAdmin, usuarioController.editarPerfil);
+router.put('/configuracion', adminYOperador, usuarioController.editarPerfil);
 
 // Ruta para cambio de contraseña del usuario autenticado - PUT
-router.put('/cambiar-password', verificarToken, usuarioController.cambiarContraseña);
+router.put('/cambiar-password', adminYOperador, usuarioController.cambiarContraseña);
 
 // Actualizar estado de usuario (activo/inactivo) - PUT
 router.put('/:id/estado', soloAdmin, usuarioController.toggleEstadoUsuario);

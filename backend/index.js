@@ -29,6 +29,8 @@ const rutaEventosFreezer = require('./routes/eventos.routes.js');
 const rutasUbicaciones = require('./routes/ubicaciones.routes.js');
 const rutaAuditoria = require('./routes/auditoria.routes.js');
 const rutaCodigosRegistro = require('./routes/codigos-registro.routes.js');
+const rutasZonasOperador = require('./routes/zonas-operador.routes.js'); 
+const rutasEventosOperador = require('./routes/eventos-operador.routes.js'); 
 
 app.use(cors({
     origin: `http://localhost:5173`,
@@ -49,6 +51,8 @@ app.use('/api/asignaciones-mantenimiento', rutaAsignacionMantenimientos);
 app.use('/api/eventos', rutaEventosFreezer);
 app.use('/api/ubicaciones', rutasUbicaciones);
 app.use('/api/auditoria', rutaAuditoria);
+app.use('/api/zonas-operador', rutasZonasOperador); 
+app.use('/api/eventos-operador', rutasEventosOperador);
 
 
 app.use(errorHandler);

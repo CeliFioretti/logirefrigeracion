@@ -31,6 +31,7 @@ export default function SideNav({ open, toggleDrawer, drawerWidth }) {
     freezers: false,
     clientes: false,
     mantenimientos: false,
+    asignacionesmantenimiento: false,
     usuarios: false,
     gestionUsuarios: false,
     eventos: false,
@@ -199,6 +200,30 @@ export default function SideNav({ open, toggleDrawer, drawerWidth }) {
             <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/mantenimientos/nuevo')} selected={isActive('/mantenimientos/nuevo')}>
               <ListItemIcon><AddIcon sx={{ color: isActive('/mantenimientos/nuevo') ? activeIconColor : primaryColor }} /></ListItemIcon>
               <ListItemText primary="Registrar nuevo" sx={{ fontWeight: isActive('/mantenimientos/nuevo') ? 'bold' : 'normal', color: isActive('/mantenimientos/nuevo') ? activeTextColor : primaryColor }} />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* ASIGNACIONES DE MANTENIMIENTO */}
+        <ListItemButton
+          onClick={() => handleToggle('asignacionesmantenimiento')}
+          selected={isParentActive(['/asignaciones-mantenimiento/listado', '/asignaciones-mantenimiento/nuevo'])}
+        >
+          <ListItemIcon><AccessAlarmsIcon sx={{ color: isParentActive(['/asignaciones-mantenimiento/listado', '/asignaciones-mantenimiento/nuevo']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Asignaciones Mant" sx={{ fontWeight: isParentActive(['/asignacionesmantenimiento', '/asignaciones-mantenimiento/nuevo']) ? 'bold' : 'normal', color: isParentActive(['/asignaciones-mantenimiento/listado', '/asignaciones-mantenimiento/nuevo']) ? activeTextColor : primaryColor }} />
+          {openMenus.asignacionesmantenimiento ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
+        </ListItemButton>
+        <Collapse in={openMenus.asignacionesmantenimiento || isParentActive(['/asignaciones-mantenimiento/listado', '/asignaciones-mantenimiento/nuevo'])} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/asignaciones-mantenimiento/listado')} selected={isActive('/asignaciones-mantenimiento/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/asignaciones-mantenimiento/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Historial" sx={{ fontWeight: isActive('/asignaciones-mantenimiento/listado') ? 'bold' : 'normal', color: isActive('/asignaciones-mantenimiento/listado') ? activeTextColor : primaryColor }} />
+            </ListItemButton>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleNavigation('/asignaciones-mantenimiento/nuevo')} selected={isActive('/asignaciones-mantenimiento/nuevo')}>
+              <ListItemIcon><AddIcon sx={{ color: isActive('/asignaciones-mantenimiento/nuevo') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Registrar nueva" sx={{ fontWeight: isActive('/asignaciones-mantenimiento/nuevo') ? 'bold' : 'normal', color: isActive('/asignaciones-mantenimiento/nuevo') ? activeTextColor : primaryColor }} />
             </ListItemButton>
           </List>
         </Collapse>
