@@ -7,6 +7,14 @@ const crypto = require('crypto');
 const login = async (req, res) => {
     const { nombre, password } = req.body;
 
+     // --- AÑADE ESTOS CONSOLE.LOGS TEMPORALMENTE PARA DEPURAR ---
+    console.log('----------------------------------------------------');
+    console.log('Intento de login recibido.');
+    console.log('Correo recibido:', correo);
+    // CUIDADO: NO MUESTRES CONTRASEÑAS EN LOGS DE PRODUCCIÓN REAL
+    // console.log('Contraseña recibida (SOLO PARA DEPURAR):', password);
+    console.log('----------------------------------------------------');
+
     try {
         const { rows } = await db.query('SELECT * FROM usuario WHERE nombre_usuario = $1', [nombre]);
 
