@@ -90,7 +90,7 @@ function FreezerDetailPage() {
         setLoading(true);
         setError(null);
         try {
-            const url = `http://localhost:3200/api/freezers/${id}`
+            const url = `/freezers/${id}`
             const response = await axiosInstance.get(url)
 
             setFreezer(response.data.data);
@@ -130,7 +130,7 @@ function FreezerDetailPage() {
             queryParams.append('page', pageMant);
             queryParams.append('pageSize', rowsPerPageMant);
 
-            const url = `http://localhost:3200/api/freezers/${id}/mantenimientos?${queryParams.toString()}`
+            const url = `/freezers/${id}/mantenimientos?${queryParams.toString()}`
 
             const response = await axiosInstance.get(url)
 
@@ -156,7 +156,7 @@ function FreezerDetailPage() {
         setErrorCliente(null);
 
         try {
-            const url = `http://localhost:3200/api/clientes/${clienteId}`
+            const url = `/clientes/${clienteId}`
             const response = await axiosInstance.get(url)
             setClienteAsignado(response.data.data.cliente);
         } catch (err) {

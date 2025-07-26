@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../api/axios';
 import { useContext } from 'react';
 import { UserContext } from '../../context/UserContext';
 
@@ -52,7 +52,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post('http://localhost:3200/api/auth/login', {
+      const { data } = await axiosInstance.post('/auth/login', {
         nombre,
         password
       });

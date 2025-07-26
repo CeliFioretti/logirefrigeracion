@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import axiosInstance from '../../api/axios';
 import {
   TextField,
   Button,
@@ -51,7 +51,7 @@ function RegistroOperador() {
     }
 
     try {
-      const { data } = await axios.post('http://localhost:3200/api/auth/registro', {
+      const { data } = await axiosInstance.post('/auth/registro', {
         nombre,
         correo,
         password,
