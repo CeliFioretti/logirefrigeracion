@@ -6,8 +6,8 @@ const listar = async (req, res, next) => {
     const idUsuarioResponsable = req.usuario.id;
 
     try {
-        const [notificaciones] = await db.promise().query(
-            'SELECT * FROM notificacion WHERE usuario_id = ? ORDER BY fecha_creacion DESC',
+        const { rows: notificaciones } = await db.query( 
+            'SELECT * FROM notificacion WHERE usuario_id = $1 ORDER BY fecha_creacion DESC', 
             [idUsuarioResponsable]
         );
 
@@ -26,9 +26,8 @@ const leida = async (req, res, next) => {
     const idUsuarioResponsable = req.usuario.id;
 
     try {
-        await db.promise().query(
-            'UPDATE notificacion SET leida = 1 WHERE id = ? AND usuario_id = ?',
-            [id, idUsuarioResponsable]
+        await db.query( 
+            'UPDATE notificacion SET leida = 1 WHERE id = $1 AND usuario_id = $2', 
         );
 
         res.status(200).json({ message: 'Notificación marcada como leída' });
@@ -43,10 +42,10 @@ const crear = async ({ usuario_id, titulo, mensaje, tipo, referencia_id = null, 
 
     try {
 
-        await db.promise().query(
-            `INSERT INTO notificacion 
-      (usuario_id, titulo, mensaje, tipo, referencia_id, referencia_tipo) 
-      VALUES (?, ?, ?, ?, ?, ?)`,
+        await db.query( // Cambiado a db.query
+            `INSERT INTO notificacion
+      (usuario_id, titulo, mensaje, tipo, referencia_id, referencia_tipo)
+      VALUES ($1, $2, $3, $4, $5, $6)`,
             [usuario_id, titulo, mensaje, tipo, referencia_id, referencia_tipo]
         );
     } catch (err) {

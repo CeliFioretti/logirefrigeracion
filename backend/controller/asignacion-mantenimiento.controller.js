@@ -12,10 +12,10 @@ const listar = async (req, res, next) => {
                 am.fecha_creacion,
                 am.fecha_asignacion,
                 am.estado,
-                am.tipo AS tipo_asignacion,
                 am.observaciones AS asignacion_observaciones,
+                am.tipo AS tipo_asignacion,
                 u.id AS usuario_id,
-                u.nombre AS usuario_nombre,
+                u.nombre_usuario AS usuario_nombre,
                 u.correo AS usuario_correo,
                 f.id AS freezer_id,
                 f.numero_serie,
@@ -40,51 +40,62 @@ const listar = async (req, res, next) => {
         let condiciones = [];
         let params = [];
         let countParams = [];
+        let paramIndex = 1;
 
         if (usuario_nombre) {
-            condiciones.push('u.nombre LIKE ?');
+            condiciones.push(`u.nombre_usuario ILIKE $${paramIndex++}`);
             params.push(`%${usuario_nombre}%`);
             countParams.push(`%${usuario_nombre}%`);
         }
         if (freezer_numero_serie) {
-            condiciones.push('f.numero_serie LIKE ?');
+            condiciones.push(`f.numero_serie ILIKE $${paramIndex++}`);
             params.push(`%${freezer_numero_serie}%`);
             countParams.push(`%${freezer_numero_serie}%`);
         }
         if (estado) {
-            condiciones.push('am.estado = ?');
+            condiciones.push(`am.estado = $${paramIndex++}`);
             params.push(estado);
             countParams.push(estado);
         }
         if (fechaDesde) {
-            condiciones.push('am.fecha_asignacion >= ?');
+            condiciones.push(`am.fecha_asignacion >= $${paramIndex++}`);
             params.push(fechaDesde);
             countParams.push(fechaDesde);
         }
         if (fechaHasta) {
-            condiciones.push('am.fecha_asignacion <= ?');
+            condiciones.push(`am.fecha_asignacion <= $${paramIndex++}`);
             params.push(fechaHasta);
             countParams.push(fechaHasta);
         }
 
         if (condiciones.length > 0) {
-            query += ' WHERE ' + condiciones.join(' AND ');
-            countQuery += ' WHERE ' + condiciones.join(' AND ');
+            const whereClause = ' WHERE ' + condiciones.join(' AND ');
+            query += whereClause;
+            countQuery += whereClause;
         }
 
-        query += ' ORDER BY am.fecha_asignacion DESC'; // Ordenar por fecha de asignación
-
-        const [totalResult] = await db.promise().query(countQuery, countParams);
-        const totalRegistros = totalResult[0].total;
+        // PostgreSQL no tiene FIELD, se ordena directamente por la columna de estado y luego por fecha
+        query += ` ORDER BY 
+            CASE am.estado
+                WHEN 'pendiente' THEN 1
+                WHEN 'vencida' THEN 2
+                WHEN 'en curso' THEN 3
+                WHEN 'completada' THEN 4
+                WHEN 'cancelada' THEN 5
+                ELSE 6
+            END, am.fecha_asignacion ASC`;
 
         const pageNum = parseInt(page) || 0;
         const pageSizeNum = parseInt(pageSize) || 10;
         const offset = pageNum * pageSizeNum;
 
-        query += ` LIMIT ? OFFSET ?`;
+        query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
         params.push(pageSizeNum, offset);
 
-        const [asignaciones] = await db.promise().query(query, params);
+        const { rows: totalResult } = await db.query(countQuery, countParams);
+        const totalRegistros = totalResult[0].total;
+
+        const { rows: asignaciones } = await db.query(query, params);
 
         if (asignaciones.length === 0 && totalRegistros === 0) {
             return res.status(200).json({
@@ -116,28 +127,23 @@ const crear = async (req, res, next) => {
             return res.status(400).json({ error: 'Faltan datos requeridos: usuario_id, freezer_id, fecha_asignacion, tipo_mantenimiento_asignado.' });
         }
 
-        // Insertar asignación y capturar el ID generado
-        const [resultado] = await db.promise().query(
+        const { rows: resultado } = await db.query(
             `INSERT INTO asignacionmantenimiento
                (usuario_id, freezer_id, fecha_creacion, fecha_asignacion, estado, observaciones, tipo)
-               VALUES (?, ?, NOW(), ?, 'pendiente', ?, ?)`,
+               VALUES ($1, $2, NOW(), $3, 'pendiente', $4, $5) RETURNING id`,
             [usuario_id, freezer_id, fecha_asignacion, observaciones || null, tipo_mantenimiento_asignado]
         );
 
-        const idAsignacion = resultado.insertId;
+        const idAsignacion = resultado[0].id;
 
-        // Obtener nombre del operador para la notificación
-        const [operadorInfo] = await db.promise().query('SELECT nombre FROM usuario WHERE id = ?', [usuario_id]);
-        const nombreOperador = operadorInfo[0]?.nombre || 'Operador Desconocido';
+        const { rows: operadorInfo } = await db.query('SELECT nombre_usuario FROM usuario WHERE id = $1', [usuario_id]);
+        const nombreOperador = operadorInfo[0]?.nombre_usuario || 'Operador Desconocido';
 
-        // Obtener número de serie del freezer para la notificación
-        const [freezerInfo] = await db.promise().query('SELECT numero_serie FROM freezer WHERE id = ?', [freezer_id]);
+        const { rows: freezerInfo } = await db.query('SELECT numero_serie FROM freezer WHERE id = $1', [freezer_id]);
         const numeroSerieFreezer = freezerInfo[0]?.numero_serie || 'Freezer Desconocido';
 
-
-        // Crear notificación al operador
         await notificacionController.crear({
-            usuario_id: usuario_id,  // operador asignado
+            usuario_id: usuario_id,
             titulo: 'Nueva Asignación de Mantenimiento',
             mensaje: `Se te ha asignado un mantenimiento para el freezer ${numeroSerieFreezer} (ID: ${freezer_id}) con fecha ${new Date(fecha_asignacion).toLocaleDateString()}.`,
             tipo: 'asignacion_mantenimiento',
@@ -145,11 +151,10 @@ const crear = async (req, res, next) => {
             referencia_tipo: 'asignacion_mantenimiento'
         });
 
-        // Auditoría
         const mensaje = `Asignación de mantenimiento (ID: ${idAsignacion}) del freezer ${numeroSerieFreezer} (ID: ${freezer_id}) al operador ${nombreOperador} (ID: ${usuario_id}). Tipo: ${tipo_mantenimiento_asignado}.`;
-        await db.promise().query(
+        await db.query(
             `INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
-               VALUES (?, ?, NOW(), ?)`,
+               VALUES ($1, $2, NOW(), $3)`,
             [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
         );
 
@@ -161,157 +166,160 @@ const crear = async (req, res, next) => {
     }
 };
 
-// Eliminar una asignacion de mantenimiento - DELETE
 const eliminar = async (req, res, next) => {
-  const idAsignacion = req.params.id;
+    const idAsignacion = req.params.id;
 
-  // Auditoría
-  const idUsuarioResponsable = req.usuario.id;
-  const nombreUsuarioResponsable = req.usuario.nombre;
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
 
-  try {
-    const [asig] = await db.promise().query('SELECT * FROM asignacionmantenimiento WHERE id = ?', [idAsignacion]);
+    try {
+        const { rows: asig } = await db.query('SELECT * FROM asignacionmantenimiento WHERE id = $1', [idAsignacion]);
 
-    if (asig.length === 0) {
-      return res.status(404).json({ error: 'Asignación no encontrada' });
+        if (asig.length === 0) {
+            return res.status(404).json({ error: 'Asignación no encontrada' });
+        }
+
+        const asignacion = asig[0];
+
+        await db.query('DELETE FROM asignacionmantenimiento WHERE id = $1', [idAsignacion]);
+
+        const mensaje = `Eliminación de asignación de mantenimiento ID ${idAsignacion} (operador ID ${asignacion.usuario_id}, freezer ID ${asignacion.freezer_id}) por ${nombreUsuarioResponsable} (ID ${idUsuarioResponsable}).`;
+        await db.query(
+            `INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
+               VALUES ($1, $2, NOW(), $3)`,
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
+        );
+
+        res.status(200).json({
+            message: 'Asignación eliminada correctamente'
+        });
+    } catch (err) {
+        console.error('Error al eliminar asignación de mantenimiento:', err);
+        next(err);
     }
-
-    const asignacion = asig[0];
-
-    await db.promise().query('DELETE FROM asignacionmantenimiento WHERE id = ?', [idAsignacion]);
-
-    // Auditoría
-    const mensaje = `Eliminación de asignación de mantenimiento al operador ID ${asignacion.usuario_id}, freezer ID ${asignacion.freezer_id}`;
-    await db.promise().query(
-      `INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
-       VALUES (?, ?, NOW(), ?)`,
-      [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
-    );
-
-    res.status(200).json({
-      message: 'Asignación eliminada correctamente'
-    });
-  } catch (err) {
-    next(err);
-  }
 };
 
 
-// Ver asignaciones propias (Operador) - GET
 const verAsignacionesPropias = async (req, res, next) => {
-  const idOperador = req.usuario.id;
+    const idOperador = req.usuario.id;
 
-  try {
-    const [asignaciones] = await db.promise().query(
-      'SELECT * FROM asignacionmantenimiento WHERE usuario_id = ?',
-      [idOperador]
-    );
+    try {
+        const { rows: asignaciones } = await db.query(
+            'SELECT * FROM asignacionmantenimiento WHERE usuario_id = $1',
+            [idOperador]
+        );
 
-    if (asignaciones.length === 0) {
-      return res.status(200).json({
-        message: 'No tienes asignaciones de mantenimiento pendientes',
-        data: []
-      });
+        if (asignaciones.length === 0) {
+            return res.status(200).json({
+                message: 'No tienes asignaciones de mantenimiento pendientes',
+                data: [],
+                total: 0
+            });
+        }
+
+        res.status(200).json({ data: asignaciones, total: asignaciones.length });
+    } catch (err) {
+        console.error('Error al ver asignaciones propias:', err);
+        next(err);
     }
-
-    res.status(200).json({ data: asignaciones });
-  } catch (err) {
-    next(err);
-  }
 };
 
-// Confirmar asignacion propia (Operador) - POST
 const confirmarAsignacion = async (req, res, next) => {
-  const idAsignacion = req.params.id;
-  const idUsuarioResponsable = req.usuario.id;
-  const nombreUsuarioResponsable = req.usuario.nombre;
+    const idAsignacion = req.params.id;
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
 
-  try {
+    try {
+        const { rows: asig } = await db.query('SELECT * FROM asignacionmantenimiento WHERE id = $1', [idAsignacion]);
+        if (asig.length === 0) return res.status(404).json({ error: 'Asignación no encontrada' });
 
-    const [asig] = await db.promise().query('SELECT * FROM asignacionmantenimiento WHERE id = ?', [idAsignacion]);
-    if (asig.length === 0) return res.status(404).json({ error: 'Asignación no encontrada' });
+        const asignacion = asig[0];
 
-    const asignacion = asig[0];
+        if (asignacion.usuario_id !== idUsuarioResponsable) {
+            return res.status(403).json({ error: 'No puedes confirmar una asignación que no te pertenece' });
+        }
 
-    if (asignacion.usuario_id !== idUsuarioResponsable) {
-      return res.status(403).json({ error: 'No puedes confirmar una asignación que no te pertenece' });
+        await db.query(
+            `INSERT INTO mantenimiento (usuario_id, freezer_id, usuario_nombre, fecha, descripcion, tipo, observaciones)
+               VALUES ($1, $2, $3, NOW(), $4, 'Correctivo', $5)`,
+            [idUsuarioResponsable, asignacion.freezer_id, nombreUsuarioResponsable, 'Mantenimiento realizado', asignacion.observaciones || null]
+        );
+
+        await db.query('DELETE FROM asignacionmantenimiento WHERE id = $1', [idAsignacion]);
+
+        const mensaje = `Operador ${nombreUsuarioResponsable} confirmó mantenimiento del freezer ID ${asignacion.freezer_id}`;
+        await db.query(
+            `INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
+               VALUES ($1, $2, NOW(), $3)`,
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
+        );
+
+        res.status(200).json({ message: 'Mantenimiento confirmado y registrado' });
+    } catch (err) {
+        console.error('Error al confirmar asignación:', err);
+        next(err);
     }
-
-    await db.promise().query(
-      `INSERT INTO mantenimiento (usuario_id, freezer_id, usuario_nombre, fecha, descripcion, tipo, observaciones)
-       VALUES (?, ?, ?, NOW(), ?, 'Correctivo', ?)`,
-      [idUsuarioResponsable, asignacion.freezer_id, nombreUsuarioResponsable, 'Mantenimiento realizado', asignacion.observaciones || null]
-    );
-
-    await db.promise().query('DELETE FROM asignacionmantenimiento WHERE id = ?', [idAsignacion]);
-
-    // Auditoría
-    const mensaje = `Operador ${nombreUsuarioResponsable} confirmó mantenimiento del freezer ID ${asignacion.freezer_id}`;
-    await db.promise().query(
-      `INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
-       VALUES (?, ?, NOW(), ?)`,
-      [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
-    );
-
-    res.status(200).json({ message: 'Mantenimiento confirmado y registrado' });
-  } catch (err) {
-    next(err);
-  }
 };
 
-// Actualiza el estado de una asignacion de mantenimiento.
 const cambiarEstadoAsignacion = async (req, res, next) => {
-  const idAsignacion = req.params.id;
-  const { estado } = req.body;
+    const idAsignacion = req.params.id;
+    const { estado } = req.body;
 
-  const idUsuarioResponsable = req.usuario.id;
-  const nombreUsuarioResponsable = req.usuario.nombre;
+    const idUsuarioResponsable = req.usuario.id;
+    const nombreUsuarioResponsable = req.usuario.nombre;
 
-  try {
-    if (!estado) {
-      return res.status(400).json({ error: 'Debe proporcionar el nuevo estado' });
+    try {
+        if (!estado) {
+            return res.status(400).json({ error: 'Debe proporcionar el nuevo estado' });
+        }
+
+        const ESTADOS_VALIDOS = ['pendiente', 'en curso', 'completada', 'cancelada', 'vencida'];
+
+        if (!ESTADOS_VALIDOS.includes(estado)) {
+            return res.status(400).json({ error: `Estado inválido. Estados permitidos: ${ESTADOS_VALIDOS.join(', ')}` });
+        }
+
+        const { rows: asignacion } = await db.query('SELECT id, estado FROM asignacionmantenimiento WHERE id = $1', [idAsignacion]);
+
+        if (asignacion.length === 0) {
+            return res.status(404).json({ error: 'La asignación no existe' });
+        }
+
+        const oldEstado = asignacion[0].estado;
+
+        await db.query(
+            'UPDATE asignacionmantenimiento SET estado = $1 WHERE id = $2',
+            [estado, idAsignacion]
+        );
+
+        const mensaje = `Se actualizó el estado de la asignación de mantenimiento ID ${idAsignacion} de "${oldEstado}" a "${estado}" por ${nombreUsuarioResponsable} (ID ${idUsuarioResponsable}).`;
+        await db.query(
+            'INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES ($1, $2, NOW(), $3)',
+            [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
+        );
+
+        res.status(200).json({ message: 'Estado de la asignación actualizado correctamente', newStatus: estado });
+
+    } catch (error) {
+        console.error('Error al cambiar estado de asignación:', error);
+        next(error);
     }
-
-    const ESTADOS_VALIDOS = ['pendiente', 'en curso', 'completado', 'cancelado', 'vencida'];
-
-    if (!ESTADOS_VALIDOS.includes(estado)) {
-      return res.status(400).json({ error: `Estado inválido. Estados permitidos: ${ESTADOS_VALIDOS.join(', ')}` });
-    }
-
-    const [asignacion] = await db.promise().query('SELECT id FROM asignacionmantenimiento WHERE id = ?', [idAsignacion]);
-
-    if (asignacion.length === 0) {
-      return res.status(404).json({ error: 'La asignación no existe' });
-    }
-
-    await db.promise().query(
-      'UPDATE asignacionmantenimiento SET estado = ? WHERE id = ?',
-      [estado, idAsignacion]
-    );
-
-    // Auditoría
-    const mensaje = `Se actualizó el estado de la asignación de mantenimiento ID ${idAsignacion} a "${estado}"`;
-    await db.promise().query(
-      'INSERT INTO auditoriadeactividades (idUsuarioResponsable, nombreUsuarioResponsable, fecha_hora, accion) VALUES (?, ?, NOW(), ?)',
-      [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]
-    );
-
-    res.status(200).json({ message: 'Estado de la asignación actualizado correctamente' });
-
-  } catch (error) {
-    next(error);
-  }
 };
 
-// Mantenimientos pendientes de operador - GET
 const listarPendientesOperador = async (req, res, next) => {
     const idUsuarioOperador = req.usuario.id;
     const { page, pageSize, search } = req.query;
 
     try {
+        // Actualizar el estado de asignaciones a 'vencida' si la fecha ya pasó
+        const { rows: updateResult } = await db.query(
+            `UPDATE asignacionmantenimiento
+             SET estado = 'vencida'
+             WHERE usuario_id = $1 AND estado = 'pendiente' AND fecha_asignacion < CURRENT_DATE`, // CURRENT_DATE para PostgreSQL
+            [idUsuarioOperador]
+        );
 
-        // Construir la consulta SELECT para obtener las asignaciones pendientes y vencidas
-         let query = `
+        let query = `
             SELECT
                 am.id AS asignacion_id,
                 am.fecha_asignacion,
@@ -323,13 +331,13 @@ const listarPendientesOperador = async (req, res, next) => {
                 f.modelo,
                 f.tipo AS tipo_freezer,
                 f.capacidad,
-                c.nombre_responsable AS nombre_cliente,
+                c.nombre_responsable AS cliente_nombre,
                 c.direccion AS cliente_direccion,
                 c.cuit AS cliente_cuit
             FROM asignacionmantenimiento am
             JOIN freezer f ON am.freezer_id = f.id
             JOIN cliente c ON f.cliente_id = c.id
-            WHERE am.usuario_id = ? 
+            WHERE am.usuario_id = $1 AND am.estado IN ('pendiente', 'vencida')
         `;
 
         let countQuery = `
@@ -337,39 +345,42 @@ const listarPendientesOperador = async (req, res, next) => {
             FROM asignacionmantenimiento am
             JOIN freezer f ON am.freezer_id = f.id
             JOIN cliente c ON f.cliente_id = c.id
-            WHERE am.usuario_id = ? 
+            WHERE am.usuario_id = $1 AND am.estado IN ('pendiente', 'vencida')
         `;
 
         let params = [idUsuarioOperador];
         let countParams = [idUsuarioOperador];
+        let paramIndex = 2; // El primer parámetro ($1) ya es idUsuarioOperador
 
         if (search) {
             const searchQueryParam = `
-                AND (f.numero_serie LIKE ? OR f.modelo LIKE ? OR f.tipo LIKE ? OR c.nombre_responsable LIKE ? OR c.direccion LIKE ? OR c.cuit LIKE ?)
+                AND (f.numero_serie ILIKE $${paramIndex} OR f.modelo ILIKE $${paramIndex} OR f.tipo ILIKE $${paramIndex} OR c.nombre_responsable ILIKE $${paramIndex} OR c.direccion ILIKE $${paramIndex} OR c.cuit ILIKE $${paramIndex})
             `;
             const searchPattern = `%${search}%`;
             query += searchQueryParam;
             countQuery += searchQueryParam;
-            params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
-            countParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+            params.push(searchPattern); // Solo se necesita un push por el ILIKE
+            countParams.push(searchPattern);
+            paramIndex++;
         }
 
-        query += ` ORDER BY FIELD(am.estado, 'pendiente', 'vencida'), am.fecha_asignacion ASC`;
+        query += ` ORDER BY 
+            CASE am.estado
+                WHEN 'pendiente' THEN 1
+                WHEN 'vencida' THEN 2
+                ELSE 3
+            END, am.fecha_asignacion ASC`;
 
         const pageNum = parseInt(page) || 0;
         const pageSizeNum = parseInt(pageSize) || 10;
         const offset = pageNum * pageSizeNum;
 
-        query += ` LIMIT ? OFFSET ?`;
+        query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
         params.push(pageSizeNum, offset);
 
-        const [mantenimientosPendientes] = await db.promise().query(query, params);
-        const [totalResult] = await db.promise().query(countQuery, countParams);
+        const { rows: mantenimientosPendientes } = await db.query(query, params);
+        const { rows: totalResult } = await db.query(countQuery, countParams);
         const totalRegistros = totalResult[0].total;
-
-        console.log(`[listarPendientesOperador] Query de selección ejecutada. Resultados:`, mantenimientosPendientes);
-        console.log(`[listarPendientesOperador] Total de registros encontrados:`, totalRegistros);
-
 
         if (mantenimientosPendientes.length === 0) {
             return res.status(200).json({
@@ -391,25 +402,23 @@ const listarPendientesOperador = async (req, res, next) => {
 };
 
 
-// Completar un mantenimiento asignado - PATCH
 const completarMantenimientoAsignado = async (req, res, next) => {
     const { idAsignacion } = req.params;
-    const { descripcion, observaciones, tipoMantenimientoRealizado } = req.body; // Datos que envía el operador
+    const { descripcion, observaciones, tipoMantenimientoRealizado } = req.body;
 
-    const idUsuarioOperador = req.usuario.id; 
-    const nombreUsuarioOperador = req.usuario.nombre; 
+    const idUsuarioOperador = req.usuario.id;
+    const nombreUsuarioOperador = req.usuario.nombre;
 
     if (!descripcion || !tipoMantenimientoRealizado) {
         return res.status(400).json({ message: 'La descripción y el tipo de mantenimiento realizado son obligatorios.' });
     }
 
     try {
-        // Obtener detalles de la asignación para el registro de mantenimiento
-        const [asignacionRows] = await db.promise().query(
+        const { rows: asignacionRows } = await db.query(
             `SELECT am.freezer_id, am.usuario_id, am.tipo AS tipo_asignacion, f.numero_serie
              FROM asignacionmantenimiento am
              JOIN freezer f ON am.freezer_id = f.id
-             WHERE am.id = ? AND am.usuario_id = ? AND am.estado = 'pendiente'`,
+             WHERE am.id = $1 AND am.usuario_id = $2 AND am.estado = 'pendiente'`,
             [idAsignacion, idUsuarioOperador]
         );
 
@@ -418,33 +427,30 @@ const completarMantenimientoAsignado = async (req, res, next) => {
         }
         const asignacionInfo = asignacionRows[0];
 
-        // Actualizar el estado de la asignación a 'completada'
-        await db.promise().query(
-            `UPDATE asignacionmantenimiento 
-             SET estado = 'completada' 
-             WHERE id = ? AND usuario_id = ? AND estado = 'pendiente'`,
+        await db.query(
+            `UPDATE asignacionmantenimiento
+             SET estado = 'completada'
+             WHERE id = $1 AND usuario_id = $2 AND estado = 'pendiente'`,
             [idAsignacion, idUsuarioOperador]
         );
 
-        // Crear un nuevo registro en la tabla `mantenimiento`
-        await db.promise().query(
-            `INSERT INTO mantenimiento 
+        await db.query(
+            `INSERT INTO mantenimiento
              (usuario_id, freezer_id, usuario_nombre, fecha, descripcion, tipo, observaciones)
-             VALUES (?, ?, ?, NOW(), ?, ?, ?)`,
+             VALUES ($1, $2, $3, NOW(), $4, $5, $6)`,
             [
                 idUsuarioOperador,
                 asignacionInfo.freezer_id,
                 nombreUsuarioOperador,
                 descripcion,
-                tipoMantenimientoRealizado, 
-                observaciones || null 
+                tipoMantenimientoRealizado,
+                observaciones || null
             ]
         );
 
-        // Auditoría
-        await db.promise().query(
+        await db.query(
             `INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
-             VALUES (?, ?, NOW(), ?)`,
+               VALUES ($1, $2, NOW(), $3)`,
             [idUsuarioOperador, nombreUsuarioOperador, `Operador ${nombreUsuarioOperador} completó mantenimiento asignado ID ${idAsignacion} para freezer ${asignacionInfo.numero_serie}.`]
         );
 
@@ -452,18 +458,18 @@ const completarMantenimientoAsignado = async (req, res, next) => {
 
     } catch (err) {
         console.error('Error al completar mantenimiento asignado:', err);
-        next(err); // Pasa el error al manejador de errores global
+        next(err);
     }
 };
 
 
 module.exports = {
-  listar,
-  crear,
-  eliminar,
-  verAsignacionesPropias,
-  confirmarAsignacion,
-  cambiarEstadoAsignacion,
-  listarPendientesOperador,
-  completarMantenimientoAsignado
+    listar,
+    crear,
+    eliminar,
+    verAsignacionesPropias,
+    confirmarAsignacion,
+    cambiarEstadoAsignacion,
+    listarPendientesOperador,
+    completarMantenimientoAsignado
 };

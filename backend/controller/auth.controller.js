@@ -8,27 +8,27 @@ const login = async (req, res) => {
     const { nombre, password } = req.body;
 
     try {
-        const [filas] = await db.promise().query('SELECT * FROM usuario WHERE nombre = ?', [nombre]);
+        const { rows } = await db.query('SELECT * FROM usuario WHERE nombre_usuario = $1', [nombre]);
 
-        if (filas.length === 0) {
+        if (rows.length === 0) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        const usuario = filas[0];
+        const usuario = rows[0];
 
-        const passwordValida = await bcrypt.compare(password, usuario.password);
+        const passwordValida = await bcrypt.compare(password, usuario.contrasena);
 
         if (!passwordValida) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        if (usuario.activo === 0) {
+        if (usuario.estado === false) {
             return res.status(403).json({ error: 'El usuario esta inactivo' });
         }
 
         const payload = {
             id: usuario.id,
-            nombre: usuario.nombre,
+            nombre: usuario.nombre_usuario,
             rol: usuario.rol
         }
 
@@ -39,13 +39,13 @@ const login = async (req, res) => {
         res.status(200).json({
             message: 'Inicio de sesión exitoso',
             token: token,
-            nombreUsuario: usuario.nombre,
+            nombreUsuario: usuario.nombre_usuario,
             rol: usuario.rol,
-            requiereCambioPassword: usuario.requiere_cambio_password === 1
+            requiereCambioPassword: usuario.requiere_cambio_password === true
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Error en login:", error);
         res.status(500).json({
             error: 'Error interno al iniciar sesión'
         });
@@ -61,9 +61,8 @@ const registrarUsuario = async (req, res, next) => {
     }
 
     try {
-        // Verificar si el código existe, está disponible y no ha expirado
-        const [codigo] = await db.promise().query(
-            `SELECT * FROM codigos_registro WHERE codigo = ? AND usado = 0 AND fecha_expiracion > NOW()`,
+        const { rows: codigo } = await db.query(
+            `SELECT * FROM codigos_registro WHERE codigo = $1 AND usado = FALSE AND fecha_expiracion > NOW()`,
             [codigoRegistro]
         );
 
@@ -71,19 +70,16 @@ const registrarUsuario = async (req, res, next) => {
             return res.status(400).json({ error: 'Código inválido o expirado' });
         }
 
-        // Verificar que el codigo sea para operador 
-        // A futuro se agregaran los codigos para administradores
         const codigoEncontrado = codigo[0];
 
         if (codigoEncontrado.rol !== 'operador') {
             return res.status(403).json({ error: 'Este código de registro no es para operadores.' });
         }
 
-        // Verificar si el usuario o correo existe
-        const [existingUser] = await db.promise().query(`SELECT id FROM usuario WHERE nombre = ? OR correo = ?`, [nombre, correo])
+        const { rows: existingUser } = await db.query(`SELECT id, nombre_usuario, correo FROM usuario WHERE nombre_usuario = $1 OR correo = $2`, [nombre, correo])
 
         if (existingUser.length > 0) {
-            const isNameTaken = existingUser.some(user => user.nombre === nombre);
+            const isNameTaken = existingUser.some(user => user.nombre_usuario === nombre);
             const isEmailTaken = existingUser.some(user => user.correo === correo);
 
             if (isNameTaken && isEmailTaken) {
@@ -95,17 +91,15 @@ const registrarUsuario = async (req, res, next) => {
             }
         }
 
-        // Encripto la contraseña antes de usarla
         const passwordHash = await bcrypt.hash(password, 10);
 
-        await db.promise().query(
-            `INSERT INTO usuario (nombre, correo, password, rol, activo, requiere_cambio_password) VALUES (?, ?, ?, ?, 1, 0)`,
+        await db.query(
+            `INSERT INTO usuario (nombre_usuario, correo, contrasena, rol, estado, requiere_cambio_password) VALUES ($1, $2, $3, $4, TRUE, FALSE)`,
             [nombre, correo, passwordHash, 'operador']
         );
 
-        // Marcar el código como usado
-        await db.promise().query(
-            `UPDATE codigos_registro SET usado = 1 WHERE codigo = ?`,
+        await db.query(
+            `UPDATE codigos_registro SET usado = TRUE WHERE codigo = $1`,
             [codigoRegistro]
         );
 
@@ -121,8 +115,8 @@ const solicitarRecuperacion = async (req, res) => {
     const { correo } = req.body;
 
     try {
-        const [filas] = await db.promise().query('SELECT * FROM usuario WHERE correo = ?', [correo]);
-        const usuario = filas[0];
+        const { rows } = await db.query('SELECT * FROM usuario WHERE correo = $1', [correo]);
+        const usuario = rows[0];
 
         if (!usuario) {
             return res.status(404).json({ error: 'No se encontró un usuario con ese correo' });
@@ -131,8 +125,8 @@ const solicitarRecuperacion = async (req, res) => {
         const token = crypto.randomBytes(32).toString('hex');
         const expiracion = new Date(Date.now() + 3600000); // 1 hora desde ahora
 
-        await db.promise().query(
-            'UPDATE usuario SET token_recuperacion = ?, expiracion_token = ? WHERE id = ?',
+        await db.query(
+            'UPDATE usuario SET token_recuperacion = $1, expiracion_token = $2 WHERE id = $3',
             [token, expiracion, usuario.id]
         );
 
@@ -142,7 +136,7 @@ const solicitarRecuperacion = async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error("Error en solicitarRecuperacion:", error);
         res.status(500).json({ error: 'Error al solicitar recuperación de contraseña' });
     }
 };
@@ -152,12 +146,12 @@ const restablecerPassword = async (req, res) => {
     const { token, nuevaPassword } = req.body;
 
     try {
-        const [filas] = await db.promise().query(
-            'SELECT * FROM usuario WHERE token_recuperacion = ?',
+        const { rows } = await db.query(
+            'SELECT * FROM usuario WHERE token_recuperacion = $1',
             [token]
         );
 
-        const usuario = filas[0];
+        const usuario = rows[0];
 
         if (!usuario) {
             return res.status(400).json({ error: 'Token inválido' });
@@ -170,23 +164,19 @@ const restablecerPassword = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(nuevaPassword, 10);
 
-        await db.promise().query(
+        await db.query(
             `UPDATE usuario 
-             SET password = ?, token_recuperacion = NULL, expiracion_token = NULL, requiere_cambio_password = 0 
-             WHERE id = ?`,
+             SET contrasena = $1, token_recuperacion = NULL, expiracion_token = NULL, requiere_cambio_password = FALSE 
+             WHERE id = $2`,
             [passwordHash, usuario.id]
         );
 
         res.status(200).json({ message: 'Contraseña restablecida correctamente' });
 
     } catch (error) {
-        console.error(error);
+        console.error("Error en restablecerPassword:", error);
         res.status(500).json({ error: 'Error al restablecer contraseña' });
     }
 };
-
-
-
-
 
 module.exports = { login, solicitarRecuperacion, restablecerPassword, registrarUsuario };
