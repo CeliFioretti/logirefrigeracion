@@ -4,61 +4,87 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 
 // Login con token
-const login = async (req, res) => {
-    const { nombre, password } = req.body;
-
-     // --- AÑADE ESTOS CONSOLE.LOGS TEMPORALMENTE PARA DEPURAR ---
+const login = async (req, res, next) => {
+    // --- AÑADE ESTOS CONSOLE.LOGS ADICIONALES ---
     console.log('----------------------------------------------------');
     console.log('Intento de login recibido.');
-    console.log('Correo recibido:', correo);
-    // CUIDADO: NO MUESTRES CONTRASEÑAS EN LOGS DE PRODUCCIÓN REAL
-    // console.log('Contraseña recibida (SOLO PARA DEPURAR):', password);
+    console.log('Contenido de req.body:', req.body); // <-- NUEVO LOG
+    const { correo, password } = req.body;
+    console.log('Correo extraído de body:', correo); // <-- NUEVO LOG
+    console.log('Contraseña extraída de body (solo para depurar):', password); // <-- NUEVO LOG
     console.log('----------------------------------------------------');
 
     try {
-        const { rows } = await db.query('SELECT * FROM usuario WHERE nombre_usuario = $1', [nombre]);
-
-        if (rows.length === 0) {
-            return res.status(401).json({ error: 'Credenciales inválidas' });
+        if (!correo || !password) {
+            console.log('Error 400: Correo o contraseña faltante.');
+            return res.status(400).json({ error: 'Correo y contraseña son obligatorios.' });
         }
 
-        const usuario = rows[0];
+        console.log('Ejecutando consulta a la DB para el correo:', correo); // <-- NUEVO LOG
+        const { rows: userRows } = await db.query('SELECT id, nombre, correo, contrasena, rol, activo FROM usuario WHERE correo = $1', [correo]);
+        console.log('Resultado de la consulta a la DB para el usuario:', userRows);
 
-        const passwordValida = await bcrypt.compare(password, usuario.contrasena);
-
-        if (!passwordValida) {
-            return res.status(401).json({ error: 'Credenciales inválidas' });
+        if (userRows.length === 0) {
+            console.log('Usuario no encontrado en la DB para el correo:', correo);
+            return res.status(401).json({ error: 'Credenciales inválidas.' });
         }
 
-        if (usuario.estado === false) {
-            return res.status(403).json({ error: 'El usuario esta inactivo' });
+        const user = userRows[0];
+        console.log('Usuario encontrado en la DB. ID:', user.id, 'Nombre:', user.nombre, 'Correo:', user.correo);
+
+        const passwordMatch = await bcrypt.compare(password, user.contrasena);
+
+        console.log('Resultado de bcrypt.compare:', passwordMatch);
+
+        if (!passwordMatch) {
+            console.log('Contraseña no coincide para el usuario:', user.correo);
+            return res.status(401).json({ error: 'Credenciales inválidas.' });
         }
 
-        const payload = {
-            id: usuario.id,
-            nombre: usuario.nombre_usuario,
-            rol: usuario.rol
+        if (user.activo === false || user.activo === 0) {
+            console.log('Usuario inactivo detectado:', user.correo);
+            return res.status(401).json({ error: 'Tu cuenta está inactiva. Contacta al administrador.' });
         }
 
-        const token = jwt.sign(
-            payload, process.env.JWT_SECRET, { expiresIn: '2h' }
-        );
+        const jwt = require('jsonwebtoken'); 
+        const JWT_SECRET = process.env.JWT_SECRET; 
+
+        if (!JWT_SECRET) {
+            console.error('ERROR: JWT_SECRET no está definido en las variables de entorno!');
+            return res.status(500).json({ error: 'Error de configuración del servidor (JWT_SECRET no definido).' });
+        }
+
+        const token = jwt.sign({
+            id: user.id,
+            correo: user.correo,
+            rol: user.rol,
+            nombre: user.nombre
+        }, JWT_SECRET, { expiresIn: '1d' });
+
+        console.log('Token JWT generado con éxito para:', user.correo);
+        console.log('Login exitoso para usuario:', user.correo);
 
         res.status(200).json({
-            message: 'Inicio de sesión exitoso',
-            token: token,
-            nombreUsuario: usuario.nombre_usuario,
-            rol: usuario.rol,
-            requiereCambioPassword: usuario.requiere_cambio_password === true
+            message: 'Autenticación exitosa',
+            token,
+            usuario: {
+                id: user.id,
+                nombre: user.nombre,
+                correo: user.correo,
+                rol: user.rol
+            }
         });
 
     } catch (error) {
-        console.error("Error en login:", error);
-        res.status(500).json({
-            error: 'Error interno al iniciar sesión'
-        });
+        console.error('----------------------------------------------------');
+        console.error('ERROR CRÍTICO en el controlador de login:', error);
+        console.error('Mensaje de error:', error.message);
+        console.error('Stack Trace:', error.stack);
+        console.error('----------------------------------------------------');
+        next(error); 
     }
 };
+
 
 // Registra un usuario operador nuevo - POST
 const registrarUsuario = async (req, res, next) => {
