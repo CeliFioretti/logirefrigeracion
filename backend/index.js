@@ -35,11 +35,7 @@ const rutasEventosOperador = require('./routes/eventos-operador.routes.js');
 const rutaExport = require('./routes/export.routes.js');
 
 app.use(cors({
-   origin: [
-    'https://logirefrigeracion-1-3vug.onrender.com', 
-    'http://localhost:5173',
-  ],
-  credentials: true,
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
