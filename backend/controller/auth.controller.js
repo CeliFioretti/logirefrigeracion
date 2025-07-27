@@ -5,85 +5,49 @@ const crypto = require('crypto');
 
 // Login con token
 const login = async (req, res) => {
-    // --- NUEVOS LOGS DE DEPURACIÓN ---
-    console.log('----------------------------------------------------');
-    console.log('Intento de login recibido.');
-    console.log('Contenido de req.body:', req.body); // <-- Log del cuerpo de la solicitud
     const { nombre, password } = req.body;
-    console.log('Nombre extraído de body:', nombre); // <-- Log del nombre
-    console.log('Contraseña extraída de body (solo para depurar):', password); // <-- Log de la contraseña (cuidado en producción)
-    console.log('----------------------------------------------------');
-    // --- FIN DE LOS LOGS DE DEPURACIÓN ---
 
     try {
-        // Validación de campos obligatorios (opcional, pero buena práctica)
-        if (!nombre || !password) {
-            console.log('Error 400: Nombre de usuario o contraseña faltante.');
-            return res.status(400).json({ error: 'Nombre de usuario y contraseña son obligatorios.' });
-        }
+        const [filas] = await db.promise().query('SELECT * FROM usuario WHERE nombre = ?', [nombre]);
 
-        console.log('Ejecutando consulta a la DB para el nombre de usuario:', nombre); // <-- Log antes de la consulta
-        const { rows } = await db.query('SELECT * FROM usuario WHERE nombre_usuario = $1', [nombre]);
-        console.log('Resultado de la consulta a la DB para el usuario:', rows); // <-- Log del resultado de la consulta
-
-        if (rows.length === 0) {
-            console.log('Usuario no encontrado en la DB para el nombre:', nombre);
+        if (filas.length === 0) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        const usuario = rows[0];
-        console.log('Usuario encontrado en la DB. ID:', usuario.id, 'Nombre de usuario:', usuario.nombre_usuario, 'Rol:', usuario.rol); // <-- Log del usuario encontrado
+        const usuario = filas[0];
 
-        const passwordValida = await bcrypt.compare(password, usuario.contrasena);
-        console.log('Resultado de bcrypt.compare (passwordValida):', passwordValida); // <-- Log del resultado de la comparación de contraseña
+        const passwordValida = await bcrypt.compare(password, usuario.password);
 
         if (!passwordValida) {
-            console.log('Contraseña no coincide para el usuario:', usuario.nombre_usuario);
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        if (usuario.estado === false) {
-            console.log('Usuario inactivo detectado:', usuario.nombre_usuario);
+        if (usuario.activo === 0) {
             return res.status(403).json({ error: 'El usuario esta inactivo' });
         }
 
         const payload = {
             id: usuario.id,
-            nombre: usuario.nombre_usuario,
+            nombre: usuario.nombre,
             rol: usuario.rol
         }
 
-        // Asegúrate de que JWT_SECRET esté definido en tus variables de entorno de Render
-        const JWT_SECRET = process.env.JWT_SECRET;
-        if (!JWT_SECRET) {
-            console.error('ERROR: JWT_SECRET no está definido en las variables de entorno!');
-            return res.status(500).json({ error: 'Error de configuración del servidor (JWT_SECRET no definido).' });
-        }
-
         const token = jwt.sign(
-            payload, JWT_SECRET, { expiresIn: '2h' }
+            payload, process.env.JWT_SECRET, { expiresIn: '2h' }
         );
-        console.log('Token JWT generado con éxito para:', usuario.nombre_usuario); // <-- Log del token generado
 
         res.status(200).json({
             message: 'Inicio de sesión exitoso',
             token: token,
-            nombreUsuario: usuario.nombre_usuario,
+            nombreUsuario: usuario.nombre,
             rol: usuario.rol,
-            requiereCambioPassword: usuario.requiere_cambio_password === true
+            requiereCambioPassword: usuario.requiere_cambio_password === 1
         });
 
     } catch (error) {
-        console.error("----------------------------------------------------");
-        console.error("Error CRÍTICO en login:", error);
-        console.error("Mensaje de error:", error.message);
-        console.error("Stack Trace:", error.stack);
-        console.error("----------------------------------------------------");
-        // Si tienes un middleware de manejo de errores global, puedes pasarlo
-        // next(error); 
+        console.error(error);
         res.status(500).json({
-            error: 'Error interno al iniciar sesión',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined // Solo detalles en desarrollo
+            error: 'Error interno al iniciar sesión'
         });
     }
 };
@@ -97,8 +61,9 @@ const registrarUsuario = async (req, res, next) => {
     }
 
     try {
-        const { rows: codigo } = await db.query(
-            `SELECT * FROM codigos_registro WHERE codigo = $1 AND usado = FALSE AND fecha_expiracion > NOW()`,
+        // Verificar si el código existe, está disponible y no ha expirado
+        const [codigo] = await db.promise().query(
+            `SELECT * FROM codigos_registro WHERE codigo = ? AND usado = 0 AND fecha_expiracion > NOW()`,
             [codigoRegistro]
         );
 
@@ -106,16 +71,19 @@ const registrarUsuario = async (req, res, next) => {
             return res.status(400).json({ error: 'Código inválido o expirado' });
         }
 
+        // Verificar que el codigo sea para operador 
+        // A futuro se agregaran los codigos para administradores
         const codigoEncontrado = codigo[0];
 
         if (codigoEncontrado.rol !== 'operador') {
             return res.status(403).json({ error: 'Este código de registro no es para operadores.' });
         }
 
-        const { rows: existingUser } = await db.query(`SELECT id, nombre_usuario, correo FROM usuario WHERE nombre_usuario = $1 OR correo = $2`, [nombre, correo])
+        // Verificar si el usuario o correo existe
+        const [existingUser] = await db.promise().query(`SELECT id FROM usuario WHERE nombre = ? OR correo = ?`, [nombre, correo])
 
         if (existingUser.length > 0) {
-            const isNameTaken = existingUser.some(user => user.nombre_usuario === nombre);
+            const isNameTaken = existingUser.some(user => user.nombre === nombre);
             const isEmailTaken = existingUser.some(user => user.correo === correo);
 
             if (isNameTaken && isEmailTaken) {
@@ -127,15 +95,17 @@ const registrarUsuario = async (req, res, next) => {
             }
         }
 
+        // Encripto la contraseña antes de usarla
         const passwordHash = await bcrypt.hash(password, 10);
 
-        await db.query(
-            `INSERT INTO usuario (nombre_usuario, correo, contrasena, rol, estado, requiere_cambio_password) VALUES ($1, $2, $3, $4, TRUE, FALSE)`,
+        await db.promise().query(
+            `INSERT INTO usuario (nombre, correo, password, rol, activo, requiere_cambio_password) VALUES (?, ?, ?, ?, 1, 0)`,
             [nombre, correo, passwordHash, 'operador']
         );
 
-        await db.query(
-            `UPDATE codigos_registro SET usado = TRUE WHERE codigo = $1`,
+        // Marcar el código como usado
+        await db.promise().query(
+            `UPDATE codigos_registro SET usado = 1 WHERE codigo = ?`,
             [codigoRegistro]
         );
 
@@ -151,8 +121,8 @@ const solicitarRecuperacion = async (req, res) => {
     const { correo } = req.body;
 
     try {
-        const { rows } = await db.query('SELECT * FROM usuario WHERE correo = $1', [correo]);
-        const usuario = rows[0];
+        const [filas] = await db.promise().query('SELECT * FROM usuario WHERE correo = ?', [correo]);
+        const usuario = filas[0];
 
         if (!usuario) {
             return res.status(404).json({ error: 'No se encontró un usuario con ese correo' });
@@ -161,8 +131,8 @@ const solicitarRecuperacion = async (req, res) => {
         const token = crypto.randomBytes(32).toString('hex');
         const expiracion = new Date(Date.now() + 3600000); // 1 hora desde ahora
 
-        await db.query(
-            'UPDATE usuario SET token_recuperacion = $1, expiracion_token = $2 WHERE id = $3',
+        await db.promise().query(
+            'UPDATE usuario SET token_recuperacion = ?, expiracion_token = ? WHERE id = ?',
             [token, expiracion, usuario.id]
         );
 
@@ -172,7 +142,7 @@ const solicitarRecuperacion = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error en solicitarRecuperacion:", error);
+        console.error(error);
         res.status(500).json({ error: 'Error al solicitar recuperación de contraseña' });
     }
 };
@@ -182,12 +152,12 @@ const restablecerPassword = async (req, res) => {
     const { token, nuevaPassword } = req.body;
 
     try {
-        const { rows } = await db.query(
-            'SELECT * FROM usuario WHERE token_recuperacion = $1',
+        const [filas] = await db.promise().query(
+            'SELECT * FROM usuario WHERE token_recuperacion = ?',
             [token]
         );
 
-        const usuario = rows[0];
+        const usuario = filas[0];
 
         if (!usuario) {
             return res.status(400).json({ error: 'Token inválido' });
@@ -200,19 +170,23 @@ const restablecerPassword = async (req, res) => {
 
         const passwordHash = await bcrypt.hash(nuevaPassword, 10);
 
-        await db.query(
+        await db.promise().query(
             `UPDATE usuario 
-             SET contrasena = $1, token_recuperacion = NULL, expiracion_token = NULL, requiere_cambio_password = FALSE 
-             WHERE id = $2`,
+             SET password = ?, token_recuperacion = NULL, expiracion_token = NULL, requiere_cambio_password = 0 
+             WHERE id = ?`,
             [passwordHash, usuario.id]
         );
 
         res.status(200).json({ message: 'Contraseña restablecida correctamente' });
 
     } catch (error) {
-        console.error("Error en restablecerPassword:", error);
+        console.error(error);
         res.status(500).json({ error: 'Error al restablecer contraseña' });
     }
 };
+
+
+
+
 
 module.exports = { login, solicitarRecuperacion, restablecerPassword, registrarUsuario };

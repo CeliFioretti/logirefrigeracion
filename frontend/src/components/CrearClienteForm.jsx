@@ -380,7 +380,7 @@ const ClienteForm = () => {
                         type="button"
                         variant="outlined"
                         color="secondary"
-                        onClick={() => navigate('/clientes')}
+                        onClick={() => navigate('/clientes/listado')}
                         disabled={loading}
                     >
                         Cancelar

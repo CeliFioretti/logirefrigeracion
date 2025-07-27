@@ -6,6 +6,7 @@ const express = require('express');
 const app = express();
 const puerto = process.env.PORT || 3200;
 
+
 // Cors
 const cors = require('cors');
 
@@ -31,12 +32,13 @@ const rutaAuditoria = require('./routes/auditoria.routes.js');
 const rutaCodigosRegistro = require('./routes/codigos-registro.routes.js');
 const rutasZonasOperador = require('./routes/zonas-operador.routes.js'); 
 const rutasEventosOperador = require('./routes/eventos-operador.routes.js'); 
+const rutaExport = require('./routes/export.routes.js');
 
 app.use(cors({
     origin: [
-        'http://localhost:5173',
-        'https://logirefrigeracion-1.onrender.com' 
-    ],
+    'http://localhost:5173',
+    'https://logirefrigeracion2-0-1.onrender.com'
+  ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -56,6 +58,7 @@ app.use('/api/ubicaciones', rutasUbicaciones);
 app.use('/api/auditoria', rutaAuditoria);
 app.use('/api/zonas-operador', rutasZonasOperador); 
 app.use('/api/eventos-operador', rutasEventosOperador);
+app.use('/api/exportar', rutaExport);
 
 
 app.use(errorHandler);

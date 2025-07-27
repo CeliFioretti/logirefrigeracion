@@ -13,10 +13,9 @@ const listarDepartamentos = async (req, res, next) => {
         let condiciones = [];
         let params = [];
         let countParams = [];
-        let paramIndex = 1; // Para los parámetros de las condiciones
 
         if (nombre) {
-            condiciones.push(`nombre ILIKE $${paramIndex++}`); // Cambiado a ILIKE para PostgreSQL
+            condiciones.push('nombre LIKE ?');
             params.push(`%${nombre}%`);
             countParams.push(`%${nombre}%`);
         }
@@ -31,12 +30,11 @@ const listarDepartamentos = async (req, res, next) => {
         const pageSizeNum = parseInt(pageSize) || 10;
         const offset = pageNum * pageSizeNum;
 
-        // Parámetros para la paginación en la query principal
-        query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+        query += ` LIMIT ? OFFSET ?`;
         params.push(pageSizeNum, offset);
 
-        const { rows: departamentos } = await db.query(query, params); // Cambiado a db.query y acceso a .rows
-        const { rows: totalResult } = await db.query(countQuery, countParams); // Cambiado a db.query y acceso a .rows
+        const [departamentos] = await db.promise().query(query, params);
+        const [totalResult] = await db.promise().query(countQuery, countParams);
         const totalRegistros = totalResult[0].total;
 
         if (departamentos.length === 0) {
@@ -65,16 +63,16 @@ const crearDepartamento = async (req, res, next) => {
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-        let query = 'INSERT INTO departamento (nombre) VALUES ($1)'; // Cambiado a $1
+        let query = 'INSERT INTO departamento (nombre) VALUES (?)';
         if (!nombre || nombre.trim() === '') {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
 
-        await db.query(query, [nombre]); // Cambiado a db.query
+        await db.promise().query(query, [nombre]);
 
         // Auditoría
         const mensaje = `Registro de nuevo departamento: ${nombre.replace(/'/g, "")}`
-        await db.query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES($1,$2,NOW(),$3)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]); // Cambiado a $1, $2, $3 y NOW()
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(201).json({
             message: 'Departamento creado con éxito',
@@ -91,7 +89,7 @@ const verDepartamentoPorId = async (req, res, next) => {
     const { id } = req.params;
 
     try {
-        const { rows: departamento } = await db.query('SELECT id, nombre FROM departamento WHERE id = $1', [id]); // Cambiado a db.query y acceso a .rows
+        const [departamento] = await db.promise().query('SELECT id, nombre FROM departamento WHERE id = ?', [id]);
 
         if (departamento.length === 0) {
             return res.status(404).json({ message: 'Departamento no encontrado' })
@@ -118,7 +116,7 @@ const editarDepartamento = async (req, res, next) => {
             return res.status(400).json({ error: 'El nombre del departamento es obligatorio.' });
         }
 
-        const { rows: existingDept } = await db.query('SELECT nombre FROM departamento WHERE id = $1', [id]); // Cambiado a db.query y acceso a .rows
+        const [existingDept] = await db.promise().query('SELECT nombre FROM departamento WHERE id = ?', [id]);
 
         if (existingDept.length === 0) {
             return res.status(404).json({ message: 'Departamento no encontrado.' });
@@ -127,15 +125,15 @@ const editarDepartamento = async (req, res, next) => {
         const oldNombre = existingDept[0].nombre;
 
         // Actualizar el nombre del departamento
-        const result = await db.query('UPDATE departamento SET nombre = $1 WHERE id = $2', [nombre, id]); // Cambiado a db.query y $1, $2
+        const [result] = await db.promise().query('UPDATE departamento SET nombre = ? WHERE id = ?', [nombre, id]);
 
-        if (result.rowCount === 0) { // En pg, rowCount indica las filas afectadas
+        if (result.affectedRows === 0) {
             return res.status(500).json({ error: 'No se pudo actualizar el departamento.' });
         }
 
         // Auditoría
         const mensaje = `Edición de departamento: ID ${id}. Nombre anterior: '${oldNombre.replace(/'/g, "")}', Nuevo nombre: '${nombre.replace(/'/g, "")}'`;
-        await db.query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES($1,$2,NOW(),$3)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]); // Cambiado a $1, $2, $3 y NOW()
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(200).json({
             message: 'Departamento actualizado correctamente',
@@ -158,21 +156,20 @@ const verZonasPorDepartamento = async (req, res, next) => {
         SELECT z.id, z.nombre AS zona, u.nombre AS operador
         FROM zona z
         LEFT JOIN usuario u ON z.usuario_id = u.id
-        WHERE z.departamento_id = $1
+        WHERE z.departamento_id = ?
         `;
         let params = [idDepartamento];
-        let paramIndex = 2; // Empezar en 2 porque $1 ya se usó para idDepartamento
 
         if (nombre) {
-            query += ` AND z.nombre ILIKE $${paramIndex++}`; // Cambiado a ILIKE
+            query += ' AND z.nombre LIKE ?';
             params.push(`%${nombre}%`)
         }
         if (operador) {
-            query += ` AND u.nombre ILIKE $${paramIndex++}`; // Cambiado a ILIKE
+            query += ' AND u.nombre LIKE ?';
             params.push(`%${operador}%`)
         }
 
-        const { rows: results } = await db.query(query, params) // Cambiado a db.query y acceso a .rows
+        const [results] = await db.promise().query(query, params)
 
         if (results.length === 0) {
             return res.status(200).json({
@@ -193,8 +190,8 @@ const verZonasPorDepartamento = async (req, res, next) => {
 const verZona = async (req, res, next) => {
     const idZona = req.params.id;
     try {
-        let query = 'SELECT * FROM zona WHERE id = $1'; // Cambiado a $1
-        const { rows: results } = await db.query(query, [idZona]) // Cambiado a db.query y acceso a .rows
+        let query = 'SELECT * FROM zona WHERE id = ?';
+        const [results] = await db.promise().query(query, [idZona])
 
         if (results.length === 0) {
             return res.status(200).json({
@@ -203,7 +200,7 @@ const verZona = async (req, res, next) => {
             });
         } else {
             res.status(200).json({
-                data: results[0] // Devolver el primer elemento ya que es por ID
+                data: results
             });
         }
     } catch (err) {
@@ -221,7 +218,7 @@ const crearZona = async (req, res, next) => {
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-        let query = 'INSERT INTO zona (departamento_id, usuario_id, nombre) VALUES ($1, $2, $3)'; // Cambiado a $1, $2, $3
+        let query = 'INSERT INTO zona (departamento_id, usuario_id, nombre) VALUES (?, ?, ?)';
 
         let usuarioAsignado;
 
@@ -235,11 +232,11 @@ const crearZona = async (req, res, next) => {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
 
-        await db.query(query, [idDepartamento, usuarioAsignado, nombre]); // Cambiado a db.query
+        await db.promise().query(query, [idDepartamento, usuarioAsignado, nombre]);
 
         // Auditoría
         const mensaje = `Registro de nueva zona: ${nombre.replace(/'/g, "")}`
-        await db.query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES($1,$2,NOW(),$3)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]); // Cambiado a $1, $2, $3 y NOW()
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(201).json({
             message: 'Zona creada con éxito'
@@ -247,17 +244,17 @@ const crearZona = async (req, res, next) => {
 
         // Si existe un usuario asignado para la zona (operador), le envia un correo para informarlo.
         if (usuarioAsignado) {
-            const { rows: [operador] } = await db.query('SELECT correo, nombre FROM usuario WHERE id = $1', [usuarioAsignado]); // Cambiado a db.query y acceso a .rows
+            const [[operador]] = await db.promise().query('SELECT correo, nombre FROM usuario WHERE id = ?', [usuarioAsignado]);
 
             if (operador) {
                 const asunto = '¡Nueva Zona Asignada!';
                 const mensajeTexto = `Hola ${operador.nombre},\n\nSe te ha asignado una nueva zona: "${nombre}".\n\nPor favor, revisa tus tareas en la aplicación.`;
                 const mensajeHtml = `
-                                        <p>Hola <strong>${operador.nombre}</strong>,</p>
-                                        <p>Se te ha asignado una nueva zona: <strong>"${nombre}"</strong>.</p>
-                                        <p>Por favor, revisa tus tareas en la aplicación.</p>
-                                        <p>Saludos cordiales,<br>El equipo de LogiRefrigeración</p>
-                                    `;
+                                    <p>Hola <strong>${operador.nombre}</strong>,</p>
+                                    <p>Se te ha asignado una nueva zona: <strong>"${nombre}"</strong>.</p>
+                                    <p>Por favor, revisa tus tareas en la aplicación.</p>
+                                    <p>Saludos cordiales,<br>El equipo de LogiRefrigeración</p>
+                                `;
 
                 enviarCorreo({
                     para: operador.correo,
@@ -290,50 +287,50 @@ const editarZona = async (req, res, next) => {
             return res.status(400).json({ error: 'El nombre es obligatorio' })
         }
 
-        const { rows: existingZona } = await db.query('SELECT nombre FROM zona WHERE id = $1', [idZona]); // Cambiado a db.query y acceso a .rows
+        const [existingZona] = await db.promise().query('SELECT nombre FROM zona WHERE id = ?', [idZona]);
         if (existingZona.length === 0) {
             return res.status(404).json({ message: "Zona no encontrada." });
         }
         const oldNombreZona = existingZona[0].nombre;
 
-        let query = 'UPDATE zona SET usuario_id = $1, nombre = $2 WHERE id = $3'; // Cambiado a $1, $2, $3
+        let query = 'UPDATE zona SET usuario_id = ?, nombre = ?  WHERE id = ?';
 
         if (!nombre || nombre.trim() === '') {
             return res.status(400).json({ error: 'El nombre es obligatorio' });
         }
 
-        const result = await db.query(query, [usuarioAAsignar, nombre, idZona]); // Cambiado a db.query
+        const [result] = await db.promise().query(query, [usuarioAAsignar, nombre, idZona]);
 
-        if (result.rowCount === 0) { // En pg, rowCount indica las filas afectadas
+        if (result.affectedRows === 0) {
             return res.status(404).json({ message: "Zona no encontrada o sin cambios." });
         }
 
         // Auditoría
         const mensaje = `Edición de zona: ID ${idZona}. Nombre de '${oldNombreZona.replace(/'/g, "")}' a '${nombre.replace(/'/g, "")}'. Operador asignado: ${usuarioAAsignar ? `ID ${usuarioAAsignar}` : 'Ninguno'}`;
-        await db.query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES($1,$2,NOW(),$3)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]); // Cambiado a $1, $2, $3 y NOW()
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(200).json({
             message: 'Zona actualizada correctamente'
         })
 
         if (usuarioAAsignar) { // Solo envía correo si hay un operador asignado
-            const { rows: [operadorInfo] } = await db.query('SELECT correo, nombre FROM usuario WHERE id = $1', [usuarioAAsignar]); // Cambiado a db.query y acceso a .rows
+            const [[operadorInfo]] = await db.promise().query('SELECT correo, nombre FROM usuario WHERE id = ?', [usuarioAAsignar]);
 
             if (operadorInfo) {
-                const asunto = 'Tu Zona Ha Sido Actualizada';
+                const asunto = 'Tu Zona Ha Sido Actualizada'; 
                 const mensajeTexto = `Hola ${operadorInfo.nombre},\n\nTu zona "${nombre}" ha sido modificada.\n\nPor favor, revisa los detalles en la aplicación.`;
                 const mensajeHtml = `
-                                        <p>Hola <strong>${operadorInfo.nombre}</strong>,</p>
-                                        <p>Se te asignó una nueva zona: <strong>"${nombre}"</strong> .</p>
-                                        <p>Por favor, revisa los detalles en la aplicación.</p>
-                                        <p>Saludos cordiales,<br>El equipo de LogiRefrigeración</p>
-                                    `;
+                                    <p>Hola <strong>${operadorInfo.nombre}</strong>,</p>
+                                    <p>Se te asignó una nueva zona:  <strong>"${nombre}"</strong> .</p>
+                                    <p>Por favor, revisa los detalles en la aplicación.</p>
+                                    <p>Saludos cordiales,<br>El equipo de LogiRefrigeración</p>
+                                `;
 
                 enviarCorreo({
                     para: operadorInfo.correo,
                     asunto: asunto,
                     mensaje: mensajeTexto,
-                    html: mensajeHtml
+                    html: mensajeHtml 
                 }).catch(emailErr => console.error('Error enviando correo de actualización:', emailErr));
             }
         }
@@ -352,10 +349,10 @@ const eliminarZona = async (req, res, next) => {
     const nombreUsuarioResponsable = req.usuario.nombre;
 
     try {
-        let querySelect = 'SELECT nombre, usuario_id FROM zona WHERE id = $1'; // Cambiado a $1
-        let queryDelete = 'DELETE FROM zona WHERE id = $1'; // Cambiado a $1
+        let querySelect = 'SELECT nombre, usuario_id FROM zona WHERE id = ?';
+        let queryDelete = 'DELETE FROM zona WHERE id =?';
 
-        const { rows: zona } = await db.query(querySelect, [idZona]); // Cambiado a db.query y acceso a .rows
+        const [zona] = await db.promise().query(querySelect, [idZona]);
 
         if (zona.length === 0) {
             return res.status(404).json({
@@ -372,11 +369,11 @@ const eliminarZona = async (req, res, next) => {
             });
         }
 
-        await db.query(queryDelete, [idZona]); // Cambiado a db.query
+        await db.promise().query(queryDelete, [idZona]);
 
         // Auditoría
         const mensaje = `Eliminación de zona: ${nombreZona.replace(/'/g, "")}`;
-        await db.query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES($1,$2,NOW(),$3)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]); // Cambiado a $1, $2, $3 y NOW()
+        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
         res.status(200).json({
             message: 'Zona eliminada correctamente'
@@ -385,6 +382,9 @@ const eliminarZona = async (req, res, next) => {
         next(err);
     }
 };
+
+
+
 
 
 module.exports = {

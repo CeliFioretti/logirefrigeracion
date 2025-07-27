@@ -5,14 +5,14 @@ const verMisZonasAsignadas = async (req, res, next) => {
     const idUsuarioOperador = req.usuario.id;
 
     try {
-        const { rows: zonas } = await db.query( 
+        const [zonas] = await db.promise().query(
             `SELECT 
                 z.id AS zona_id,
                 z.nombre AS nombre_zona,
                 d.nombre AS nombre_departamento
             FROM zona z
             JOIN departamento d ON z.departamento_id = d.id
-            WHERE z.usuario_id = $1
+            WHERE z.usuario_id = ?
             ORDER BY d.nombre, z.nombre ASC`,
             [idUsuarioOperador]
         );

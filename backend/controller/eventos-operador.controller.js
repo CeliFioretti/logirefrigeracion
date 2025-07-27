@@ -1,9 +1,9 @@
 const db = require('../config/db.js');
 
-// Lista los eventos (entregas/retiros) realizados por el operador logueado
+// Lista los eventos (entregas/retiros) realizados por el operador - GET
 const listarMisEventos = async (req, res, next) => {
-    const idUsuarioOperador = req.usuario.id; // Obtenemos el ID del operador desde el token
-    const { page, pageSize, search } = req.query; // Para paginación y búsqueda
+    const idUsuarioOperador = req.usuario.id; 
+    const { page, pageSize, search } = req.query; 
 
     try {
         let query = `
@@ -22,22 +22,21 @@ const listarMisEventos = async (req, res, next) => {
                 ef.cliente_nombre
             FROM eventofreezer ef
             JOIN freezer f ON ef.freezer_id = f.id
-            WHERE ef.usuario_id = $1
+            WHERE ef.usuario_id = ?
         `;
         let countQuery = `
             SELECT COUNT(ef.id) as total 
             FROM eventofreezer ef
             JOIN freezer f ON ef.freezer_id = f.id
-            WHERE ef.usuario_id = $1
+            WHERE ef.usuario_id = ?
         `;
 
         let params = [idUsuarioOperador];
         let countParams = [idUsuarioOperador];
-        let paramIndex = 2; // Empezamos con $2 para los parámetros de búsqueda
 
         if (search) {
             const searchQueryParam = `
-                AND (f.numero_serie ILIKE $${paramIndex++} OR f.modelo ILIKE $${paramIndex++} OR ef.tipo ILIKE $${paramIndex++} OR ef.cliente_nombre ILIKE $${paramIndex++} OR ef.observaciones ILIKE $${paramIndex++})
+                AND (f.numero_serie LIKE ? OR f.modelo LIKE ? OR ef.tipo LIKE ? OR ef.cliente_nombre LIKE ? OR ef.observaciones LIKE ?)
             `;
             const searchPattern = `%${search}%`;
             query += searchQueryParam;
@@ -52,11 +51,11 @@ const listarMisEventos = async (req, res, next) => {
         const pageSizeNum = parseInt(pageSize) || 10;
         const offset = pageNum * pageSizeNum;
 
-        query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+        query += ` LIMIT ? OFFSET ?`;
         params.push(pageSizeNum, offset);
 
-        const { rows: eventos } = await db.query(query, params);
-        const { rows: totalResult } = await db.query(countQuery, countParams);
+        const [eventos] = await db.promise().query(query, params);
+        const [totalResult] = await db.promise().query(countQuery, countParams);
         const totalRegistros = totalResult[0].total;
 
         if (eventos.length === 0) {
@@ -78,7 +77,7 @@ const listarMisEventos = async (req, res, next) => {
     }
 };
 
-// Función para registrar un nuevo evento (entrega/retiro) por el operador
+// Función para registrar un nuevo evento (entrega/retiro) por el operador - POST
 const registrarEventoOperador = async (req, res, next) => {
     const { freezer_id, cliente_id, fecha, tipo, observaciones } = req.body;
     const idUsuarioOperador = req.usuario.id;
@@ -91,31 +90,30 @@ const registrarEventoOperador = async (req, res, next) => {
 
     try {
         // Obtener nombre del cliente para registrarlo en eventofreezer
-        const { rows: clienteRows } = await db.query('SELECT nombre_responsable FROM cliente WHERE id = $1', [cliente_id]);
+        const [clienteRows] = await db.promise().query('SELECT nombre_responsable FROM cliente WHERE id = ?', [cliente_id]);
         if (clienteRows.length === 0) {
             return res.status(404).json({ message: 'Cliente no encontrado.' });
         }
         const cliente_nombre = clienteRows[0].nombre_responsable;
 
         // Insertar el evento en la tabla eventofreezer
-        // Usar RETURNING id para obtener el ID del registro insertado en PostgreSQL
-        const { rows: result } = await db.query(
+        const [result] = await db.promise().query(
             `INSERT INTO eventofreezer 
              (usuario_id, freezer_id, usuario_nombre, cliente_id, cliente_nombre, fecha, tipo, observaciones)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 idUsuarioOperador,
                 freezer_id,
                 nombreUsuarioOperador,
                 cliente_id,
                 cliente_nombre,
-                fecha, // La fecha ya viene en formato de DB desde el frontend
+                fecha, 
                 tipo.toLowerCase(), // Asegurar que se guarda en minúsculas
                 observaciones || null
             ]
         );
 
-        const eventoId = result[0].id; // Acceder al ID insertado
+        const eventoId = result.insertId;
 
         // Actualizar el estado del freezer
         let nuevoEstadoFreezer;
@@ -127,15 +125,15 @@ const registrarEventoOperador = async (req, res, next) => {
             return res.status(400).json({ message: 'Tipo de evento inválido. Debe ser "Entrega" o "Retiro".' });
         }
 
-        await db.query(
-            `UPDATE freezer SET estado = $1, cliente_id = $2 WHERE id = $3`,
+        await db.promise().query(
+            `UPDATE freezer SET estado = ?, cliente_id = ? WHERE id = ?`,
             [nuevoEstadoFreezer, (nuevoEstadoFreezer === 'Asignado' ? cliente_id : null), freezer_id]
         );
 
         // Auditoría
-        await db.query(
+        await db.promise().query(
             `INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion)
-             VALUES ($1, $2, NOW(), $3)`,
+             VALUES (?, ?, NOW(), ?)`,
             [idUsuarioOperador, nombreUsuarioOperador, `Operador ${nombreUsuarioOperador} registró evento de ${tipo} (ID: ${eventoId}) para freezer ${freezer_id} y cliente ${cliente_id}.`]
         );
 

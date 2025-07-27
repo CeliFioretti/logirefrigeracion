@@ -61,6 +61,7 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
     freezers: false,
     clientes: false,
     mantenimientos: false,
+    asignacionesmantenimiento: false,
     usuarios: false,
     gestionUsuarios: false,
     eventos: false,
@@ -106,6 +107,10 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
 
   const handleNotificationsMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const goToDashboard = () => {
+      navigate('/admin-dashboard');
   };
 
   const handleMarkAsRead = async (notificationId) => {
@@ -191,6 +196,7 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
           }
         }}
       >
+        {/* INICIO */}
         <ListItemButton
           onClick={() => handleMobileNavigation('/admin-dashboard')}
           selected={isActive('/admin-dashboard')}
@@ -198,7 +204,10 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
           <ListItemIcon><AppsIcon sx={{ color: isActive('/admin-dashboard') ? activeIconColor : primaryColor }} /></ListItemIcon>
           <ListItemText primary="Inicio" sx={{ fontWeight: isActive('/admin-dashboard') ? 'bold' : 'normal', color: isActive('/admin-dashboard') ? activeTextColor : primaryColor }} />
         </ListItemButton>
+
         <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* FREEZERS */}
         <ListItemButton
           onClick={() => handleToggle('freezers')}
           selected={isParentActive(['/freezers/listado', '/freezers/nuevo', '/freezers/buscar'])}
@@ -223,7 +232,10 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
             </ListItemButton>
           </List>
         </Collapse>
+
         <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* CLIENTES */}
         <ListItemButton
           onClick={() => handleToggle('clientes')}
           selected={isParentActive(['/clientes/listado', '/clientes/nuevo', '/clientes/buscar'])}
@@ -248,7 +260,10 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
             </ListItemButton>
           </List>
         </Collapse>
+
         <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* MANTENIMIENTOS */}
         <ListItemButton
           onClick={() => handleToggle('mantenimientos')}
           selected={isParentActive(['/mantenimientos/listado', '/mantenimientos/nuevo'])}
@@ -269,7 +284,34 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
             </ListItemButton>
           </List>
         </Collapse>
+
         <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* ASIGNACIONES DE MANTENIMIENTO */}
+        <ListItemButton
+          onClick={() => handleToggle('asignacionesmantenimiento')}
+          selected={isParentActive(['/asignaciones-mantenimiento/listado', '/asignaciones-mantenimiento/nuevo'])}
+        >
+          <ListItemIcon><AccessAlarmsIcon sx={{ color: isParentActive(['/asignaciones-mantenimiento/listado', '/asignaciones-mantenimiento/nuevo']) ? activeIconColor : primaryColor }} /></ListItemIcon>
+          <ListItemText primary="Asignaciones Mant" sx={{ fontWeight: isParentActive(['/asignacionesmantenimiento', '/asignaciones-mantenimiento/nuevo']) ? 'bold' : 'normal', color: isParentActive(['/asignaciones-mantenimiento/listado', '/asignaciones-mantenimiento/nuevo']) ? activeTextColor : primaryColor }} />
+          {openMenus.asignacionesmantenimiento ? <ExpandLess sx={{ color: primaryColor }} /> : <ExpandMore sx={{ color: primaryColor }} />}
+        </ListItemButton>
+        <Collapse in={openMenus.asignacionesmantenimiento || isParentActive(['/asignaciones-mantenimiento/listado', '/asignaciones-mantenimiento/nuevo'])} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/asignaciones-mantenimiento/listado')} selected={isActive('/asignaciones-mantenimiento/listado')}>
+              <ListItemIcon><ListAltIcon sx={{ color: isActive('/asignaciones-mantenimiento/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Historial" sx={{ fontWeight: isActive('/asignaciones-mantenimiento/listado') ? 'bold' : 'normal', color: isActive('/asignaciones-mantenimiento/listado') ? activeTextColor : primaryColor }} />
+            </ListItemButton>
+            <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/asignaciones-mantenimiento/nuevo')} selected={isActive('/asignaciones-mantenimiento/nuevo')}>
+              <ListItemIcon><AddIcon sx={{ color: isActive('/asignaciones-mantenimiento/nuevo') ? activeIconColor : primaryColor }} /></ListItemIcon>
+              <ListItemText primary="Registrar nueva" sx={{ fontWeight: isActive('/asignaciones-mantenimiento/nuevo') ? 'bold' : 'normal', color: isActive('/asignaciones-mantenimiento/nuevo') ? activeTextColor : primaryColor }} />
+            </ListItemButton>
+          </List>
+        </Collapse>
+
+        <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* USUARIOS */}
         <ListItemButton
           onClick={() => handleToggle('usuarios')}
           selected={isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores/listado', '/usuarios/operadores'])}
@@ -280,6 +322,8 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
         </ListItemButton>
         <Collapse in={openMenus.usuarios || isParentActive(['/usuarios', '/usuarios/crear', '/usuarios/administradores/listado', '/usuarios/operadores'])} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
+
+            {/* GESTIÓN DE USUARIOS */}
             <ListItemButton
               sx={{ pl: 4 }}
               onClick={() => handleToggle('gestionUsuarios')}
@@ -291,23 +335,33 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
             </ListItemButton>
             <Collapse in={openMenus.gestionUsuarios || isParentActive(['/usuarios/administradores/listado', '/usuarios/operadores/listado'])} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
+
+                {/* ADMINISTRADORES */}
                 <ListItemButton sx={{ pl: 6 }} onClick={() => handleMobileNavigation('/usuarios/administradores/listado')} selected={isActive('/usuarios/administradores/listado')}>
                   <ListItemIcon><AdminIcon sx={{ color: isActive('/usuarios/administradores/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
                   <ListItemText primary="Administradores" sx={{ fontWeight: isActive('/usuarios/administradores/listado') ? 'bold' : 'normal', color: isActive('/usuarios/administradores/listado') ? activeTextColor : primaryColor }} />
                 </ListItemButton>
+
+                {/* OPERADORES */}
                 <ListItemButton sx={{ pl: 6 }} onClick={() => handleMobileNavigation('/usuarios/operadores/listado')} selected={isActive('/usuarios/operadores/listado')}>
                   <ListItemIcon><OperadorIcon sx={{ color: isActive('/usuarios/operadores/listado') ? activeIconColor : primaryColor }} /></ListItemIcon>
                   <ListItemText primary="Operadores" sx={{ fontWeight: isActive('/usuarios/operadores/listado') ? 'bold' : 'normal', color: isActive('/usuarios/operadores/listado') ? activeTextColor : primaryColor }} />
                 </ListItemButton>
               </List>
             </Collapse>
+
+            {/* CODIGOS DE REGISTRO */}
             <ListItemButton sx={{ pl: 4 }} onClick={() => handleMobileNavigation('/usuarios/codigos-registro')} selected={isActive('/usuarios/codigos-registro')}>
               <ListItemIcon><VpnKeyIcon sx={{ color: isActive('/usuarios/codigos-registro') ? activeIconColor : primaryColor }} /></ListItemIcon>
               <ListItemText primary="Códigos de Registro" sx={{ fontWeight: isActive('/usuarios/codigos-registro') ? 'bold' : 'normal', color: isActive('/usuarios/codigos-registro') ? activeTextColor : primaryColor }} />
             </ListItemButton>
+
           </List>
         </Collapse>
+
         <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* EVENTOS */}
         <ListItemButton
           onClick={() => handleToggle('eventos')}
           selected={isParentActive(['/eventos/listado', '/eventos/nuevo'])}
@@ -328,7 +382,10 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
             </ListItemButton>
           </List>
         </Collapse>
+
         <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* ZONAS */}
         <ListItemButton
           onClick={() => handleToggle('zonas')}
           selected={isParentActive(['/ubicaciones/departamentos/listado', '/ubicaciones/crear'])}
@@ -349,7 +406,10 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
             </ListItemButton>
           </List>
         </Collapse>
+
         <Divider sx={{ my: 1, borderColor: darkGrey }} />
+
+        {/* AUDITORÍA */}
         <ListItemButton
           onClick={() => handleToggle('auditoria')}
           selected={isActive('/auditoria/listado')}
@@ -382,15 +442,40 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
     >
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton
-            color="inherit"
-            aria-label='open drawer'
-            edge="start"
-            onClick={isLargeScreen ? toggleSideNav : toggleMobileMenu}
-            sx={{ mr: 2 }}
+          {/* Contenedor clicable para el ícono de menú y el nombre de la empresa */}
+          <Box
+            onClick={goToDashboard} 
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer', 
+              '&:hover': {
+                opacity: 0.8, 
+              }
+            }}
           >
-            <MenuIcon />
-          </IconButton>
+            <IconButton
+              color="inherit"
+              aria-label='open drawer'
+              edge="start"
+              onClick={isLargeScreen ? toggleSideNav : toggleMobileMenu}
+              sx={{ mr: 1 }} 
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                flexGrow: 1,
+                display: { xs: 'none', sm: 'block' }, 
+                color: 'white', 
+              }}
+            >
+              Logirefrigeracion
+            </Typography>
+          </Box>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton color="inherit" onClick={handleNotificationsBellClick}>

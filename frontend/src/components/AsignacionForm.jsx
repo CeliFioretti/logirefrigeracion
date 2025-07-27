@@ -422,7 +422,7 @@ const AsignacionForm = () => {
                                 type="button"
                                 variant="outlined"
                                 color="secondary"
-                                onClick={() => navigate('/admin/asignaciones')}
+                                onClick={() => navigate('/asignaciones-mantenimiento/listado')}
                                 disabled={loading}
                             >
                                 Cancelar

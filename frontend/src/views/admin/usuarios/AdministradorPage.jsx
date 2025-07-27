@@ -149,7 +149,7 @@ function AdministradoresPage() {
         const newStatus = !userToToggleCurrentStatus; // Invertir el estado actual
 
         try {
-            await instanceAxios.put(`/usuarios/${userToToggleId}/estado`,
+            await axios.put(`/usuarios/${userToToggleId}/estado`,
                 { activo: newStatus },
                 {
                     headers: {

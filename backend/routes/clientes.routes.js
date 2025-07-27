@@ -24,6 +24,9 @@ router.put('/:id', soloAdmin, clientesController.editar);
 // Eliminar cliente - DELETE
 router.delete('/:id', soloAdmin, clientesController.eliminar);
 
+// Obtener el cliente con más freezers - GET
+router.get('/estadistica/mas-freezers', soloAdmin, clientesController.getClienteConMasFreezers);
+
 
 
 module.exports = router;

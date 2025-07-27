@@ -48,6 +48,9 @@ function ClientesPage() {
     const [totalRegistros, setTotalRegistros] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [clienteConMasFreezers, setClienteConMasFreezers] = useState(null);
+    const [loadingStats, setLoadingStats] = useState(true);
+    const [statsError, setStatsError] = useState(null);
 
     // Estados para los filtros
     const [filtroNombreCliente, setFiltroNombreCliente] = useState('');
@@ -68,12 +71,12 @@ function ClientesPage() {
             const url = `/clientes/${id}`;
             const response = await axiosInstance.get(url)
             return response.data.data.cliente;
-            
+
         } catch (err) {
             console.error('Error al obtener cliente:', err);
             setError('Error al cargar cliente. Inténtelo de nuevo.');
             return null;
-        } 
+        }
     }, [])
 
     // Función para obtener los datos de los clientes
@@ -113,6 +116,34 @@ function ClientesPage() {
         }
     }, [token]);
 
+    // Obtener las estadísticas adicionales
+    const fetchAdditionalStats = useCallback(async () => {
+        if (!token) {
+            setStatsError('No autenticado. Por favor, inicie sesión para ver las estadísticas.');
+            setLoadingStats(false);
+            return;
+        }
+
+        setLoadingStats(true);
+        setStatsError(null);
+
+        try {
+            // Petición para el cliente con más freezers
+            const mostFreezersResponse = await axiosInstance.get('/clientes/estadistica/mas-freezers');
+            if (mostFreezersResponse.data.success) {
+                setClienteConMasFreezers(mostFreezersResponse.data.data);
+            } else {
+                setStatsError(mostFreezersResponse.data.message || 'Error al obtener el cliente con más freezers.');
+            }
+
+        } catch (err) {
+            console.error('Error al obtener estadísticas de clientes:', err);
+            setStatsError('Error al cargar estadísticas. Inténtelo de nuevo.');
+        } finally {
+            setLoadingStats(false);
+        }
+    }, [token]);
+
     useEffect(() => {
         document.title = 'Listado de clientes - Admin';
 
@@ -126,7 +157,8 @@ function ClientesPage() {
         };
 
         fetchClientes(currentSearchParams);
-    }, [fetchClientes, page, rowsPerPage, triggerSearch]);
+        fetchAdditionalStats();
+    }, [fetchClientes, fetchAdditionalStats, page, rowsPerPage, triggerSearch]);
 
     // Manejadores de paginación
     const handleChangePage = (event, newPage) => {
@@ -180,7 +212,7 @@ function ClientesPage() {
     const handleDeleteCliente = async (id) => {
         const clienteToDelete = await fetchClienteById(id);
 
-       if (!clienteToDelete) {
+        if (!clienteToDelete) {
             alert('No se pudo obtener la información del cliente para eliminar.');
             return;
         }
@@ -218,8 +250,43 @@ function ClientesPage() {
         navigate(`/clientes/${id}`)
     }
 
-    const handleViewEventsHistory = () => {
-        navigate('/eventos');
+    const handleExportData = async () => {
+        if (!token) {
+            alert('No autenticado. Por favor, inicie sesión para exportar.');
+            return;
+        }
+
+        try {
+
+            // Envio de los mismos filtros para el back y así poder descargar los clientes filtrados en PDF
+            const queryParams = new URLSearchParams();
+            if (filtroNombreCliente) queryParams.append('nombreCliente', filtroNombreCliente);
+            if (filtroTipoNegocio) queryParams.append('tipoNegocio', filtroTipoNegocio);
+            if (filtroNombreNegocio) queryParams.append('nombreNegocio', filtroNombreNegocio);
+            if (filtroCuit) queryParams.append('cuit', filtroCuit);
+
+            // Realiza la petición GET a tu nueva ruta del backend
+            const response = await axiosInstance.get(`/exportar/clientes-pdf?${queryParams.toString()}`, {
+                responseType: 'blob', // Importante: para manejar el archivo binario
+            });
+
+            // Crea un URL para el blob y un enlace para descargar el archivo
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'clientes.pdf'); // Nombre del archivo que se descargará
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url); // Libera la URL del objeto
+
+            alert('PDF de clientes generado y descargado exitosamente.');
+
+
+        } catch (err) {
+            console.error('Error al exportar datos de clientes:', error);
+            alert('Error al exportar los datos. Por favor, inténtelo de nuevo.');
+        }
     };
 
     const handleGoBack = () => {
@@ -267,7 +334,7 @@ function ClientesPage() {
                             <Typography variant="h6" gutterBottom>Exportar datos de Clientes</Typography>
                             <Button
                                 variant="contained"
-                                onClick={handleViewEventsHistory}
+                                onClick={handleExportData}
                             >
                                 Descargar PDF
                             </Button>
@@ -446,16 +513,24 @@ function ClientesPage() {
                 <Grid container spacing={2} sx={{ mt: 4 }}>
                     <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <Typography variant="h6" gutterBottom>Clientes activos</Typography>
-                            {/* Lógica para obtener este número */}
-                            <Typography variant="h3">4</Typography> {/* Valor hardcodeado por ahora */}
+                            <Typography variant="h6" gutterBottom>Total de clientes</Typography>    
+                            <Typography variant="h3">{clientes.length}</Typography> 
                         </Paper>
                     </Grid>
-                    <Grid>
+                   <Grid item xs={12} sm={6} md={4}>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <Typography variant="h6" gutterBottom>Cliente con más Freezers</Typography>
-                            {/* Lógica para obtener este número */}
-                            <Typography variant="h3">Raúl Suarez</Typography> {/* Valor hardcodeado por ahora */}
+                            <Typography variant="h5" gutterBottom>Cliente con más Freezers</Typography>
+                            {loadingStats ? (
+                                <CircularProgress size={24} />
+                            ) : statsError ? (
+                                <Typography color="error">{statsError}</Typography>
+                            ) : clienteConMasFreezers ? (
+                                <Box sx={{ textAlign: 'center' }}>
+                                    <Typography variant="h3">{clienteConMasFreezers.nombre_responsable}</Typography>
+                                </Box>
+                            ) : (
+                                <Typography variant="body1">N/A</Typography>
+                            )}
                         </Paper>
                     </Grid>
                 </Grid>
