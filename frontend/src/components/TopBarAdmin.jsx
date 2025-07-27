@@ -443,6 +443,15 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {/* Contenedor clicable para el ícono de menú y el nombre de la empresa */}
+          <IconButton
+              color="inherit"
+              aria-label='open drawer'
+              edge="start"
+              onClick={isLargeScreen ? toggleSideNav : toggleMobileMenu}
+              sx={{ mr: 1 }} 
+            >
+              <MenuIcon />
+            </IconButton>
           <Box
             onClick={goToDashboard} 
             sx={{
@@ -454,15 +463,6 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
               }
             }}
           >
-            <IconButton
-              color="inherit"
-              aria-label='open drawer'
-              edge="start"
-              onClick={isLargeScreen ? toggleSideNav : toggleMobileMenu}
-              sx={{ mr: 1 }} 
-            >
-              <MenuIcon />
-            </IconButton>
             <Typography
               variant="h6"
               noWrap

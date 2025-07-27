@@ -126,7 +126,7 @@ const AsignacionForm = () => {
             if (usuario?.token) {
                 try {
                     // Cargar operadores (solo rol 'operador')
-                    const operadoresResponse = await axiosInstance.get('/usuarios?rol=operador', {
+                    const operadoresResponse = await axiosInstance.get('/usuarios?rol=operador&activo=1', {
                         headers: { Authorization: `Bearer ${usuario.token}` }
                     });
                     setOperadores(operadoresResponse.data.data);
@@ -318,7 +318,7 @@ const AsignacionForm = () => {
                     }}
                 >
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <IconButton onClick={() => navigate('/admin/asignaciones')} aria-label="Volver">
+                        <IconButton onClick={() => navigate('/asignaciones-mantenimiento/listado')} aria-label="Volver">
                             <ArrowBackIcon fontSize='large' />
                         </IconButton>
                         <Typography variant="h5" component="h2" align="center" gutterBottom sx={{ flexGrow: 1 }}>

@@ -12,14 +12,14 @@ import {
     Container,
     Alert,
     CircularProgress,
-    MenuItem, 
+    MenuItem,
     FormControl,
     InputLabel,
     Select,
-    Grid, 
-    FormHelperText, 
-    Paper, 
-    Stack, 
+    Grid,
+    FormHelperText,
+    Paper,
+    Stack,
 } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
@@ -53,9 +53,10 @@ const FreezerForm = () => {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
     const [clientes, setClientes] = useState([]);
+    const [initialFreezerState, setInitialFreezerState] = useState(null);
 
     const tiposFreezer = ["Horizontal", "Horizontal No-Frost", "Vertical", "Vertical No-Frost"];
-    const estadosManualesFreezer = ["Baja", "Mantenimiento"]; // Estados que se pueden seleccionar manualmente
+    const estadosManualesFreezer = ["Disponible", "Baja", "Mantenimiento"];
 
     // Función de validación de campo individual
     const validateField = (name, value) => {
@@ -127,51 +128,74 @@ const FreezerForm = () => {
             }
         });
 
+        // Validación específica para el estado y cliente_id
+        if (formData.cliente_id && formData.estado !== "Asignado") {
+            errors.estado = 'Si se asigna un cliente, el estado debe ser "Asignado".';
+            isValid = false;
+        }
+        if (!formData.cliente_id && formData.estado === "Asignado") {
+            errors.estado = 'No se puede tener un freezer en estado "Asignado" sin un cliente asignado.';
+            isValid = false;
+        }
+
+        // Regla del backend: No se puede cambiar a Baja/Mantenimiento si hay cliente asignado
+        if (isEditing && initialFreezerState?.cliente_id !== null && formData.cliente_id !== null && (formData.estado === "Baja" || formData.estado === "Mantenimiento")) {
+            errors.estado = 'Primero debe desasignar el cliente para poder cambiar el estado a "Baja" o "Mantenimiento".';
+            isValid = false;
+        }
+
+
         setFormErrors(errors);
         return isValid;
     };
 
     useEffect(() => {
         const fetchData = async () => {
-            if (usuario?.token) {
-                try {
-                    // Cargar clientes
-                    const clientesResponse = await axiosInstance.get('/clientes');
-                    setClientes(clientesResponse.data.data);
-
-                    if (id) {
-                        setIsEditing(true);
-                        
-                        const freezerResponse = await axiosInstance.get(`/freezers/${id}`);
-                        const freezerData = freezerResponse.data.data;
-
-                        setFormData({
-                            modelo: freezerData.modelo || '',
-                            numero_serie: freezerData.numero_serie || '',
-                            tipo: freezerData.tipo || '',
-                            fecha_creacion: freezerData.fecha_creacion ? new Date(freezerData.fecha_creacion).toISOString().split('T')[0] : '',
-                            marca: freezerData.marca || '',
-                            capacidad: freezerData.capacidad || '',
-                            imagen: freezerData.imagen || '',
-                            cliente_id: freezerData.cliente_id ? String(freezerData.cliente_id) : '',
-                            estado: freezerData.estado || 'Disponible'
-                        });
-                    } else {
-                        setIsEditing(false);
-                        setFormData(prevData => ({
-                            ...prevData,
-                            estado: 'Disponible',
-                            fecha_creacion: formatDate(new Date())
-                        }));
-                    }
-                    setLoading(false);
-                } catch (err) {
-                    console.error("Error al cargar datos:", err.response ? err.response.data : err.message);
-                    setError("Error al cargar los datos del freezer o clientes. Verifique permisos o la conexión.");
-                    setLoading(false);
-                }
-            } else {
+            if (!usuario?.token) {
                 setError("No autorizado. Por favor, inicie sesión.");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                // Cargar clientes
+                const clientesResponse = await axiosInstance.get('/clientes');
+                setClientes(clientesResponse.data.data);
+
+                if (id) {
+                    setIsEditing(true);
+                    const freezerResponse = await axiosInstance.get(`/freezers/${id}`);
+                    const freezerData = freezerResponse.data.data;
+
+                    // Guarda el estado inicial del freezer para validaciones en edición
+                    setInitialFreezerState({
+                        cliente_id: freezerData.cliente_id,
+                        estado: freezerData.estado
+                    });
+
+                    setFormData({
+                        modelo: freezerData.modelo || '',
+                        numero_serie: freezerData.numero_serie || '',
+                        tipo: freezerData.tipo || '',
+                        fecha_creacion: freezerData.fecha_creacion ? new Date(freezerData.fecha_creacion).toISOString().split('T')[0] : '',
+                        marca: freezerData.marca || '',
+                        capacidad: freezerData.capacidad || '',
+                        imagen: freezerData.imagen || '',
+                        cliente_id: freezerData.cliente_id ? String(freezerData.cliente_id) : '', // Asegura que sea string para el Select
+                        estado: freezerData.estado || 'Disponible'
+                    });
+                } else {
+                    setIsEditing(false);
+                    setFormData(prevData => ({
+                        ...prevData,
+                        estado: 'Disponible',
+                        fecha_creacion: formatDate(new Date())
+                    }));
+                }
+                setLoading(false);
+            } catch (err) {
+                console.error("Error al cargar datos:", err.response ? err.response.data : err.message);
+                setError("Error al cargar los datos del freezer o clientes. Verifique permisos o la conexión.");
                 setLoading(false);
             }
         };
@@ -186,12 +210,14 @@ const FreezerForm = () => {
         setFormData(prevData => {
             const newData = { ...prevData, [name]: value };
 
-            // Lógica para auto-establecer el estado del freezer
+            // Lógica para auto-establecer el estado del freezer cuando cambia cliente_id
             if (name === "cliente_id") {
                 if (value !== "") {
                     newData.estado = "Asignado";
-                } else if (prevData.estado === "Asignado") { 
-                    newData.estado = "Disponible";
+                } else {
+                    if (prevData.estado === "Asignado") {
+                        newData.estado = "Disponible";
+                    }
                 }
             }
             return newData;
@@ -235,32 +261,8 @@ const FreezerForm = () => {
             ...formData,
             capacidad: formData.capacidad ? Number(formData.capacidad) : null,
             cliente_id: formData.cliente_id === '' ? null : Number(formData.cliente_id),
-            // Aseguramos que el estado se envíe correctamente basado en la lógica del formulario
-            estado: formData.cliente_id ? "Asignado" : (formData.estado === "Asignado" ? "Disponible" : formData.estado)
+            estado: formData.estado
         };
-
-        // Lógica de validación de estados para la edición
-        if (isEditing) {
-            // Si hay un cliente asignado y se intenta poner en Baja o Mantenimiento
-            if (dataToSend.cliente_id !== null && (dataToSend.estado === "Baja" || dataToSend.estado === "Mantenimiento")) {
-                setLoading(false);
-                setError('Para cambiar a "Baja" o "Mantenimiento", primero debe desasignar el cliente (establecer "Cliente Asignado" en "Ninguno").');
-                return;
-            }
-            // Si no hay cliente asignado y el estado es Asignado (esto no debería pasar por la lógica de handleChange, pero como safety net)
-            if (dataToSend.cliente_id === null && dataToSend.estado === "Asignado") {
-                setLoading(false);
-                setError('No se puede tener un freezer en estado "Asignado" sin un cliente asignado.');
-                return;
-            }
-        } else { // Si es un nuevo freezer
-            if (dataToSend.estado !== "Disponible" && dataToSend.cliente_id === null) {
-                 setLoading(false);
-                 setError('Un freezer nuevo sin cliente asignado solo puede estar en estado "Disponible".');
-                 return;
-            }
-        }
-
 
         try {
             if (isEditing) {
@@ -294,7 +296,7 @@ const FreezerForm = () => {
         }
     };
 
-    if (loading && isEditing) {
+    if (loading && (isEditing || id === undefined)) {
         return (
             <Container maxWidth="sm" sx={{ mt: 4 }}>
                 <CircularProgress sx={{ display: 'block', margin: '20px auto' }} />
@@ -310,6 +312,9 @@ const FreezerForm = () => {
             </Container>
         );
     }
+
+    // Determina si el campo de estado debe estar deshabilitado
+    const isEstadoDisabled = !!formData.cliente_id;
 
     return (
         <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
@@ -329,9 +334,9 @@ const FreezerForm = () => {
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
                 {successMessage && <Alert severity="success" sx={{ mb: 2 }}>{successMessage}</Alert>}
 
-                <Grid container spacing={3}>
-                    {/* Sección de la imagen  */}
-                    <Grid sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                <Grid container spacing={3} component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {/* Sección de la imagen */}
+                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
                         <Box sx={{ textAlign: 'center', width: '100%', maxWidth: 250 }}>
                             <Box
                                 sx={{
@@ -376,8 +381,10 @@ const FreezerForm = () => {
                         </Box>
                     </Grid>
 
-                    {/* Campos del formulario*/}
-                    <Grid >
+                    {/* Campos del formulario */}
+                    {/* Todos los Grid item tienen xs={12} para asegurar que se apilen verticalmente */}
+                    <Grid>
+                        <Grid item xs={12}>
                         <TextField
                             label="Modelo"
                             variant="outlined"
@@ -390,6 +397,8 @@ const FreezerForm = () => {
                             helperText={formErrors.modelo}
                             sx={{ mb: 2 }}
                         />
+                    </Grid>
+                    <Grid item xs={12}>
                         <TextField
                             label="Número de serie"
                             variant="outlined"
@@ -402,6 +411,8 @@ const FreezerForm = () => {
                             helperText={formErrors.numero_serie}
                             sx={{ mb: 2 }}
                         />
+                    </Grid>
+                    <Grid item xs={12}>
                         <FormControl fullWidth required error={!!formErrors.tipo} sx={{ mb: 2 }}>
                             <InputLabel id="tipo-label">Tipo</InputLabel>
                             <Select
@@ -419,6 +430,8 @@ const FreezerForm = () => {
                             </Select>
                             {formErrors.tipo && <FormHelperText>{formErrors.tipo}</FormHelperText>}
                         </FormControl>
+                    </Grid>
+                    <Grid item xs={12}>
                         <TextField
                             label="Fecha de adquisición"
                             type="date"
@@ -433,6 +446,8 @@ const FreezerForm = () => {
                             helperText={formErrors.fecha_creacion}
                             sx={{ mb: 2 }}
                         />
+                    </Grid>
+                    <Grid item xs={12}>
                         <TextField
                             label="Marca"
                             variant="outlined"
@@ -445,6 +460,8 @@ const FreezerForm = () => {
                             helperText={formErrors.marca}
                             sx={{ mb: 2 }}
                         />
+                    </Grid>
+                    <Grid item xs={12}>
                         <TextField
                             label="Capacidad"
                             type="number"
@@ -458,7 +475,9 @@ const FreezerForm = () => {
                             helperText={formErrors.capacidad}
                             sx={{ mb: 2 }}
                         />
+                    </Grid>
 
+                    <Grid item xs={12}>
                         <FormControl fullWidth sx={{ mb: 2 }}>
                             <InputLabel id="cliente_id-label">Cliente Asignado</InputLabel>
                             <Select
@@ -481,14 +500,12 @@ const FreezerForm = () => {
                                     El estado se forzará a "Asignado" si se selecciona un cliente.
                                 </FormHelperText>
                             )}
-                            {!formData.cliente_id && formData.estado === "Asignado" && isEditing && (
-                                <FormHelperText error>
-                                    No se puede asignar un freezer sin un cliente.
-                                </FormHelperText>
-                            )}
+                            {formErrors.cliente_id && <FormHelperText error>{formErrors.cliente_id}</FormHelperText>}
                         </FormControl>
+                    </Grid>
 
-                        <FormControl fullWidth sx={{ mb: 2 }}>
+                    <Grid item xs={12}>
+                        <FormControl fullWidth sx={{ mb: 2 }} error={!!formErrors.estado}>
                             <InputLabel id="estado-label">Estado</InputLabel>
                             <Select
                                 labelId="estado-label"
@@ -497,70 +514,53 @@ const FreezerForm = () => {
                                 value={formData.estado}
                                 onChange={handleChange}
                                 label="Estado"
-                                disabled={
-                                    (!!formData.cliente_id && formData.estado !== 'Baja' && formData.estado !== 'Mantenimiento') ||
-                                    (!isEditing && !!formData.cliente_id) ||
-                                    (!isEditing && !formData.cliente_id)
-                                }
+                                disabled={isEstadoDisabled}
                             >
-
-                                <MenuItem value="Disponible" disabled={!!formData.cliente_id}>Disponible</MenuItem>
-                                {estadosManualesFreezer.map(estado => (
-                                    <MenuItem
-                                        key={estado}
-                                        value={estado}
-                                        disabled={!!formData.cliente_id}
-                                    >
-                                        {estado}
-                                    </MenuItem>
-                                ))}
-                                {!!formData.cliente_id && (
+                                {isEstadoDisabled ? (
                                     <MenuItem value="Asignado">Asignado</MenuItem>
+                                ) : (
+                                    estadosManualesFreezer.map(estado => (
+                                        <MenuItem key={estado} value={estado}>{estado}</MenuItem>
+                                    ))
                                 )}
                             </Select>
-                            {!!formData.cliente_id && formData.estado !== "Baja" && formData.estado !== "Mantenimiento" && (
-                                <FormHelperText sx={{ color: 'warning.dark' }}>
-                                    Para cambiar a "Baja" o "Mantenimiento", primero debe desasignar el cliente.
+                            {isEstadoDisabled && (
+                                <FormHelperText sx={{ color: 'info.main' }}>
+                                    El estado es "Asignado" porque hay un cliente.
                                 </FormHelperText>
                             )}
-                             {!formData.cliente_id && formData.estado === "Disponible" && (
+                            {!isEstadoDisabled && formData.estado === "Disponible" && (
                                 <FormHelperText sx={{ color: 'info.main' }}>
                                     El estado es "Disponible" al no tener un cliente asignado.
                                 </FormHelperText>
                             )}
-                             {!!formData.cliente_id && (
-                                <FormHelperText sx={{ color: 'info.main' }}>
-                                    El estado se forzará a "Asignado" si se selecciona un cliente.
-                                </FormHelperText>
-                            )}
-                             {!formData.cliente_id && formData.estado === "Asignado" && (
-                                <FormHelperText error>
-                                    No se puede tener un freezer en estado "Asignado" sin un cliente asignado.
-                                </FormHelperText>
-                            )}
+                            {formErrors.estado && <FormHelperText>{formErrors.estado}</FormHelperText>}
                         </FormControl>
                     </Grid>
+                    {/* Botones de acción */}
+                    <Grid item xs={12}>
+                        <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 4 }}>
+                            <Button
+                                type="button"
+                                variant="outlined"
+                                color="secondary"
+                                onClick={() => navigate('/freezers/listado')}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                disabled={loading}
+                                startIcon={loading && <CircularProgress size={20} color="inherit" />}
+                            >
+                                {loading ? (isEditing ? 'Actualizando...' : 'Guardando...') : (isEditing ? 'Confirmar Edición' : 'Confirmar')}
+                            </Button>
+                        </Stack>
+                    </Grid>
+                    </Grid>
                 </Grid>
-
-                <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 4 }}>
-                    <Button
-                        type="button"
-                        variant="outlined"
-                        color="secondary"
-                        onClick={() => navigate('/freezers/listado')}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        disabled={loading}
-                        startIcon={loading && <CircularProgress size={20} color="inherit" />}
-                    >
-                        {loading ? (isEditing ? 'Actualizando...' : 'Guardando...') : (isEditing ? 'Confirmar Edición' : 'Confirmar')}
-                    </Button>
-                </Stack>
             </Paper>
         </Container>
     );

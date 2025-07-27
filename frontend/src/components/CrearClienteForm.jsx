@@ -218,7 +218,7 @@ const ClienteForm = () => {
                 setFormErrors({});
             }
             setTimeout(() => {
-                navigate('/clientes'); // Redirige al listado de clientes
+                navigate('/clientes/listado'); // Redirige al listado de clientes
             }, 2000);
         } catch (err) {
             console.error("Error al enviar el formulario:", err.response ? err.response.data : err.message);

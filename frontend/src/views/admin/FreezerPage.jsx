@@ -443,7 +443,7 @@ function FreezersPage() {
                                                         />
                                                     ) : (<Box
                                                         component={"img"}
-                                                        src='https://img.freepik.com/premium-vector/modern-refrigerator-vector-illustration-white-background_1138840-2108.jpg'
+                                                        src='/assets/freezer-generico.png'
                                                         alt='Imagen no disponible'
                                                         sx={{
                                                             width: 50,
@@ -569,7 +569,7 @@ function FreezersPage() {
                     </Grid>
                     <Grid>
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <Typography variant="h6" gutterBottom>Mantenimientos pendientes</Typography>
+                            <Typography variant="h6" gutterBottom>Mantenimientos programados</Typography>
                             <Typography variant="h3">{dashboardData.mantenimientosPendientes}</Typography> 
                         </Paper>
                     </Grid>

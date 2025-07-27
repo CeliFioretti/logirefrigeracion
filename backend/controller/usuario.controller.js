@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 
 // Obtener registro completo de usuarios
 const listar = async (req, res, next) => {
-    const { nombre, rol } = req.query; 
+    const { nombre, rol, activo } = req.query; 
 
     try {
         let query = 'SELECT id, nombre, correo, rol, activo FROM usuario';
@@ -23,6 +23,12 @@ const listar = async (req, res, next) => {
             condiciones.push('rol = ?');
             params.push(`${rol}`);
             countParams.push(`${rol}`);
+        }
+
+        if (activo === '0' || activo === '1') {
+            condiciones.push('activo = ?');
+            params.push(activo);
+            countParams.push(activo);
         }
 
         if (condiciones.length > 0) {

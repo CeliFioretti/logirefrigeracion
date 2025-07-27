@@ -35,13 +35,11 @@ const rutasEventosOperador = require('./routes/eventos-operador.routes.js');
 const rutaExport = require('./routes/export.routes.js');
 
 app.use(cors({
-    origin: [
-    'http://localhost:5173',
-    'https://logirefrigeracion2-0-1.onrender.com'
-  ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 
 
 app.use('/api/auth', rutaAuth);
