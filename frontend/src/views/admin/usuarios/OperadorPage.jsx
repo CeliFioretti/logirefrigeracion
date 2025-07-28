@@ -344,6 +344,7 @@ function OperadoresPage() {
                                                         aria-label="editar"
                                                         onClick={() => handleEditClick(usuarioItem.id)}
                                                         size="small"
+                                                        disabled
                                                     >
                                                         <EditIcon />
                                                     </IconButton>
