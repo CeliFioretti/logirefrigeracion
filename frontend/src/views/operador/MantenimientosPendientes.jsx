@@ -22,7 +22,7 @@ import {
     DialogActions,
     Snackbar,
     MenuItem,
-    Chip, 
+    Chip,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -35,8 +35,11 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import KitchenIcon from '@mui/icons-material/Kitchen';
 import BuildIcon from '@mui/icons-material/Build';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; 
-import DoneAllIcon from '@mui/icons-material/DoneAll'; 
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import EventIcon from '@mui/icons-material/Event';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 function MantenimientosPendientes() {
     const { usuario } = useContext(UserContext);
@@ -56,7 +59,7 @@ function MantenimientosPendientes() {
     const [selectedAsignacion, setSelectedAsignacion] = useState(null);
     const [descripcionMantenimiento, setDescripcionMantenimiento] = useState('');
     const [observacionesMantenimiento, setObservacionesMantenimiento] = useState('');
-    const [tipoMantenimientoRealizado, setTipoMantenimientoRealizado] = useState(''); 
+    const [tipoMantenimientoRealizado, setTipoMantenimientoRealizado] = useState('');
 
     const pageSize = 10;
 
@@ -78,12 +81,12 @@ function MantenimientosPendientes() {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get('/asignaciones-mantenimiento/pendientes-operador', { 
+            const response = await axios.get('/asignaciones-mantenimiento/pendientes-operador', {
                 headers: {
                     Authorization: `Bearer ${usuario.token}`,
                 },
                 params: {
-                    page: page - 1, // El backend espera un índice de página basado en 0
+                    page: page - 1,
                     pageSize: pageSize,
                     search: searchQuery,
                 },
@@ -112,7 +115,7 @@ function MantenimientosPendientes() {
 
     const handleSearchSubmit = (event) => {
         if (event.key === 'Enter' || event.type === 'click') {
-            setPage(1); // Reinicia la página a 1 cuando se realiza una nueva búsqueda
+            setPage(1);
             fetchMantenimientosPendientes();
         }
     };
@@ -127,12 +130,11 @@ function MantenimientosPendientes() {
     };
 
     const capitalizeFirstLetter = (string) => {
-        if (!string) return ''; // Maneja casos donde la cadena es null, undefined o vacía
+        if (!string) return '';
         return string.charAt(0).toUpperCase() + string.slice(1);
     };
 
     const handleOpenCompleteModal = (asignacion) => {
-        // Solo abrir el modal si la asignación no está vencida ni completada
         if (asignacion.estado !== 'vencida' && asignacion.estado !== 'completada') {
             setSelectedAsignacion(asignacion);
             setDescripcionMantenimiento('');
@@ -155,7 +157,7 @@ function MantenimientosPendientes() {
             return;
         }
 
-        setLoading(true); // Mostrar spinner mientras se procesa
+        setLoading(true);
         try {
             await axios.patch(`/asignaciones-mantenimiento/${selectedAsignacion.asignacion_id}/completar`, {
                 descripcion: descripcionMantenimiento,
@@ -170,8 +172,8 @@ function MantenimientosPendientes() {
             setSnackbarMessage('Mantenimiento completado con éxito.');
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
-            handleCloseCompleteModal(); // Cerrar modal
-            fetchMantenimientosPendientes(); // Recargar la lista para que la asignación se actualice a 'completada'
+            handleCloseCompleteModal();
+            fetchMantenimientosPendientes();
         } catch (err) {
             console.error('Error al completar el mantenimiento:', err);
             setSnackbarMessage(err.response?.data?.message || 'Error al completar el mantenimiento.');
@@ -182,13 +184,15 @@ function MantenimientosPendientes() {
         }
     };
 
-    // Estilo para las tarjetas de mantenimiento
+    // Estilo base para las tarjetas de mantenimiento
     const cardStyle = {
         backgroundColor: 'white',
         borderRadius: '10px',
         padding: theme.spacing(2),
         boxShadow: theme.shadows[1],
         marginBottom: theme.spacing(2),
+        transition: 'background-color 0.3s ease, border 0.3s ease, box-shadow 0.3s ease',
+        position: 'relative', // Necesario para posicionar el chip absolutamente
     };
 
     const infoTextStyle = {
@@ -200,22 +204,25 @@ function MantenimientosPendientes() {
         marginBottom: theme.spacing(0.5),
     };
 
-    // Estilo para tarjetas vencidas
+    // Estilo para tarjetas vencidas (solo opacidad, sin fondo de color)
     const expiredCardStyle = {
         ...cardStyle,
-        opacity: 0.6, // Hace que la tarjeta se vea "deshabilitada"
-        backgroundColor: theme.palette.grey[200], // Un color de fondo más claro
-        border: `1px solid ${theme.palette.grey[400]}`,
+        opacity: 0.7,
+        border: `1px solid ${theme.palette.grey[400]}`, // Borde sutil
     };
 
-    // Estilo para tarjetas completadas
+    // Estilo para tarjetas completadas (solo opacidad, sin fondo de color)
     const completedCardStyle = {
         ...cardStyle,
-        opacity: 0.8, // Ligeramente atenuado
-        backgroundColor: theme.palette.success.light, // Un color de fondo que indique completado
-        border: `1px solid ${theme.palette.success.main}`,
-        color: theme.palette.success.contrastText, // Color de texto para el fondo
+        opacity: 0.9,
+        border: `1px solid ${theme.palette.grey[300]}`, // Borde sutil
     };
+
+    const pendingCardStyle = {
+        ...cardStyle,
+        border: `1px solid ${theme.palette.grey[200]}`, // Borde sutil
+    };
+
 
     return (
         <Box
@@ -253,7 +260,7 @@ function MantenimientosPendientes() {
                         marginRight: isSmallScreen ? theme.spacing(5) : theme.spacing(7),
                     }}
                 >
-                    MANTENIMIENTOS PENDIENTES
+                    MANTENIMIENTOS PENDIENTES/COMPLETADOS
                 </Typography>
                 <Box sx={{ width: 40 }} />
             </Box>
@@ -306,10 +313,9 @@ function MantenimientosPendientes() {
                     <>
                         {mantenimientos.map((mantenimiento) => {
                             const isExpired = mantenimiento.estado === 'vencida';
-                            const isCompleted = mantenimiento.estado === 'completada'; 
-                            
-                            // Selecciona el estilo de la tarjeta basado en el estado
-                            let currentCardStyle = cardStyle;
+                            const isCompleted = mantenimiento.estado === 'completada';
+
+                            let currentCardStyle = pendingCardStyle;
                             if (isExpired) {
                                 currentCardStyle = expiredCardStyle;
                             } else if (isCompleted) {
@@ -318,66 +324,87 @@ function MantenimientosPendientes() {
 
                             return (
                                 <Paper key={mantenimiento.asignacion_id} sx={currentCardStyle}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
-                                            {mantenimiento.nombre_cliente}
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                                        <Typography
+                                            variant="h6"
+                                            sx={{
+                                                fontWeight: 'bold',
+                                                color: theme.palette.primary.main
+                                            }}
+                                        >
+                                            {mantenimiento.nombre_cliente || 'Sin cliente'}
                                         </Typography>
                                         {isExpired && (
                                             <Chip
                                                 label="Vencida"
                                                 color="error"
                                                 size="small"
-                                                sx={{ fontWeight: 'bold' }}
+                                                sx={{ fontWeight: 'bold', ml: 2 }}
                                             />
                                         )}
-                                        {isCompleted && ( 
+                                        {isCompleted && (
                                             <Chip
                                                 label="Completada"
-                                                color="success" // O 'primary', o un color custom
+                                                color="success"
                                                 size="small"
                                                 icon={<DoneAllIcon />}
-                                                sx={{ fontWeight: 'bold' }}
+                                                sx={{ fontWeight: 'bold', ml: 2 }}
                                             />
                                         )}
                                     </Box>
-                                    
+
                                     <Typography sx={infoTextStyle}>
                                         <AcUnitIcon fontSize="small" /> <span style={{ fontWeight: 'bold' }}>Freezer:</span> {mantenimiento.numero_serie} - {mantenimiento.modelo}
                                     </Typography>
                                     {mantenimiento.tipo_freezer && (
                                         <Typography sx={infoTextStyle}>
-                                            <KitchenIcon fontSize="small"/> <span style={{ fontWeight: 'bold' }}>Tipo de Freezer:</span> {capitalizeFirstLetter(mantenimiento.tipo_freezer)}
+                                            <KitchenIcon fontSize="small" /> <span style={{ fontWeight: 'bold' }}>Tipo de Freezer:</span> {capitalizeFirstLetter(mantenimiento.tipo_freezer)}
                                         </Typography>
                                     )}
                                     {mantenimiento.tipo_mantenimiento && (
                                         <Typography sx={infoTextStyle}>
-                                            <BuildIcon fontSize="small"/> <span style={{ fontWeight: 'bold' }}>Tipo de Mantenimiento: </span> {capitalizeFirstLetter(mantenimiento.tipo_mantenimiento)}
+                                            <BuildIcon fontSize="small" /> <span style={{ fontWeight: 'bold' }}>Tipo de Mantenimiento: </span> {capitalizeFirstLetter(mantenimiento.tipo_mantenimiento)}
                                         </Typography>
                                     )}
-                                    <Typography sx={infoTextStyle}>
-                                        <LocationOnIcon fontSize="small" /> <span style={{ fontWeight: 'bold' }}> Dirección: </span> {mantenimiento.cliente_direccion}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: theme.palette.text.primary, mt: 1 }}>
-                                        Fecha: <span style={{ fontWeight: 'bold' }}>{new Date(mantenimiento.fecha_asignacion).toLocaleDateString()}</span>
+                                    {mantenimiento.cliente_direccion && (
+                                        <Typography sx={infoTextStyle}>
+                                            <LocationOnIcon fontSize="small" /> <span style={{ fontWeight: 'bold' }}> Dirección: </span> {mantenimiento.cliente_direccion}
+                                        </Typography>
+                                    )}
+                                    <Typography variant="body2" sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '5px',
+                                        color: theme.palette.text.primary,
+                                        mt: 1
+                                    }}>
+                                        <EventIcon fontSize="small" /> Fecha: <span style={{ fontWeight: 'bold' }}>{new Date(mantenimiento.fecha_asignacion).toLocaleDateString()}</span>
                                         {' '}
-                                        Hora:  <span style={{ fontWeight: 'bold' }}>{new Date(mantenimiento.fecha_asignacion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        <AccessTimeIcon fontSize="small" sx={{ ml: 1 }} /> Hora: <span style={{ fontWeight: 'bold' }}>{new Date(mantenimiento.fecha_asignacion).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </Typography>
                                     {mantenimiento.asignacion_observaciones && (
-                                        <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontStyle: 'italic', mt: 1 }}>
-                                            <span style={{ fontWeight: 'bold' }}>Obs:</span> {mantenimiento.asignacion_observaciones}
+                                        <Typography variant="caption" sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            color: theme.palette.text.secondary,
+                                            fontStyle: 'italic',
+                                            mt: 1
+                                        }}>
+                                            <InfoOutlinedIcon fontSize="small" /> <span style={{ fontWeight: 'bold' }}>Obs:</span> {mantenimiento.asignacion_observaciones}
                                         </Typography>
                                     )}
-                                    {/* Lógica condicional para el botón Completar o el texto "Completada" */}
+                                    {/* Botón para completar mantenimiento */}
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                                        {isCompleted ? ( 
-                                            <Typography 
-                                                variant="button" 
-                                                sx={{ 
-                                                    color: theme.palette.success.dark, 
-                                                    fontWeight: 'bold', 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    gap: '5px' 
+                                        {isCompleted ? (
+                                            <Typography
+                                                variant="button"
+                                                sx={{
+                                                    color: theme.palette.success.dark,
+                                                    fontWeight: 'bold',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px'
                                                 }}
                                             >
                                                 <DoneAllIcon sx={{ fontSize: '1.2rem' }} /> Completada
@@ -388,11 +415,11 @@ function MantenimientosPendientes() {
                                                 color="primary"
                                                 startIcon={<CheckCircleOutlineIcon />}
                                                 onClick={() => handleOpenCompleteModal(mantenimiento)}
-                                                disabled={isExpired} // Deshabilita el botón si la asignación está vencida
+                                                disabled={isExpired}
                                                 sx={{
                                                     borderRadius: '20px',
                                                     textTransform: 'none',
-                                                    backgroundColor: isExpired ? theme.palette.grey[500] : '#4CAF50', // Color diferente si está deshabilitado
+                                                    backgroundColor: isExpired ? theme.palette.grey[500] : '#4CAF50',
                                                     '&:hover': {
                                                         backgroundColor: isExpired ? theme.palette.grey[600] : '#45a049',
                                                     },
@@ -428,7 +455,7 @@ function MantenimientosPendientes() {
                     {selectedAsignacion && (
                         <Box sx={{ mb: 2 }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                                Cliente: {selectedAsignacion.nombre_cliente}
+                                Cliente: {selectedAsignacion.nombre_cliente || 'N/A'}
                             </Typography>
                             <Typography variant="body2">
                                 Freezer: {selectedAsignacion.numero_serie} - {selectedAsignacion.modelo}

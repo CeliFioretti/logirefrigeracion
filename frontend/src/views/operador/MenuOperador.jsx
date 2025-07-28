@@ -310,7 +310,7 @@ function MenuOperador() {
             <ButtonBase sx={menuButtonStyle} component={RouterLink} to="/operador/mantenimientos-pendientes">
               <DirectionsCarFilledIcon sx={iconStyle} />
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                Mantenimientos pendientes
+                Mantenimientos
               </Typography>
             </ButtonBase>
           </Grid>
