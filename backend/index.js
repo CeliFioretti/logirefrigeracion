@@ -34,12 +34,13 @@ const rutasZonasOperador = require('./routes/zonas-operador.routes.js');
 const rutasEventosOperador = require('./routes/eventos-operador.routes.js'); 
 const rutaExport = require('./routes/export.routes.js');
 
+
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, 
 }));
-
 
 
 app.use('/api/auth', rutaAuth);
