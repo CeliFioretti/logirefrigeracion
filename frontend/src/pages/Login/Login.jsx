@@ -14,7 +14,8 @@ import {
   Paper,
   Checkbox,
   FormControlLabel,
-  Link
+  Link,
+  CircularProgress 
 } from '@mui/material';
 
 import fondo from '../../assets/fondo-login-0.png';
@@ -23,6 +24,7 @@ import logo from '../../assets/logo-negro-2.png';
 function Login() {
   const [nombre, setNombre] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false); 
 
   const { login: userContextLogin } = useContext(UserContext);
   const { usuario } = useContext(UserContext);
@@ -51,6 +53,7 @@ function Login() {
   // Manejo del formulario Login
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true); // Activa el spin de carga al inicio del intento de login
     try {
       const { data } = await axiosInstance.post('/auth/login', {
         nombre,
@@ -74,6 +77,8 @@ function Login() {
       }
     } catch (error) {
       alert('Credenciales incorrectas');
+    } finally {
+      setIsLoading(false); // Desactiva el spin de carga al finalizar (éxito o error)
     }
   };
 
@@ -121,6 +126,7 @@ function Login() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               required
+              disabled={isLoading} // Deshabilita el campo mientras carga
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '10px',
@@ -153,6 +159,7 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading} // Deshabilita el campo mientras carga
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '10px',
@@ -181,8 +188,9 @@ function Login() {
               <FormControlLabel
                 control={<Checkbox sx={{ '&.Mui-checked': { color: '#5f85db' } }} />}
                 label={<Typography variant="body2" sx={{ fontSize: '13px', color: '#333' }}>Recuérdame</Typography>}
+                disabled={isLoading} // Deshabilita el checkbox mientras carga
               />
-              <Link href="#" variant="body2" className="extra-options-link">
+              <Link href="#" variant="body2" className="extra-options-link" sx={{pointerEvents: isLoading ? 'none' : 'auto'}}> {/* Deshabilita el link */}
                 ¿Olvidaste tu contraseña?
               </Link>
             </Box>
@@ -191,6 +199,7 @@ function Login() {
               type="submit"
               variant="contained"
               fullWidth
+              disabled={isLoading}
               sx={{
                 backgroundColor: '#9bcbe0',
                 color: 'white',
@@ -203,12 +212,17 @@ function Login() {
                   boxShadow: 'none',
                 },
                 transition: '0.3s ease',
-                marginTop: '15px'
+                marginTop: '15px',
+
+                '&.Mui-disabled': {
+                    backgroundColor: '#b0d9ea', 
+                    color: '#e0e0e0',
+                }
               }}
             >
-              ENTRAR
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'ENTRAR'}
             </Button>
-            <Link href="/registro-operador" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db' }}>
+            <Link href="/registro-operador" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db', pointerEvents: isLoading ? 'none' : 'auto' }}> {/* Deshabilita el link */}
               ¿Eres operador? Regístrate aquí
             </Link>
           </form>
