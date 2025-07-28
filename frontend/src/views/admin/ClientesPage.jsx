@@ -17,10 +17,9 @@ import {
     TextField,
     Button,
     Grid,
-    MenuItem,
     IconButton
 } from '@mui/material';
-import axiosInstance from '../../api/axios'
+import axiosInstance from '../../api/axios';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { es } from 'date-fns/locale';
@@ -51,6 +50,7 @@ function ClientesPage() {
     const [clienteConMasFreezers, setClienteConMasFreezers] = useState(null);
     const [loadingStats, setLoadingStats] = useState(true);
     const [statsError, setStatsError] = useState(null);
+    const [deleteErrorMessage, setDeleteErrorMessage] = useState(null); 
 
     // Estados para los filtros
     const [filtroNombreCliente, setFiltroNombreCliente] = useState('');
@@ -65,19 +65,20 @@ function ClientesPage() {
     // Estado para disparar la búsqueda de filtros y la carga inicial
     const [triggerSearch, setTriggerSearch] = useState(0);
 
-    // Función para obtener el nombre de un cliente
+    // Función para obtener el nombre de un cliente (mejorado para usar la misma URL que tu backend devuelve)
     const fetchClienteById = useCallback(async (id) => {
         try {
             const url = `/clientes/${id}`;
-            const response = await axiosInstance.get(url)
-            return response.data.data.cliente;
+            const response = await axiosInstance.get(url);
+            
+            return response.data.data; 
 
         } catch (err) {
-            console.error('Error al obtener cliente:', err);
-            setError('Error al cargar cliente. Inténtelo de nuevo.');
+            console.error('Error al obtener cliente para confirmación:', err);
+            
             return null;
         }
-    }, [])
+    }, []);
 
     // Función para obtener los datos de los clientes
     const fetchClientes = useCallback(async (searchParams) => {
@@ -89,6 +90,7 @@ function ClientesPage() {
 
         setLoading(true);
         setError(null);
+        setDeleteErrorMessage(null); // Limpiar cualquier mensaje de error de eliminación anterior al cargar clientes
 
         try {
             const queryParams = new URLSearchParams();
@@ -103,7 +105,7 @@ function ClientesPage() {
 
             const url = `/clientes?${queryParams.toString()}`;
 
-            const response = await axiosInstance.get(url)
+            const response = await axiosInstance.get(url);
 
             setClientes(response.data.data);
             setTotalRegistros(response.data.total);
@@ -169,13 +171,12 @@ function ClientesPage() {
         const newSize = parseInt(event.target.value, 10);
         setRowsPerPage(newSize);
         setPage(0); // Volver a la primera página cuando cambian los elementos por página
-        fetchClientes({ page: 0, pageSize: newSize })
     };
 
     // Manejadores de filtros
     const handleApplyFilters = () => {
         setPage(0); // Resetear a la primera página al aplicar filtros
-        setTriggerSearch(prev => prev + 1);
+        setTriggerSearch(prev => prev + 1); // Disparar useEffect
     };
 
     const handleClearFilters = () => {
@@ -184,13 +185,12 @@ function ClientesPage() {
         setFiltroNombreNegocio('');
         setFiltroCuit('');
         setPage(0); // Resetear a la primera página
-        fetchClientes({ page: 0 })
-        setTriggerSearch(prev => prev + 1);
+        setTriggerSearch(prev => prev + 1); // Disparar useEffect
     };
 
     // Funciones de Acciones en la tabla
     const handleCopyData = (cliente) => {
-        const dataToCopy = `Nombre del cliente: ${cliente.nombreCliente}, Tipo de Negocio: ${cliente.tipoNegocio}, Nombre del Negocio: ${cliente.nombreNegocio}, Cuit: ${cliente.cuit}`;
+        const dataToCopy = `Nombre del cliente: ${cliente.nombre_responsable}, Tipo de Negocio: ${cliente.tipo_negocio}, Nombre del Negocio: ${cliente.nombre_negocio}, Cuit: ${cliente.cuit}`;
         navigator.clipboard.writeText(dataToCopy)
             .then(() => alert('Datos del cliente copiados al portapapeles'))
             .catch(err => console.error('Error al copiar:', err));
@@ -210,21 +210,27 @@ function ClientesPage() {
     };
 
     const handleDeleteCliente = async (id) => {
+        // Limpiar cualquier mensaje de error de eliminación anterior
+        setDeleteErrorMessage(null); 
+
         const clienteToDelete = await fetchClienteById(id);
 
         if (!clienteToDelete) {
-            alert('No se pudo obtener la información del cliente para eliminar.');
+
+            alert('No se pudo obtener la información del cliente para eliminar. Inténtelo de nuevo.');
             return;
         }
 
         if (!window.confirm(`¿Está seguro que desea eliminar el cliente ${clienteToDelete.nombre_responsable} (ID: ${id})?`)) {
             return;
         }
+
         setLoading(true);
         try {
             const url = `/clientes/${id}`;
             await axiosInstance.delete(url);
             alert('Cliente eliminado correctamente.');
+
             fetchClientes({
                 nombreCliente: filtroNombreCliente,
                 tipoNegocio: filtroTipoNegocio,
@@ -235,7 +241,14 @@ function ClientesPage() {
             });
         } catch (err) {
             console.error('Error al eliminar cliente:', err);
-            setError('Error al eliminar el cliente.');
+            if (err.response && err.response.data && err.response.data.message) {
+                
+                setDeleteErrorMessage(err.response.data.message);
+            } else if (err.response && err.response.status === 409) { 
+                setDeleteErrorMessage('No se puede eliminar el cliente porque tiene freezers asignados. Desasigne los freezers primero.');
+            } else {
+                setDeleteErrorMessage('Error al eliminar el cliente. Por favor, inténtelo de nuevo.');
+            }
         } finally {
             setLoading(false);
         }
@@ -247,8 +260,8 @@ function ClientesPage() {
     };
 
     const handleViewClienteDetail = (id) => {
-        navigate(`/clientes/${id}`)
-    }
+        navigate(`/clientes/${id}`);
+    };
 
     const handleExportData = async () => {
         if (!token) {
@@ -257,34 +270,29 @@ function ClientesPage() {
         }
 
         try {
-
-            // Envio de los mismos filtros para el back y así poder descargar los clientes filtrados en PDF
             const queryParams = new URLSearchParams();
             if (filtroNombreCliente) queryParams.append('nombreCliente', filtroNombreCliente);
             if (filtroTipoNegocio) queryParams.append('tipoNegocio', filtroTipoNegocio);
             if (filtroNombreNegocio) queryParams.append('nombreNegocio', filtroNombreNegocio);
             if (filtroCuit) queryParams.append('cuit', filtroCuit);
 
-            // Realiza la petición GET a tu nueva ruta del backend
             const response = await axiosInstance.get(`/exportar/clientes-pdf?${queryParams.toString()}`, {
-                responseType: 'blob', // Importante: para manejar el archivo binario
+                responseType: 'blob',
             });
 
-            // Crea un URL para el blob y un enlace para descargar el archivo
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'clientes.pdf'); // Nombre del archivo que se descargará
+            link.setAttribute('download', 'clientes.pdf');
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
-            window.URL.revokeObjectURL(url); // Libera la URL del objeto
+            window.URL.revokeObjectURL(url);
 
             alert('PDF de clientes generado y descargado exitosamente.');
 
-
         } catch (err) {
-            console.error('Error al exportar datos de clientes:', error);
+            console.error('Error al exportar datos de clientes:', err);
             alert('Error al exportar los datos. Por favor, inténtelo de nuevo.');
         }
     };
@@ -294,7 +302,7 @@ function ClientesPage() {
     };
 
 
-    if (loading && clientes.length === 0) {
+    if (loading && clientes.length === 0 && !error && !deleteErrorMessage) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
                 <CircularProgress />
@@ -317,7 +325,7 @@ function ClientesPage() {
 
                 {/* --- Sección de Botones Grandes --- */}
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid>
+                    <Grid item> 
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Registrar nuevo Cliente</Typography>
                             <Button
@@ -329,7 +337,7 @@ function ClientesPage() {
                             </Button>
                         </Paper>
                     </Grid>
-                    <Grid>
+                    <Grid item> {/* Cambiado a 'item' */}
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h6" gutterBottom>Exportar datos de Clientes</Typography>
                             <Button
@@ -346,7 +354,7 @@ function ClientesPage() {
                 <Paper sx={{ p: 3, mb: 4 }}>
                     <Typography variant="h6" gutterBottom>Filtros</Typography>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid>
+                        <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 label="Nombre Responsable"
                                 variant="outlined"
@@ -356,7 +364,7 @@ function ClientesPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid>
+                        <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 label="Tipo de Negocio"
                                 variant="outlined"
@@ -366,7 +374,7 @@ function ClientesPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid>
+                        <Grid item xs={12} sm={6} md={3}>
                             <TextField
                                 label="Nombre de Negocio"
                                 variant="outlined"
@@ -376,7 +384,7 @@ function ClientesPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid>
+                        <Grid item xs={12} sm={6} md={3}> 
                             <TextField
                                 label="CUIT"
                                 variant="outlined"
@@ -387,7 +395,7 @@ function ClientesPage() {
                                 size="small"
                             />
                         </Grid>
-                        <Grid>
+                        <Grid item xs={12}> 
                             <Button
                                 variant="contained"
                                 startIcon={<SearchIcon />}
@@ -407,7 +415,9 @@ function ClientesPage() {
                     </Grid>
                 </Paper>
 
+                {/* Alerta de error general (si existe) */}
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+                {deleteErrorMessage && <Alert severity="warning" sx={{ mb: 2 }}>{deleteErrorMessage}</Alert>}
 
                 {loading && clientes.length === 0 ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
@@ -432,7 +442,7 @@ function ClientesPage() {
                                 <TableBody>
                                     {clientes.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center">
+                                            <TableCell colSpan={8} align="center">
                                                 No se encontraron clientes con los filtros aplicados.
                                             </TableCell>
                                         </TableRow>
@@ -511,13 +521,13 @@ function ClientesPage() {
 
                 {/* --- Indicadores Inferiores --- */}
                 <Grid container spacing={2} sx={{ mt: 4 }}>
-                    <Grid>
+                    <Grid item xs={12} sm={6} md={4}> 
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <Typography variant="h6" gutterBottom>Total de clientes</Typography>    
-                            <Typography variant="h3">{clientes.length}</Typography> 
+                            <Typography variant="h6" gutterBottom>Total de clientes</Typography>
+                            <Typography variant="h3">{totalRegistros}</Typography> 
                         </Paper>
                     </Grid>
-                   <Grid item xs={12} sm={6} md={4}>
+                    <Grid item xs={12} sm={6} md={4}> 
                         <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h5" gutterBottom>Cliente con más Freezers</Typography>
                             {loadingStats ? (
@@ -541,4 +551,3 @@ function ClientesPage() {
 }
 
 export default ClientesPage;
-

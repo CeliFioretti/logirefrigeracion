@@ -201,7 +201,7 @@ const editar = async (req, res, next) => {
     }
 }
 
-// Eliminar zona - DELETE
+// Eliminar cliente - DELETE
 const eliminar = async (req, res, next) => {
     const id = req.params.id;
 
@@ -211,33 +211,51 @@ const eliminar = async (req, res, next) => {
 
     try {
         let querySelect = 'SELECT * FROM cliente WHERE id = ?';
-        let queryDelete = 'DELETE FROM cliente WHERE id =?';
 
         const [cliente] = await db.promise().query(querySelect, [id]);
 
         if (cliente.length === 0) {
             return res.status(404).json({
                 message: 'Cliente no encontrado'
-            })
+            });
         }
 
         const nombreCliente = cliente[0].nombre_responsable;
         const nombreLocal = cliente[0].nombre_negocio;
 
-        await db.promise().query(queryDelete, [id])
+        try {
+            await db.promise().query('DELETE FROM cliente WHERE id =?', [id]);
 
-        // Auditoría
-        const mensaje = `Eliminación de cliente: ${nombreCliente.replace(/'/g, "")}, Local: ${nombreLocal}`
-        await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable,mensaje]);
+            // Auditoría
+            const mensaje = `Eliminación de cliente: ${nombreCliente.replace(/'/g, "")}, Local: ${nombreLocal}`;
+            await db.promise().query('INSERT INTO auditoriadeactividades (usuario_id, usuario_nombre, fecha_hora, accion) VALUES(?,?,NOW(),?)', [idUsuarioResponsable, nombreUsuarioResponsable, mensaje]);
 
-        res.status(200).json({
-            message: 'Cliente eliminado correctamente'
-        })
+            res.status(200).json({
+                message: 'Cliente eliminado correctamente'
+            });
+
+        } catch (dbError) {
+           
+            if (dbError.code === 'ER_ROW_IS_REFERENCED_2' || dbError.errno === 1451) {
+                // MySQL error codigo para error de clave foranea (cliente con freezer asignado)
+                return res.status(409).json({ 
+                    message: 'No se puede eliminar el cliente porque tiene freezers asignados. Desasigne los freezers primero.'
+                });
+            } else {
+                // Para otros errores de base de datos no relacionados con claves foráneas
+                console.error('Error al intentar eliminar cliente en la DB:', dbError);
+                return res.status(500).json({
+                    message: 'Error interno del servidor al intentar eliminar el cliente.'
+                });
+            }
+        }
+
     } catch (err) {
-        next(err);
+        console.error('Error general en la función eliminar cliente:', err);
+        next(err); 
     }
+};
 
-}
 
 // Obtener el cliente con más freezers - GET
 const getClienteConMasFreezers = async (req, res, next) => {
