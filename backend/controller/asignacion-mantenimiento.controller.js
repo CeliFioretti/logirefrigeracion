@@ -328,7 +328,7 @@ const listarPendientesOperador = async (req, res, next) => {
                 c.cuit AS cliente_cuit
             FROM asignacionmantenimiento am
             JOIN freezer f ON am.freezer_id = f.id
-            JOIN cliente c ON f.cliente_id = c.id
+            LEFT JOIN cliente c ON f.cliente_id = c.id
             WHERE am.usuario_id = ? 
         `;
 
@@ -336,7 +336,7 @@ const listarPendientesOperador = async (req, res, next) => {
             SELECT COUNT(am.id) as total
             FROM asignacionmantenimiento am
             JOIN freezer f ON am.freezer_id = f.id
-            JOIN cliente c ON f.cliente_id = c.id
+            LEFT JOIN cliente c ON f.cliente_id = c.id
             WHERE am.usuario_id = ? 
         `;
 
@@ -373,7 +373,7 @@ const listarPendientesOperador = async (req, res, next) => {
 
     if (mantenimientosPendientes.length === 0) {
       return res.status(200).json({
-        message: 'No tienes mantenimientos pendientes o vencidos asignados o que coincidan con la búsqueda.',
+        message: 'No se encontraron asignaciones de mantenimiento para este operador o que coincidan con la búsqueda.', 
         data: [],
         total: 0
       });
