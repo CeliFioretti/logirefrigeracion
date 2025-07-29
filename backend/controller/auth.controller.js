@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const { enviarCorreo } = require('../services/emailService')
+require('dotenv').config();
 
 // Login con token
 const login = async (req, res) => {
@@ -124,25 +126,43 @@ const solicitarRecuperacion = async (req, res) => {
         const [filas] = await db.promise().query('SELECT * FROM usuario WHERE correo = ?', [correo]);
         const usuario = filas[0];
 
-        if (!usuario) {
-            return res.status(404).json({ error: 'No se encontró un usuario con ese correo' });
+       if (usuario) {
+            const token = crypto.randomBytes(32).toString('hex');
+            const expiracion = new Date(Date.now() + 3600000); // 1 hora desde ahora
+
+            await db.promise().query(
+                'UPDATE usuario SET token_recuperacion = ?, expiracion_token = ? WHERE id = ?',
+                [token, expiracion, usuario.id]
+            );
+
+            // Construcción de la URL de restablecimiento para el frontend 
+            const resetURL = `${process.env.CLIENT_URL}/restablecer-password?token=${token}`;
+
+            // Enviar el correo electrónico usando el servicio de email
+            await enviarCorreo({
+                para: usuario.correo,
+                asunto: 'Restablecer Contraseña de tu cuenta LogiRefrigeración',
+                html: `
+                    <p>Hola ${usuario.nombre},</p>
+                    <p>Has solicitado restablecer la contraseña de tu cuenta en LogiRefrigeración.</p>
+                    <p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
+                    <p><a href="${resetURL}">Restablecer mi contraseña</a></p>
+                    <p>Este enlace expirará en 1 hora.</p>
+                    <p>Si no solicitaste esto, por favor, ignora este correo.</p>
+                    <p>Saludos,</p>
+                    <p>El equipo de LogiRefrigeración</p>
+                `,
+            });
         }
 
-        const token = crypto.randomBytes(32).toString('hex');
-        const expiracion = new Date(Date.now() + 3600000); // 1 hora desde ahora
-
-        await db.promise().query(
-            'UPDATE usuario SET token_recuperacion = ?, expiracion_token = ? WHERE id = ?',
-            [token, expiracion, usuario.id]
-        );
-
+        // Respuesta genérica para seguridad
         res.status(200).json({
-            message: 'Solicitud de recuperación creada',
-            tokenRecuperacion: token
+            message: 'Si el correo electrónico está registrado, se ha enviado un enlace para restablecer la contraseña.'
         });
 
+
     } catch (error) {
-        console.error(error);
+        cconsole.error('Error al solicitar recuperación de contraseña:', error);
         res.status(500).json({ error: 'Error al solicitar recuperación de contraseña' });
     }
 };

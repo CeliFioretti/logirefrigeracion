@@ -1,84 +1,99 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link  } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom'; 
 import axiosInstance from '../../api/axios';
-import { useContext } from 'react';
-import { UserContext } from '../../context/UserContext';
 
 // Iconos y Estilos
-import '../../styles/Login.css';
+import '../../styles/Login.css'; 
 import {
   TextField,
   Button,
   Typography,
   Box,
   Paper,
-  Checkbox,
-  FormControlLabel,
-  CircularProgress 
+  CircularProgress,
+  Snackbar,
+  Alert
 } from '@mui/material';
 
 import fondo from '../../assets/fondo-login-0.png';
 import logo from '../../assets/logo-negro-2.png';
 
-function Login() {
-  const [nombre, setNombre] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false); 
-
-  const { login: userContextLogin } = useContext(UserContext);
-  const { usuario } = useContext(UserContext);
+function RestablecerPassword() {
+  const [nuevaPassword, setNuevaPassword] = useState('');
+  const [confirmarPassword, setConfirmarPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [token, setToken] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('info');
 
   const navigate = useNavigate();
-
-  // Nombre de la página
-  useEffect(() => {
-    document.title = 'Login';
-  }, []);
-
+  const location = useLocation(); // Hook para acceder a la URL
 
   useEffect(() => {
-    if (usuario && usuario.token) {
-      if (usuario.rol === 'administrador') {
-        navigate('/admin-dashboard', { replace: true });
-      } else if (usuario.rol === 'operador') {
-        navigate('/operador-menu', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+    document.title = 'Restablecer Contraseña';
+
+    // Extraer el token de la URL
+    const queryParams = new URLSearchParams(location.search);
+    const tokenFromUrl = queryParams.get('token');
+    if (tokenFromUrl) {
+      setToken(tokenFromUrl);
+    } else {
+      // Si no hay token, redirigir al login o mostrar un error
+      setSnackbarMessage('Token de recuperación no encontrado en la URL.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setTimeout(() => navigate('/'), 3000);
     }
-  }, [usuario, navigate]);
+  }, [location.search, navigate]); // location.search para re-ejecutar si la URL cambia
 
-
-  // Manejo del formulario Login
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true); // Activa el spin de carga al inicio del intento de login
-    try {
-      const { data } = await axiosInstance.post('/auth/login', {
-        nombre,
-        password
-      });
+    setIsLoading(true);
+    setSnackbarOpen(false);
 
-      userContextLogin({
-        token: data.token,
-        nombre: data.nombreUsuario,
-        rol: data.rol
-      })
-
-      // Redirigir según el rol después de un login exitoso
-      if (data.rol === 'administrador') {
-        navigate('/admin-dashboard', { replace: true });
-      } else if (data.rol === 'operador') {
-        navigate('/operador-menu', { replace: true });
-      } else {
-        // Rol no reconocido después del login, redirigir a un default
-        navigate('/admin-dashboard', { replace: true });
-      }
-    } catch (error) {
-      alert('Credenciales incorrectas');
-    } finally {
-      setIsLoading(false); // Desactiva el spin de carga al finalizar (éxito o error)
+    if (nuevaPassword !== confirmarPassword) {
+      setSnackbarMessage('Las contraseñas no coinciden.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setIsLoading(false);
+      return;
     }
+
+    if (!token) {
+      setSnackbarMessage('No se encontró un token de recuperación válido.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post('/auth/restablecer-password', {
+        token,
+        nuevaPassword
+      });
+      setSnackbarMessage(response.data.message);
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      // Redirigir al login después de un éxito
+      setTimeout(() => navigate('/login'), 6000);
+    } catch (error) {
+      console.error('Error al restablecer contraseña:', error);
+      const errorMessage = error.response?.data?.error || 'Error al restablecer contraseña. Intente de nuevo.';
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
   return (
@@ -114,18 +129,23 @@ function Login() {
             sx={{
               textTransform: 'uppercase',
             }}>
-            Iniciar Sesión
+            Restablecer Contraseña
+          </Typography>
+
+          <Typography variant="body2" align="center" sx={{ mb: 2, color: '#555' }}>
+            Introduce tu nueva contraseña.
           </Typography>
 
           <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <TextField
-              label="Nombre de usuario "
+              label="Nueva Contraseña"
               variant="outlined"
               fullWidth
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              type="password"
+              value={nuevaPassword}
+              onChange={(e) => setNuevaPassword(e.target.value)}
               required
-              disabled={isLoading} // Deshabilita el campo mientras carga
+              disabled={isLoading}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '10px',
@@ -151,14 +171,14 @@ function Login() {
             />
 
             <TextField
-              label="Contraseña "
-              type="password"
+              label="Confirmar Contraseña"
               variant="outlined"
               fullWidth
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              value={confirmarPassword}
+              onChange={(e) => setConfirmarPassword(e.target.value)}
               required
-              disabled={isLoading} // Deshabilita el campo mientras carga
+              disabled={isLoading}
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: '10px',
@@ -182,17 +202,6 @@ function Login() {
                 },
               }}
             />
-
-            <Box className="extra-options" sx={{ width: '100%' }}>
-              <FormControlLabel
-                control={<Checkbox sx={{ '&.Mui-checked': { color: '#5f85db' } }} />}
-                label={<Typography variant="body2" sx={{ fontSize: '13px', color: '#333' }}>Recuérdame</Typography>}
-                disabled={isLoading} // Deshabilita el checkbox mientras carga
-              />
-              <Link to="/solicitar-recuperacion" variant="body2" className="extra-options-link" sx={{ pointerEvents: isLoading ? 'none' : 'auto' }}>
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </Box>
 
             <Button
               type="submit"
@@ -212,17 +221,16 @@ function Login() {
                 },
                 transition: '0.3s ease',
                 marginTop: '15px',
-
                 '&.Mui-disabled': {
-                    backgroundColor: '#b0d9ea', 
-                    color: '#e0e0e0',
+                  backgroundColor: '#b0d9ea',
+                  color: '#e0e0e0',
                 }
               }}
             >
-              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'ENTRAR'}
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'RESTABLECER CONTRASEÑA'}
             </Button>
-            <Link href="/registro-operador" className="extra-options-link" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db', pointerEvents: isLoading ? 'none' : 'auto' }}>
-              ¿Eres operador? Regístrate aquí
+            <Link to="/login" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db', pointerEvents: isLoading ? 'none' : 'auto' }}>
+              Volver al Login
             </Link>
           </form>
         </Paper>
@@ -240,8 +248,16 @@ function Login() {
           LogiRefrigeración para la empresa "Nombre de la Empresa"
         </Typography>
       </div>
+
+      {/* Snackbar para mensajes al usuario */}
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
 
-export default Login;
+export default RestablecerPassword;

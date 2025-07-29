@@ -9,7 +9,10 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { UserContext } from './context/UserContext';
 import { setupAxiosInterceptors } from './api/axios';
 
+// Generales
 import Login from './pages/Login/Login';
+import SolicitarRecuperacionCuenta from './pages/Login/SolicitarRecuperacion'
+import RestablecerPassword from './pages/Login/RestablecerPassword'
 import RegistroOperador from './pages/Login/RegistroOperador'
 import DashboardLayout from './layout/DashboardLayout';
 import PrivateRoute from './components/PrivateRoute';
@@ -84,6 +87,10 @@ function App() {
                 <Routes>
                     {/* Rutas públicas y de autenticación */}
                     <Route path="/" element={<Login />} />
+                    <Route path="/solicitar-recuperacion" element={<SolicitarRecuperacionCuenta />} />
+                    <Route path="/restablecer-password" element={<RestablecerPassword />} /> 
+
+
                     <Route path="/registro-operador" element={<RegistroOperador />} />
                     <Route path="/acceso-denegado" element={<ForbiddenPage />} />
                     <Route path="/sesion-expirada" element={<SessionExpiredPage />} />
