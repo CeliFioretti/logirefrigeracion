@@ -126,7 +126,9 @@ const solicitarRecuperacion = async (req, res) => {
         const [filas] = await db.promise().query('SELECT * FROM usuario WHERE correo = ?', [correo]);
         const usuario = filas[0];
 
-       if (usuario) {
+        // Siempre enviamos una respuesta genérica por seguridad,
+        // pero solo enviamos el email si el usuario existe.
+        if (usuario) {
             const token = crypto.randomBytes(32).toString('hex');
             const expiracion = new Date(Date.now() + 3600000); // 1 hora desde ahora
 
@@ -135,22 +137,32 @@ const solicitarRecuperacion = async (req, res) => {
                 [token, expiracion, usuario.id]
             );
 
-            // Construcción de la URL de restablecimiento para el frontend 
+            // *** Construir la URL de restablecimiento para el frontend ***
             const resetURL = `${process.env.CLIENT_URL}/restablecer-password?token=${token}`;
 
-            // Enviar el correo electrónico usando el servicio de email
+            // *** Enviar el correo electrónico usando tu servicio (HTML MEJORADO) ***
             await enviarCorreo({
                 para: usuario.correo,
                 asunto: 'Restablecer Contraseña de tu cuenta LogiRefrigeración',
                 html: `
-                    <p>Hola ${usuario.nombre},</p>
-                    <p>Has solicitado restablecer la contraseña de tu cuenta en LogiRefrigeración.</p>
-                    <p>Haz clic en el siguiente enlace para restablecer tu contraseña:</p>
-                    <p><a href="${resetURL}">Restablecer mi contraseña</a></p>
-                    <p>Este enlace expirará en 1 hora.</p>
-                    <p>Si no solicitaste esto, por favor, ignora este correo.</p>
-                    <p>Saludos,</p>
-                    <p>El equipo de LogiRefrigeración</p>
+                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h2 style="color: #2a618d; text-align: center; margin-bottom: 25px;">Restablecer tu Contraseña</h2>
+                        <p>Hola <strong>${usuario.nombre}</strong>,</p>
+                        <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en LogiRefrigeración.</p>
+                        <p>Para establecer una nueva contraseña, por favor haz clic en el siguiente botón:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${resetURL}" style="background-color: #5f85db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+                                Restablecer mi Contraseña
+                            </a>
+                        </div>
+                        <p>Este enlace es válido solo por <strong>1 hora</strong>. Si no restableces tu contraseña dentro de este tiempo, deberás solicitar un nuevo enlace.</p>
+                        <p style="font-size: 0.9em; color: #777;">Si no solicitaste este cambio, por favor ignora este correo electrónico o contáctanos si crees que hay un problema.</p>
+                        <div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px; text-align: center; font-size: 0.8em; color: #999;">
+                            <p>Saludos cordiales,</p>
+                            <p>El equipo de LogiRefrigeración</p>
+                            <p>&copy; ${new Date().getFullYear()} LogiRefrigeración. Todos los derechos reservados.</p>
+                        </div>
+                    </div>
                 `,
             });
         }
@@ -160,10 +172,10 @@ const solicitarRecuperacion = async (req, res) => {
             message: 'Si el correo electrónico está registrado, se ha enviado un enlace para restablecer la contraseña.'
         });
 
-
     } catch (error) {
-        cconsole.error('Error al solicitar recuperación de contraseña:', error);
-        res.status(500).json({ error: 'Error al solicitar recuperación de contraseña' });
+        console.error('Error al solicitar recuperación de contraseña:', error);
+        // Aunque haya un error al enviar el correo, por seguridad, damos una respuesta genérica
+        res.status(500).json({ error: 'Hubo un problema al procesar su solicitud. Intente de nuevo más tarde.' });
     }
 };
 
