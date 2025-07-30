@@ -221,7 +221,7 @@ function Login() {
             >
               {isLoading ? <CircularProgress size={24} color="inherit" /> : 'ENTRAR'}
             </Button>
-            <Link href="/registro-operador" className="extra-options-link" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db', pointerEvents: isLoading ? 'none' : 'auto' }}>
+            <Link to="/registro-operador" className="extra-options-link" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db', pointerEvents: isLoading ? 'none' : 'auto' }}>
               ¿Eres operador? Regístrate aquí
             </Link>
           </form>

@@ -274,7 +274,7 @@ function RegistroOperador() {
             >
               Registrarse
             </Button>
-            <Link href="/" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db' }}>
+            <Link to="/" className="extra-options-link" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db' }}>
                 ¿Ya tienes una cuenta? Iniciar Sesión
             </Link>
           </form>
