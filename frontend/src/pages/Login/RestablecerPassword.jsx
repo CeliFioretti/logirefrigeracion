@@ -229,7 +229,7 @@ function RestablecerPassword() {
             >
               {isLoading ? <CircularProgress size={24} color="inherit" /> : 'RESTABLECER CONTRASEÑA'}
             </Button>
-            <Link to="/login" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db', pointerEvents: isLoading ? 'none' : 'auto' }}>
+            <Link to="/" variant="body2" sx={{ textAlign: 'center', marginTop: '10px', color: '#5f85db', pointerEvents: isLoading ? 'none' : 'auto' }}>
               Volver al Login
             </Link>
           </form>
