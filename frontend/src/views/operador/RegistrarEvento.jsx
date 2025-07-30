@@ -153,7 +153,7 @@ const RegistrarEvento = () => {
             const disponibles = allFreezers.filter(f => f.estado === 'Disponible');
             setFilteredFreezers(disponibles);
             // Si el freezer actualmente seleccionado no es disponible, deseleccionarlo
-            if (selectedFreezer && selectedFreeizer.estado !== 'Disponible') {
+            if (selectedFreezer && selectedFreezer.estado !== 'Disponible') {
                 setSelectedFreezer(null);
                 setFormData(prev => ({ ...prev, freezer_id: '' }));
             }
