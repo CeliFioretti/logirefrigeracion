@@ -9,6 +9,8 @@ node_modules/
 
 # Archivos de configuración sensibles
 .env
+.env.production
+.env.development
 
 # Archivos de compilación en React/Vite
 build/

@@ -23,4 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
+.env
+.env.development
+.env.production
+
 pendientes.mkd
