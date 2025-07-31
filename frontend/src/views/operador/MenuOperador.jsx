@@ -270,7 +270,7 @@ function MenuOperador() {
           ))
         )}
         {notifications.length > 0 && (
-          <MenuItem onClick={() => {
+          <MenuItem disabled onClick={() => {
             handleNotificationsMenuClose();
             navigate('/operador/notificaciones'); // Navegar a la vista completa de notificaciones del operador
           }}>

@@ -577,7 +577,7 @@ export default function TopBarAdmin({ toggleSideNav, toggleMobileMenu, isLargeSc
           ))
         )}
         {notifications.length > 0 && (
-          <MenuItem onClick={() => {
+          <MenuItem disabled onClick={() => {
             handleNotificationsMenuClose();
             navigate('/notificaciones/listado');
           }}>

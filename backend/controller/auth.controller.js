@@ -140,7 +140,6 @@ const solicitarRecuperacion = async (req, res) => {
             // *** Construir la URL de restablecimiento para el frontend ***
             const resetURL = `${process.env.CLIENT_URL}/restablecer-password?token=${token}`;
 
-            // *** Enviar el correo electrónico usando tu servicio (HTML MEJORADO) ***
             await enviarCorreo({
                 para: usuario.correo,
                 asunto: 'Restablecer Contraseña de tu cuenta LogiRefrigeración',
