@@ -2,6 +2,20 @@
 
 **LogiRefrigeración** es un sistema de gestión de logística y control de freezers para empresas de distribución de productos refrigerados. El sistema permite a administradores y operadores gestionar clientes, eventos de entrega y retiro de equipos, auditorías y más.
 
+## 📷 Capturas
+### Administrador
+![Login](frontend/public/assets/8.png)
+![Dashboard - Admin](frontend/public/assets/1.png)
+![Freezers](frontend/public/assets/2.png)
+![Formulario](frontend/public/assets/3.png)
+![Detalle de Freezer](frontend/public/assets/4.png)
+![Detalle de Cliente](frontend/public/assets/5.png)
+
+### Operador
+![Menu - Operador](frontend/public/assets/9.png)
+![Opciones Responsive - Operador](frontend/public/assets/11.png)
+
+
 ## 🚀 Tecnologías utilizadas
 
 -   **Frontend:** React JS + Vite
